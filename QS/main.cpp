@@ -12,13 +12,14 @@ int main(int argc, char* argv[]) {
   double phi = 200;
   double rho0 = 100;
   double h = 0.01;
-  int n_step = 5000;
+  int n_step = 100000;
 
   double v0 = 1;
   double eta = 0;
-  double alpha = 3;
+  double alpha = 2;
   double Dr = 0.02;
   double Dt = 0.;
+  std::string ini_mode = "restart";  // should be "new" or "restart"
 
   int n_par = int(round(Lx * Ly * phi));
 
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) {
   std::vector<node_t> p_arr;
   
   // ini integrator
-  EM_QS_iso integrator(h, Dt);
+  EM_QS_iso integrator(h, Dt, Dr);
 
   // cal force
   LinearDensityKernal kernal(r_cut);
@@ -43,15 +44,6 @@ int main(int argc, char* argv[]) {
   auto f2 = [&kernal, &pdm](node_t* p1, node_t* p2) {
     kernal(*p1, *p2, pdm);
   };
-
-  // ini particles
-  p_arr.reserve(n_par);
-  for (int i = 0; i < n_par; i++) {
-    p_arr.emplace_back(myran, gl_l, Vec_2<double>());
-    if (i * 2 >= n_par) {
-      p_arr[i].type_id = 1;
-    }
-  }
 
   // set output
   char basename[255];
@@ -64,7 +56,21 @@ int main(int argc, char* argv[]) {
   int snap_interval = 100;
   int log_interval = 100000;
   exporter::LogExporter log(log_file, 0, n_step, log_interval, n_par);
-  exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, "new");
+  exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, ini_mode);
+
+  // ini particles
+  p_arr.reserve(n_par);
+  if (ini_mode == "new") {
+    for (int i = 0; i < n_par; i++) {
+      p_arr.emplace_back(myran, gl_l, Vec_2<double>());
+      if (i * 2 >= n_par) {
+        p_arr[i].type_id = 1;
+      }
+    }
+  } else {
+    gsd.read_last_frame(p_arr);
+  }
+
   for (int t = 1; t <= n_step; t++) {
     cl.for_each_pair(f1, f2);
     kernal.normalize(p_arr);

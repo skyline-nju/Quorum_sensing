@@ -55,7 +55,7 @@ void BD_EM::update(BiNode<BP_u_tau_2>& p, double Pe, const TDomain& dm, TRan& my
 
 class EM_QS_iso {
 public:
-  EM_QS_iso(double h, double Dt = 1, double Dr = 3) 
+  EM_QS_iso(double h, double Dt, double Dr) 
     : h_(h), Dt_(sqrt(24 * Dt * h)), Dr_(sqrt(24 * Dr * h)), trans_noise_on_(Dt > 0.) {}
 
   template <typename TPar, class BdyCondi, class TRan>

@@ -171,16 +171,19 @@ public:
   template <typename TPar>
   void dump(int i_step, const std::vector<TPar>& p_arr);
 
-  //TODO
-  //void load_frame(int i_frame, float* buf, int buf_size);
+  template <typename TPar>
+  void read(int i_frame, std::vector<TPar>& p_arr);
+
+  template <typename TPar>
+  void read_last_frame(std::vector<TPar>& p_arr) {
+    read(gsd_get_nframes(handle_) - 1, p_arr);
+  }
 
 private:
   gsd_handle* handle_ = nullptr;
   Vec_2<double> half_l_;
 };
 
-
-// TODO typeid
 template<typename TPar>
 void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
   if (need_export(i_step)) {
@@ -216,6 +219,52 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
   }
 }
 
+template <typename TPar>
+void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
+  uint32_t n_par;
+  const gsd_index_entry* chunk = gsd_find_chunk(handle_, i_frame, "particles/N");
+  gsd_read_chunk(handle_, &n_par, chunk);
+  std::cout << "find " << n_par << " particles" << std::endl;
+
+  float* pos = new float[n_par * 3];
+  chunk = gsd_find_chunk(handle_, i_frame, "particles/position");
+  gsd_read_chunk(handle_, pos, chunk);
+  uint32_t* type_id = new uint32_t[n_par];
+  chunk = gsd_find_chunk(handle_, i_frame, "particles/typeid");
+  gsd_read_chunk(handle_, type_id, chunk);
+
+  p_arr.reserve(n_par);
+
+  double Lx = half_l_.x * 2;
+  double Ly = half_l_.y * 2;
+
+  for (int j = 0; j < n_par; j++) {
+    TPar p;
+    size_t j3 = j * 3;
+    double x = pos[j3] + half_l_.x;
+    double y = pos[j3 + 1] + half_l_.y;
+    double theta = pos[j3 + 2];
+    
+    if (x < 0) {
+      x += Lx;
+    } else if (x >= Lx) {
+      x -= Lx;
+    }
+    if (y < 0) {
+      y += Ly;
+    } else if (y >= Ly) {
+      y -= Ly;
+    }
+
+    p.pos = Vec_2<double>(x, y);
+    p.u = Vec_2<double>(cos(theta), sin(theta));
+    p.type_id = type_id[j];
+    p_arr.push_back(p);
+  }
+
+  delete[] pos;
+  delete[] type_id;
+}
 
 }
 

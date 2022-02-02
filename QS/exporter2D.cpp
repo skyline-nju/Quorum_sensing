@@ -123,8 +123,9 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
     
     char types[] = {'A', 'B'};
     gsd_write_chunk(handle_, "particles/types", GSD_TYPE_INT8, 2, 1, 0, types);
-  } else if (open_flag == "append") {
+  } else if (open_flag == "restart") {
     gsd_open(handle_, filename.c_str(), GSD_OPEN_READWRITE);
+    std::cout << "open " << filename << std::endl;
   } else {
     std::cout << "Wrong open flag, which must be one of 'new' or 'append'!" << std::endl;
     exit(1);
