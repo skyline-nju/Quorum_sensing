@@ -1,28 +1,10 @@
+from email.mime import base
 import numpy as np
 from gsd import hoomd, fl
-import matplotlib.pyplot as plt
+from read_gsd import read_one_frame
 
 
-def read_snap(fname, i_frame):
-    with fl.open(name=fname, mode="rb") as f:
-        s = hoomd.Snapshot()
-        s.configuration.box = f.read_chunk(frame=0, name="configuration/box")
-        s.particles.types = f.read_chunk(frame=0, name="particles/types")
-        s.configuration.step = f.read_chunk(frame=i_frame,
-                                            name="configuration/step")[0]
-        s.particles.N = f.read_chunk(frame=i_frame, name="particles/N")[0]
-        s.particles.typeid = f.read_chunk(frame=i_frame,
-                                          name="particles/typeid")
-        # position = [x, y, theta]
-        # x \in [-Lx/2, Lx/2)
-        # y \in [-Ly/2, Ly/2]
-        # theta \in [-PI, PI]
-        s.particles.position = f.read_chunk(frame=i_frame,
-                                            name="particles/position")
-    return s
-
-
-def duplicate(s, nx, ny):
+def duplicate(s: hoomd.Snapshot, nx:int, ny:int) -> hoomd.Snapshot:
     N = s.particles.N * nx * ny
     lx = s.configuration.box[0]
     ly = s.configuration.box[1]
@@ -41,10 +23,10 @@ def duplicate(s, nx, ny):
     pos[:, 1] -= Ly / 2
     s2 = hoomd.Snapshot()
     s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
-    s2.particles.types = ['A', 'B']
     s2.particles.N = N
     s2.particles.position = pos
     s2.particles.typeid = type_id
+    s2.particles.types = s.particles.types
     s2.configuration.step = 0
     return s2
 
@@ -75,17 +57,15 @@ def create_polar_patten(s):
     type_id = np.hstack((type_id1, type_id2))
     s.particles.position = np.array([x, y, theta], dtype=np.float32).T
     s.particles.typeid = np.array(type_id, dtype=np.uint32)
-    s.particles.types = ['A', 'B']
     return s
 
 
 if __name__ == "__main__":
-    fname = "D:/data/QS/20_5_200_100_0.00_2.00_1.0_0.02_0.gsd"
-    snap = read_snap(fname, 1832)
-
-    # snap2 = duplicate(snap, 1, 4)
-
-    snap = create_polar_patten(snap)
-
-    f = hoomd.open(name='b.gsd', mode='wb')
+    folder = '/scratch03.local/yduan/QS2_varied_Dr/L20_e0_h0.01'
+    basename = "20_20_200_100_0.00_0.80_1.0_0.1_0.gsd"
+    fname = f"{folder}/{basename}"
+    snap = read_one_frame(fname, 2974)
+    snap = duplicate(snap, 4, 4)
+    fout = 'L80_80_pA100_pB100_r100_e0.000_a0.800_Dr0.1_Dt0.gsd'
+    f = hoomd.open(name=fout, mode='wb')
     f.append(snap)

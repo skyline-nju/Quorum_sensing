@@ -7,21 +7,27 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 20;
-  double Ly = 5;
-  double phi = 200;
-  double rho0 = 100;
+  double Lx = 80;
+  double Ly = 80;
+  double phiA = atof(argv[1]);
+  double phiB = atof(argv[2]);
+  double rho0 = atof(argv[3]);
   double h = 0.01;
-  int n_step = 100000;
+  int n_step = 1000000;
 
+  double kappa = 0.7; 
+  double eta = atof(argv[4]);
+  double alpha = atof(argv[5]);
+  double J_AB = alpha;
+  double J_BA = -alpha;
+  double Dr = atof(argv[6]);
+  double Dt = 0;
   double v0 = 1;
-  double eta = 0;
-  double alpha = 2;
-  double Dr = 0.02;
-  double Dt = 0.;
-  std::string ini_mode = "restart";  // should be "new" or "restart"
+  std::string ini_mode = "new";  // should be "new" or "restart"
 
-  int n_par = int(round(Lx * Ly * phi));
+  int n_par_A = int(round(Lx * Ly * phiA));
+  int n_par_B = int(round(Lx * Ly * phiB));
+  int n_par = n_par_A + n_par_B;
 
   typedef BiNode<QSP_2> node_t;
   Ranq2 myran(2);
@@ -49,12 +55,14 @@ int main(int argc, char* argv[]) {
   char basename[255];
   char log_file[255];
   char gsd_file[255];
-  snprintf(basename, 255, "%g_%g_%g_%g_%.2f_%.2f_%.1f_%g_%g", Lx, Ly, phi, rho0, eta, alpha, v0, Dr, Dt);
-  snprintf(log_file, 255, "%s.log", basename);
-  snprintf(gsd_file, 255, "%s.gsd", basename);
+  char folder[] = "/scratch03.local/yduan/QS4/L80_Dt0_k0.7/";
+  // char folder[] = "./";
+  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_k%.2f_pA%g_pB%g_r%g_e%.3f_J%.3f_%.3f", Lx, Ly, Dr, Dt, kappa, phiA, phiB, rho0, eta, J_AB, J_BA);
+  snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
+  snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
-  int snap_interval = 100;
-  int log_interval = 100000;
+  int snap_interval = 1000;
+  int log_interval = 10000;
   exporter::LogExporter log(log_file, 0, n_step, log_interval, n_par);
   exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, ini_mode);
 
@@ -63,19 +71,19 @@ int main(int argc, char* argv[]) {
   if (ini_mode == "new") {
     for (int i = 0; i < n_par; i++) {
       p_arr.emplace_back(myran, gl_l, Vec_2<double>());
-      if (i * 2 >= n_par) {
+      if (i >= n_par_A) {
         p_arr[i].type_id = 1;
       }
     }
   } else {
     gsd.read_last_frame(p_arr);
   }
-
+  
   for (int t = 1; t <= n_step; t++) {
     cl.for_each_pair(f1, f2);
     kernal.normalize(p_arr);
     for (int i = 0; i < n_par; i++) {
-      double v = cal_v(v0, rho0, eta, alpha, p_arr[i]);
+      double v = cal_v(v0, kappa, rho0, eta, J_AB, J_BA, p_arr[i]);
       integrator.update(p_arr[i], pdm, myran, v);
     }
     kernal.reset_local_density(p_arr);

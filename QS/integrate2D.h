@@ -1,6 +1,8 @@
 #pragma once
 #include <cmath>
 #include "particle2D.h"
+#include "node.h"
+
 class BD_EM {
 public:
   BD_EM(double h)
@@ -84,48 +86,15 @@ void EM_QS_iso::update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const
 }
 
 template<typename TPar>
-double cal_v(double v0, double rho0, double eta, double alpha, TPar& p) {
+double cal_v(double v0, double kappa, double rho0, double eta, double JAB, double JBA, TPar& p) {
   double v;
-  /*
-  double d_rhoA = p.rho_local[0] - rho0;
-  double d_rhoB = p.rho_local[1] - rho0;
+  double d_rhoA = (p.rho_local[0] - rho0) / (rho0 * kappa);
+  double d_rhoB = (p.rho_local[1] - rho0) / (rho0 * kappa);
+
   if (p.type_id == 0) {
-    v = v0 + eta * d_rhoA + (eta + alpha) * d_rhoB;
+    v = v0 * (1 + kappa * tanh(eta * d_rhoA)) * (1 + kappa * tanh(JAB * d_rhoB));
   } else {
-    v = v0 + (eta - alpha) * d_rhoA + eta * d_rhoB;
+    v = v0 * (1 + kappa * tanh(eta * d_rhoB)) * (1 + kappa * tanh(JBA * d_rhoA));
   }
-  if (v < 0.)
-    v = 0;
-  else if (v > 3 * v0)
-    v = 3 * v0;
-  */
-
-  //double xi_rho = rho0/2;
-  //double rA = atan((p.rho_local[0] - rho0) / xi_rho) / M_PI * 2;
-  //double rB = atan((p.rho_local[1] - rho0) / xi_rho) / M_PI * 2;
-  //if (p.type_id == 0) {
-  //  v = v0 + eta * rA + (eta + alpha) * rB;
-  //} else {
-  //  v = v0 + (eta - alpha) * rA + eta * rB;
-  //}
-  //if (v < 0.)
-  //  v = 0;
-
-  //double rA = atan(p.rho_local[0] / rho0 - 1);
-  //double rB = atan(p.rho_local[1] / rho0 - 1);
-  //if (p.type_id == 0) {
-  //  v = v0 * exp(eta * rA + (eta + alpha) * rB);
-  //} else {
-  //  v = v0 * exp(eta * rB + (eta - alpha) * rA);
-  //}
-
-  double d_rhoA = (p.rho_local[0] - rho0) / rho0;
-  double d_rhoB = (p.rho_local[1] - rho0) / rho0;
-  if (p.type_id == 0) {
-    v = v0 * (1 + tanh(eta * d_rhoA)) * (1 + tanh((eta + alpha) * d_rhoB));
-  } else {
-    v = v0 * (1 + tanh(eta * d_rhoB)) * (1 + tanh((eta - alpha) * d_rhoA));
-  }
-  
   return v;
 }

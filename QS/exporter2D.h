@@ -31,7 +31,7 @@ class ExporterBase {
 public:
   ExporterBase() : n_step_(0) {}
 
-  ExporterBase(int start, int n_step, int sep) : start_(start), n_step_(n_step) {
+  ExporterBase(int start, int n_step, int sep) : start_(start), n_step_(n_step), sep_(sep) {
     set_lin_frame(start, n_step, sep);
   }
 
@@ -41,6 +41,7 @@ public:
 
 protected:
   int n_step_;    // total steps to run
+  int sep_;
   int start_ = 0; // The first step 
 private:
   std::vector<int> frames_arr_; // frames that need to export
@@ -176,7 +177,14 @@ public:
 
   template <typename TPar>
   void read_last_frame(std::vector<TPar>& p_arr) {
-    read(gsd_get_nframes(handle_) - 1, p_arr);
+    int nframes = gsd_get_nframes(handle_);
+    int i;
+    if (nframes == 0) {
+       i = 0;
+    } else {
+       i = nframes - 1;
+    }
+    read(i, p_arr);
   }
 
 private:
@@ -200,16 +208,21 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
     }
 
     size_t n_frame = gsd_get_nframes(handle_);
-    size_t i_frame;
+
+    uint64_t step;
     if (n_frame == 0) {
-      i_frame = 0;
+      step = sep_;
     } else {
       const gsd_index_entry* chunk = gsd_find_chunk(handle_, n_frame - 1, "configuration/step");
-      gsd_read_chunk(handle_, &i_frame, chunk);
-      i_frame++;
+      if (chunk) {
+        gsd_read_chunk(handle_, &step, chunk);
+        step += sep_;
+      } else {
+        step = sep_;
+      }
     }
-    //std::cout << "dump frame " << i_frame << std::endl;
-    gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &i_frame);
+    std::cout << "dump frame " << step << std::endl;
+    gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
     gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
     gsd_write_chunk(handle_, "particles/position", GSD_TYPE_FLOAT, n_par, 3, 0, pos);
     gsd_write_chunk(handle_, "particles/typeid", GSD_TYPE_UINT32, n_par, 1, 0, type_id);
@@ -224,7 +237,7 @@ void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
   uint32_t n_par;
   const gsd_index_entry* chunk = gsd_find_chunk(handle_, i_frame, "particles/N");
   gsd_read_chunk(handle_, &n_par, chunk);
-  std::cout << "find " << n_par << " particles" << std::endl;
+  std::cout << "frame " << i_frame  <<": find " << n_par << " particles" << std::endl;
 
   float* pos = new float[n_par * 3];
   chunk = gsd_find_chunk(handle_, i_frame, "particles/position");

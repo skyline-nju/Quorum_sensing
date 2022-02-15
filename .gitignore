@@ -17,6 +17,8 @@
 gsd.c
 gsd.h
 *.gsd
+*.npz
+data/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
