@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
   double Dr = atof(argv[6]);
   double Dt = 0;
   double v0 = 1;
+  int seed = atoi(argv[7]);
   std::string ini_mode = "new";  // should be "new" or "restart"
 
   int n_par_A = int(round(Lx * Ly * phiA));
@@ -30,7 +31,7 @@ int main(int argc, char* argv[]) {
   int n_par = n_par_A + n_par_B;
 
   typedef BiNode<QSP_2> node_t;
-  Ranq2 myran(2);
+  Ranq2 myran(seed);
   Vec_2<double> gl_l(Lx, Ly);
   double r_cut = 1;
   Grid_2 grid(gl_l, r_cut);
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "/scratch03.local/yduan/QS4/L80_Dt0_k0.7/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_k%.2f_pA%g_pB%g_r%g_e%.3f_J%.3f_%.3f", Lx, Ly, Dr, Dt, kappa, phiA, phiB, rho0, eta, J_AB, J_BA);
+  snprintf(basename, 255, "L%g_%g_Dr%g_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%d", 
+           Lx, Ly, Dr, kappa, phiA, phiB, rho0, eta, J_AB, J_BA, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
@@ -79,16 +81,19 @@ int main(int argc, char* argv[]) {
     gsd.read_last_frame(p_arr);
   }
   
+  float *v_buf = new float[n_par];
   for (int t = 1; t <= n_step; t++) {
     cl.for_each_pair(f1, f2);
     kernal.normalize(p_arr);
     for (int i = 0; i < n_par; i++) {
       double v = cal_v(v0, kappa, rho0, eta, J_AB, J_BA, p_arr[i]);
       integrator.update(p_arr[i], pdm, myran, v);
+      v_buf[i] = v;
     }
     kernal.reset_local_density(p_arr);
     cl.recreate(p_arr);
-    gsd.dump(t, p_arr);
+    gsd.dump(t, p_arr, v_buf);
     log.record(t);
   }
+  delete[] v_buf;
 }

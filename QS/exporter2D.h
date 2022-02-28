@@ -170,27 +170,40 @@ public:
   ~Snap_GSD_2();
 
   template <typename TPar>
+  void get_data_from_par(const std::vector<TPar>& p_arr, float* pos, uint32_t* type_id);
+
+  uint64_t get_time_step();
+
+  template <typename TPar>
   void dump(int i_step, const std::vector<TPar>& p_arr);
+
+  template <typename TPar>
+  void dump(int i_step, const std::vector<TPar>& p_arr, float* v);
 
   template <typename TPar>
   void read(int i_frame, std::vector<TPar>& p_arr);
 
   template <typename TPar>
-  void read_last_frame(std::vector<TPar>& p_arr) {
-    int nframes = gsd_get_nframes(handle_);
-    int i;
-    if (nframes == 0) {
-       i = 0;
-    } else {
-       i = nframes - 1;
-    }
-    read(i, p_arr);
-  }
+  void read_last_frame(std::vector<TPar>& p_arr);
 
 private:
   gsd_handle* handle_ = nullptr;
   Vec_2<double> half_l_;
 };
+
+
+template <typename TPar>
+void Snap_GSD_2::get_data_from_par(const std::vector<TPar>& p_arr, float* pos, uint32_t* type_id) {
+  size_t n_par = p_arr.size();
+  for (size_t j = 0; j < n_par; j++) {
+    size_t j3 = j * 3;
+    pos[j3    ] = p_arr[j].pos.x - half_l_.x;
+    pos[j3 + 1] = p_arr[j].pos.y - half_l_.y;
+    pos[j3 + 2] = p_arr[j].get_theta();
+    type_id[j] = p_arr[j].type_id;
+  }
+}
+
 
 template<typename TPar>
 void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
@@ -198,29 +211,9 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
     uint32_t n_par = p_arr.size();
     float* pos = new float[n_par * 3];
     uint32_t *type_id = new uint32_t[n_par];
-
-    for (size_t j = 0; j < n_par; j++) {
-      size_t j3 = j * 3;
-      pos[j3    ] = p_arr[j].pos.x - half_l_.x;
-      pos[j3 + 1] = p_arr[j].pos.y - half_l_.y;
-      pos[j3 + 2] = p_arr[j].get_theta();
-      type_id[j] = p_arr[j].type_id;
-    }
-
-    size_t n_frame = gsd_get_nframes(handle_);
-
-    uint64_t step;
-    if (n_frame == 0) {
-      step = sep_;
-    } else {
-      const gsd_index_entry* chunk = gsd_find_chunk(handle_, n_frame - 1, "configuration/step");
-      if (chunk) {
-        gsd_read_chunk(handle_, &step, chunk);
-        step += sep_;
-      } else {
-        step = sep_;
-      }
-    }
+    get_data_from_par(p_arr, pos, type_id);
+    uint64_t step = get_time_step();
+  
     std::cout << "dump frame " << step << std::endl;
     gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
     gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
@@ -232,6 +225,26 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
   }
 }
 
+template <typename TPar>
+void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr, float* v) {
+  if (need_export(i_step)) {
+    uint32_t n_par = p_arr.size();
+    float* pos = new float[n_par * 3];
+    uint32_t *type_id = new uint32_t[n_par];
+    get_data_from_par(p_arr, pos, type_id);
+    uint64_t step = get_time_step();
+  
+    std::cout << "dump frame " << step << std::endl;
+    gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
+    gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
+    gsd_write_chunk(handle_, "particles/position", GSD_TYPE_FLOAT, n_par, 3, 0, pos);
+    gsd_write_chunk(handle_, "particles/typeid", GSD_TYPE_UINT32, n_par, 1, 0, type_id);
+    gsd_write_chunk(handle_, "particles/charge", GSD_TYPE_FLOAT, n_par, 1, 0, v);
+    gsd_end_frame(handle_);
+    delete[] pos;
+    delete []type_id;
+  }
+}
 template <typename TPar>
 void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
   uint32_t n_par;
@@ -277,6 +290,18 @@ void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
 
   delete[] pos;
   delete[] type_id;
+}
+
+
+template <typename TPar>
+void Snap_GSD_2::read_last_frame(std::vector<TPar>& p_arr) {
+  int nframes = gsd_get_nframes(handle_);
+  if (nframes < 1) {
+    std::cout << "Error, nframes=" << nframes << std::endl;
+    exit(1);
+  } else {
+    read(nframes-1, p_arr);
+  }
 }
 
 }

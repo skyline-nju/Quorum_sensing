@@ -137,3 +137,21 @@ exporter::Snap_GSD_2::~Snap_GSD_2() {
   gsd_close(handle_);
   delete handle_;
 }
+
+
+uint64_t exporter::Snap_GSD_2::get_time_step() {
+  uint64_t step;
+  size_t n_frame = gsd_get_nframes(handle_);
+  if (n_frame == 0) {
+    step = sep_;
+  } else {
+    const gsd_index_entry* chunk = gsd_find_chunk(handle_, n_frame - 1, "configuration/step");
+    if (chunk) {
+      gsd_read_chunk(handle_, &step, chunk);
+      step += sep_;
+    } else {
+      step = sep_;
+    }
+  }
+  return step;
+}
