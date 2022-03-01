@@ -1,16 +1,16 @@
-from email.mime import base
 import numpy as np
-from gsd import hoomd, fl
+from gsd import hoomd
 from read_gsd import read_one_frame
 
 
-def duplicate(s: hoomd.Snapshot, nx:int, ny:int) -> hoomd.Snapshot:
+def duplicate(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
     N = s.particles.N * nx * ny
     lx = s.configuration.box[0]
     ly = s.configuration.box[1]
     Lx, Ly = lx * nx, ly * ny
     pos = np.zeros((N, 3), dtype=np.float32)
     type_id = np.zeros(N, dtype=np.uint32)
+    charge = np.zeros(N, dtype=np.float32)
     for j in range(ny):
         for i in range(nx):
             beg = (j * nx + i) * s.particles.N
@@ -19,6 +19,7 @@ def duplicate(s: hoomd.Snapshot, nx:int, ny:int) -> hoomd.Snapshot:
             pos[beg:end, 1] = s.particles.position[:, 1] + ly / 2 + j * ly
             pos[beg:end, 2] = s.particles.position[:, 2]
             type_id[beg:end] = s.particles.typeid
+            charge[beg:end] = s.particles.charge
     pos[:, 0] -= Lx / 2
     pos[:, 1] -= Ly / 2
     s2 = hoomd.Snapshot()
@@ -26,6 +27,7 @@ def duplicate(s: hoomd.Snapshot, nx:int, ny:int) -> hoomd.Snapshot:
     s2.particles.N = N
     s2.particles.position = pos
     s2.particles.typeid = type_id
+    s2.particles.charge = charge
     s2.particles.types = s.particles.types
     s2.configuration.step = 0
     return s2

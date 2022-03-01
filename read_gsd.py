@@ -1,5 +1,6 @@
 from gsd import hoomd, fl
 import sys
+import numpy as np
 
 
 def get_one_snap(f, i_frame):
@@ -25,22 +26,28 @@ def get_one_snap(f, i_frame):
             print("Error, cannot find step for frame =", i_frame)
             sys.exit()
     s.particles.N = f.read_chunk(frame=i_frame, name="particles/N")[0]
-    s.particles.typeid = f.read_chunk(frame=i_frame,
-                                        name="particles/typeid")
+    s.particles.typeid = f.read_chunk(frame=i_frame, name="particles/typeid")
     """"
     position = [x, y, theta]
-    x \in [-Lx/2, Lx/2)
-    y \in [-Ly/2, Ly/2]
-    theta \in [-PI, PI]
+    x in [-Lx/2, Lx/2)
+    y in [-Ly/2, Ly/2]
+    theta in [-PI, PI]
     """
     s.particles.position = f.read_chunk(frame=i_frame,
                                         name="particles/position")
+
+    if f.chunk_exists(frame=i_frame, name="particles/charge"):
+        s.particles.charge = f.read_chunk(frame=i_frame,
+                                          name="particles/charge")
+    else:
+        s.particles.charge = np.zeros(s.particles.N, np.float32)
     return s
 
 
 def get_nframes(fname):
     with hoomd.open(fname, "rb") as data:
         return len(data)
+
 
 def read_one_frame(fname, i_frame):
     if i_frame < 0:
@@ -67,6 +74,3 @@ if __name__ == "__main__":
     frames = read_frames(fname, beg=0)
     for snap in frames:
         print(snap.configuration.step)
-
-
-
