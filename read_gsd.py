@@ -1,20 +1,40 @@
+# """
+# As shown below, errors occur when using hoomd module to read gsd file. Therefore, the gsd file is
+# read by fl module instead.
+
+# ---------------------------------------------------------------------------------------------------
+# >>> from gsd import hoomd
+# >>> fname = "D:/tmp/L40_40_Dr0.100_k0.70_p20_70_r40_e-2.000_J0.020_-0.020_1002.gsd"
+# >>> f = hoomd.open(name=fname, mode='rb')
+# >>> len(f)
+# 297
+# >>> s = f[0] 
+# Traceback (most recent call last):
+#   File "<stdin>", line 1, in <module>
+#   File "C:\Users\Yu\miniconda3\envs\py310\lib\site-packages\gsd\hoomd.py", line 1011, in __getitem__
+#     return self._read_frame(key)
+#   File "C:\Users\Yu\miniconda3\envs\py310\lib\site-packages\gsd\hoomd.py", line 918, in _read_frame
+#     tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
+# IndexError: tuple index out of range
+# """
+
+
 from gsd import hoomd, fl
 import sys
 import numpy as np
+import os
+import glob
 
 
 def get_one_snap(f, i_frame):
     s = hoomd.Snapshot()
     s.configuration.box = f.read_chunk(frame=0, name="configuration/box")
-
     s.particles.types = f.read_chunk(frame=0, name="particles/types")
-    print(s.particles.types)
     try:
         if not isinstance(s.particles.types[0], str):
             s.particles.types = [chr(i) for i in s.particles.types]
     except TypeError:
         s.particles.types = ['A', 'B']
-    print(s.particles.types)
 
     if f.chunk_exists(frame=i_frame, name="configuration/step"):
         s.configuration.step = f.read_chunk(frame=i_frame,
@@ -36,6 +56,7 @@ def get_one_snap(f, i_frame):
     s.particles.position = f.read_chunk(frame=i_frame,
                                         name="particles/position")
 
+    # 'particles/charge'actually denotes the self-propelled speeds of particles
     if f.chunk_exists(frame=i_frame, name="particles/charge"):
         s.particles.charge = f.read_chunk(frame=i_frame,
                                           name="particles/charge")
@@ -44,33 +65,39 @@ def get_one_snap(f, i_frame):
     return s
 
 
-def get_nframes(fname):
-    with hoomd.open(fname, "rb") as data:
-        return len(data)
-
-
 def read_one_frame(fname, i_frame):
-    if i_frame < 0:
-        i_frame += get_nframes(fname)
     with fl.open(name=fname, mode="rb") as f:
-        return get_one_snap(f, i_frame)
+        if i_frame < f.nframes:
+            i = i_frame + f.nframes
+        else:
+            i = i_frame
+        return get_one_snap(f, i)
 
 
 def read_frames(fname, beg=0, end=None, sep=1):
-    nframes = get_nframes(fname)
-    print("nframes =", nframes)
-    if end is None or end > nframes:
-        end = nframes
     with fl.open(name=fname, mode="rb") as f:
+        if end is None or end > f.nframes:
+            end = f.nframes
         for i in range(beg, end, sep):
             snap = get_one_snap(f, i)
             yield snap
 
 
+def save_last_frames(src_folder):
+    dest_folder = src_folder.rstrip("/").split("/")[-1]
+    if not os.path.exists(dest_folder):
+        os.mkdir(dest_folder)
+    
+    pat = os.path.join(src_folder, "*.gsd")
+    fins = glob.glob(pat)
+
+    for fin in fins:
+        snap = read_one_frame(fin, -1)
+        fout = os.path.join(dest_folder, os.path.basename(fin))
+        with hoomd.open(name=fout, mode="wb") as f:
+            f.append(snap)
+
+
 if __name__ == "__main__":
-    folder = 'QS'
-    basename = "L20_40_pA80_pB70_r100_e0.000_a0.800_Dr0.1_Dt0.gsd"
-    fname = f"{folder}/{basename}"
-    frames = read_frames(fname, beg=0)
-    for snap in frames:
-        print(snap.configuration.step)
+    src_folder = ""
+    save_last_frames(src_folder)
