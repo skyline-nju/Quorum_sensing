@@ -1,4 +1,4 @@
-import enum
+import os
 from read_gsd import read_one_frame
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,10 +32,33 @@ def plot_one_panel(fname, i_frame=-1, ax=None):
         plt.close()
 
 
-def PD_pA_pB(pA_arr, pB_arr, file_pat):
+def PD_pA_pB(L, J, rho0, Dr=0.1, eta=-2):
+
+    if L == 40:
+        if rho0 == 40:
+            pA_arr = np.arange(1, 8) * 10
+            pB_arr = np.arange(1, 8) * 10
+        elif rho0 == 20:
+            pA_arr = np.arange(1, 8) * 5
+            pB_arr = np.arange(1, 8) * 5
+    elif L == 80:
+        if rho0 == 40:
+            pA_arr = np.array([20, 25, 30])
+            pB_arr = np.array([20, 25, 30, 35, 40, 45, 50, 55, 60])
+        elif rho0 == 20:
+            pA_arr = np.array([20, 25, 30]) / 2
+            pB_arr = np.array([20, 25, 30, 35, 40, 45, 50, 55, 60]) / 2
+    
+    prefix = "/scratch03.local/yduan/QS5"
+    folder = f"{prefix}/L{L}_k0.7_r{rho0:g}_e{eta:g}_J{J:g}"
+    if not os.path.exists(folder):
+        folder = f"{prefix}/L{L}_k0.7_r{rho0:g}_e{eta:g}_J{J:.1f}"
+    file_pat = f"{folder}/L{L}_{L}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_" \
+        f"e{eta:.3f}_J{J:.3f}_-{J:.3f}_1002.gsd"
+    fout_name = f"fig/PD/L{L}_Dr{Dr:g}_r{rho0:g}_e{eta:g}_J{J:.2f}.png"
     nrows = pB_arr.size
     ncols = pA_arr.size
-    figsize = (15, 15)
+    figsize = (ncols * 2, nrows * 2)
     fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
 
     for j, pB in enumerate(pB_arr[::-1]):
@@ -45,28 +68,24 @@ def PD_pA_pB(pA_arr, pB_arr, file_pat):
             plot_one_panel(fin, ax=axes[j, i])
             axes[j, i].axis("off")
 
-    
-    x = (np.arange(7) + 0.5) / 7
+    x = (np.arange(ncols) + 0.5) / ncols
     for i, pA in enumerate(pA_arr):
         fig.text(x[i], 0.002, r"$\phi_A=%g$" % pA, fontsize="x-large")
-    
     y = (np.arange(nrows) + 0.5) / nrows
     for j, pB in enumerate(pB_arr):
-        fig.text(0.001, y[j], r"$\phi_B=%g$" % pB, rotation="vertical", fontsize="x-large")
-
-
+        fig.text(0.001, y[j], r"$\phi_B=%g$" % pB, rotation="vertical",
+            fontsize="x-large")
 
     plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1)
-    # plt.show()
-    plt.savefig("PD/a.png")
+    if fout_name is None:
+        plt.show()
+    else:
+        plt.savefig(fout_name)
     plt.close()
 
 
 if __name__ == "__main__":
     # fin = r"D:\tmp\L40_k0.7_r40_e-2_J0.5\L40_40_Dr0.100_k0.70_p30_40_r40_e-2.000_J0.500_-0.500_1002.gsd"
     # plot_one_panel(fin)
-
-    pA_arr = np.arange(1, 8) * 10
-    pB_arr = np.arange(1, 8) * 10
-    file_pat = r"D:\tmp\L40_k0.7_r40_e-2_J0.9\L40_40_Dr0.100_k0.70_p%g_%g_r40_e-2.000_J0.900_-0.900_1002.gsd"
-    PD_pA_pB(pA_arr, pB_arr, file_pat)
+    
+    PD_pA_pB(L=40, J=0.5, rho0=20)

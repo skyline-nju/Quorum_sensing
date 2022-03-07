@@ -78,6 +78,8 @@ def read_frames(fname, beg=0, end=None, sep=1):
     with fl.open(name=fname, mode="rb") as f:
         if end is None or end > f.nframes:
             end = f.nframes
+        if beg < 0:
+            beg += f.nframes
         for i in range(beg, end, sep):
             snap = get_one_snap(f, i)
             yield snap
