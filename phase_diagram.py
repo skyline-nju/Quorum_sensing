@@ -67,8 +67,11 @@ def Dr_alpha_eta0():
                  ms[key],
                  c=color[key],
                  label=label[key])
-    plt.xscale("log")
-    plt.yscale("log")
+    # x = np.linspace(0, 5)
+    # y = x / np.sqrt(2)
+    # plt.plot(x, y)
+    # plt.xscale("log")
+    # plt.yscale("log")
     plt.xlabel(r"$\tilde{\alpha}$", fontsize="x-large")
     plt.ylabel(r"$D_r$", fontsize="x-large")
     title = r"$L_x=20,L_y=5,\phi_A=\phi_B=\rho_0=100,v_0=1," \
@@ -142,11 +145,16 @@ def eta_alpha_Dr():
     plt.close()
 
 
-def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0):
+def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scratch=False):
+    """ Phase diagram on (Dr alpha) plane.
+
+        Data dir:
+        sftp://yduan@sohrab001/scratch03.local/yduan/QS5/L20_5_k0.7_alpha
+    """
     fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.png"
     fnpz = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.npz"
 
-    if os.path.exists(fnpz):
+    if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
             alpha = data["alpha"]
             Dr = data["Dr"]
@@ -176,6 +184,9 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0):
     # plt.plot(alpha, Dr, "o")
     fig, ax = plt.subplots(constrained_layout=True)
     sca = ax.scatter(alpha, Dr, c=v_std)
+    # x = np.linspace(0, 5)
+    # y = x / np.sqrt(2)
+    # plt.plot(x, y)
     ax.set_xscale("log")
     ax.set_yscale("log")
     cb = fig.colorbar(sca, ax=ax)
@@ -209,7 +220,7 @@ def get_v_std_mean(fgsd, beg=-100):
     return v_std_mean
 
 
-def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3):
+def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scratch=False):
     fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.png"
     fnpz = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.npz"
     fdat = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.dat"
@@ -219,7 +230,7 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3):
     alpha = paras["alpha"]
     state = paras["state"]
 
-    if os.path.exists(fnpz):
+    if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
             # alpha = data["alpha"]
             # eta = data["eta"]
@@ -253,8 +264,8 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3):
     ax.plot(x, y, "-", label=r"$\lambda_-=0$", c="tab:orange")
     ax.axhline(1, linestyle="--", c="k")
 
-    mk = {0: "o", 1: "s", 2: "D", 3: ">"}
-    label = {0: "H", 1: "DP", 2: "SP", 3: "DP+SP"}
+    mk = {0: "o", 1: "s", 2: "D"}
+    label = {0: "H", 1: "DP", 2: "SP"}
     for state_id in mk.keys():
         mask = state == state_id
         sca = ax.scatter(alpha[mask], -eta[mask], c=v_std[mask], vmin=0,
@@ -277,6 +288,7 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3):
 
 
 if __name__ == "__main__":
-    Dr_vs_alpha()
+    Dr_vs_alpha(from_scratch=True)
 
-    # eta_vs_alpha()
+    # eta_vs_alpha(from_scratch=True)
+    # Dr_alpha_eta0()

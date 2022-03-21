@@ -67,7 +67,7 @@ def get_one_snap(f, i_frame):
 
 def read_one_frame(fname, i_frame):
     with fl.open(name=fname, mode="rb") as f:
-        if i_frame < f.nframes:
+        if i_frame < 0:
             i = i_frame + f.nframes
         else:
             i = i_frame
@@ -100,6 +100,44 @@ def save_last_frames(src_folder):
             f.append(snap)
 
 
+def get_para(fname):
+    def add_para(para, tag, keys, str_list, i):
+        status = False
+        if tag in str_list[i]:
+            s1 = str_list[i].lstrip(tag)
+            if s1.replace(".", "").isdigit():
+                if isinstance(keys, list):
+                    for j, key in enumerate(keys):
+                        if j == 0:
+                            para[key] = float(s1)
+                        else:
+                            para[key] = float(str_list[i + j])
+                else:
+                    para[keys] = float(s1)
+                status = True
+        return status
+
+    para = {}
+    tag_keys = {"L": ["Lx", "Ly"], "Dr": "Dr", "k": "kappa",
+                 "p": ["phiA", "phiB"], "r": "rho0", "s": "seed",
+                 "e": "eta", "J": ["JAB", "JBA"], "a": "alpha"}
+    basename = os.path.basename(fname)
+    s = basename.rstrip(".gsd").split("_")
+
+    for i in range(len(s)):
+        for tag in tag_keys:
+            if add_para(para, tag, tag_keys[tag], s, i):
+                break
+    if "seed" not in para:
+        if s[-1].isdigit():
+            para["seed"] = int(s[-1])
+    return para
+        
+
 if __name__ == "__main__":
-    src_folder = ""
-    save_last_frames(src_folder)
+    # src_folder = ""
+    # save_last_frames(src_folder)
+
+    fname = "data/snap/L80_80_Dr0.100_k0.70_p30_20_r40_e-2.000_J0.300_-0.300_221002.gsd"
+    para = get_para(fname)
+    print(para)
