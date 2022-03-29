@@ -153,11 +153,16 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
     """
     fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.png"
     fnpz = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.npz"
+    fdat = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.dat"
+    paras = read_txt(fdat, ["Dr", "alpha", "state"])
+    Dr = paras["Dr"]
+    alpha = paras["alpha"]
+    state = paras["state"]
 
     if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
-            alpha = data["alpha"]
-            Dr = data["Dr"]
+            # alpha = data["alpha"]
+            # Dr = data["Dr"]
             v_std = data["v_std"]
         print("load data from", fnpz)
     else:
@@ -166,19 +171,20 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
             seed = 1001
             # sftp://yduan@sohrab001
             folder = "/scratch03.local/yduan/QS5/L20_5_k0.7_alpha"
-            pat = f"{folder}/L{Lx}_{Ly}_*_k{k:.2f}_" \
+            pat = f"{folder}/L{Lx}_{Ly}_Dr%.3f_k{k:.2f}_" \
                 f"p{phiA:g}_{phiB:g}_r{rho0:g}_" \
-                f"e{eta:.3f}_*_{seed}.gsd"
-        files = glob.glob(pat)
-        alpha, Dr = np.zeros((2, len(files)))
+                f"e{eta:.3f}_a%.3f_{seed}.gsd"
         v_std = np.zeros_like(alpha)
 
-        for i, f in enumerate(files):
-            paras = get_paras(["Dr", "a"], f)
-            alpha[i] = paras['a']
-            Dr[i] = paras['Dr']
-            snap = read_one_frame(f, -1)
-            v_std[i] = np.std(snap.particles.charge)
+        for i in range(alpha.size):
+            fgsd = pat % (Dr[i], alpha[i])
+            tmp = 0.
+            count = 1
+            frames = read_frames(fgsd, -50)
+            for snap in frames:
+                tmp += np.std(snap.particles.charge)
+                count += 1
+            v_std[i] = tmp / count
         np.savez_compressed(fnpz, alpha=alpha, Dr=Dr, v_std=v_std)
     
     # plt.plot(alpha, Dr, "o")
@@ -187,6 +193,9 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
     # x = np.linspace(0, 5)
     # y = x / np.sqrt(2)
     # plt.plot(x, y)
+
+    # ax.set_xlim(0.09, 10)
+    # ax.set_ylim(0.01, 4)
     ax.set_xscale("log")
     ax.set_yscale("log")
     cb = fig.colorbar(sca, ax=ax)
@@ -202,7 +211,7 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
     plt.close()
 
 
-def get_v_std_mean(fgsd, beg=-100):
+def get_v_std_mean(fgsd, beg=-200):
     """ Cal time-averaged v_std
 
     Args:
@@ -232,8 +241,6 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
 
     if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
-            # alpha = data["alpha"]
-            # eta = data["eta"]
             v_std = data["v_std"]
         print("load data from", fnpz)
     else:
@@ -281,14 +288,16 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
         f"\\phi_A=\\phi_B=\\rho_0={phiA:g}," \
         f"\\kappa={k:g},D_r={Dr:g}$"
     fig.suptitle(title)
-    # plt.show()
-    plt.savefig(fout)
+    plt.show()
+    # plt.savefig(fout)
     plt.close()
 
 
 
 if __name__ == "__main__":
-    Dr_vs_alpha(from_scratch=True)
+    # Dr_vs_alpha(from_scratch=True)
 
-    # eta_vs_alpha(from_scratch=True)
+    eta_vs_alpha(from_scratch=True)
     # Dr_alpha_eta0()
+
+    # eta_alpha_Dr()

@@ -63,11 +63,11 @@ def create_polar_patten(s):
 
 
 if __name__ == "__main__":
-    folder = '/scratch03.local/yduan/QS5/onset_spiral'
-    basename = "L40_5_Dr0.100_k0.70_p30_50_r40_e-2.000_J0.500_-0.500_1000.gsd"
+    folder = '/scratch03.local/yduan/QS5/L40_5_k0.7_p40_beta'
+    basename = "L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
     fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, -1)
-    snap = duplicate(snap, 1, 16)
-    fout = 'data/snap/L40_80_Dr0.100_k0.70_p30_50_r40_e-2.000_J0.500_-0.500_1161000.gsd'
+    snap = read_one_frame(fname, 194)
+    snap = create_polar_patten(snap)
+    fout = 'data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_21200.gsd'
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)

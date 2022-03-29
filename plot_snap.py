@@ -1,8 +1,8 @@
 import os
 import sys
-from read_gsd import read_one_frame
 import matplotlib.pyplot as plt
 import numpy as np
+from read_gsd import read_one_frame
 
 
 def plot_one_panel(fname, i_frame=-1, ax=None, ms=0.05):
@@ -81,10 +81,15 @@ def add_ylabel(fig, axes, loc, para_name, para_arr, fontsize, vertical=True, rev
         rot = "horizontal"
 
     for j, para in enumerate(para_arr):
-        if j == 0:
-            text = r"$%s=%g$" % (para_name, para)
+        if para_name == "replica":
+            text = r"$%g$" % j
+        elif para_name == "":
+            text = r"$%g$" % para
         else:
-            text = "$%g$" % para
+            if j == 0:
+                text = r"$%s=%g$" % (para_name, para)
+            else:
+                text = "$%g$" % para
         
         if reverse:
             row = axes.shape[0] - 1 - j
@@ -242,7 +247,7 @@ def PD_eta_J(Lx=40, Ly=None, k=0.7, rho0=40, Dr=3, pA=None, pB=None, seed=1200):
     print(folder)
     file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{pA:g}_{pB:g}_" \
         f"r{rho0:g}_e%.3f_J%.3f_%.3f_{seed}.gsd"
-    fout_name = f"fig/PD/eta_etaAB/L{Lx}_{Ly}_Dr{Dr:g}_r{rho0:g}_s{seed}.png"
+    fout_name = f"fig/PD/travelling_bands/L{Lx}_{Ly}_Dr{Dr:g}_r{rho0:g}_s{seed}.png"
 
     nrows = J_arr.size
     ncols = eta_arr.size
@@ -272,7 +277,7 @@ def PD_eta_J(Lx=40, Ly=None, k=0.7, rho0=40, Dr=3, pA=None, pB=None, seed=1200):
     plt.close()
 
 
-def PD_J_seed(Lx=20, Ly=None, k=0.7, rho0=40, pA=None, pB=None, eta=0, Dr=0.1):
+def PD_seed_J(Lx=20, Ly=None, k=0.7, rho0=40, pA=None, pB=None, eta=0, Dr=0.1):
     if pA is None:
         pA = rho0
     if pB is None:
@@ -315,7 +320,7 @@ def PD_J_seed(Lx=20, Ly=None, k=0.7, rho0=40, pA=None, pB=None, eta=0, Dr=0.1):
     plt.close()
 
 
-def PD_rho0_seed(Lx=20, Ly=None, k=0.7, eta=0, alpha=0.8, Dr=0.1):
+def PD_seed_rho0(Lx=20, Ly=None, k=0.7, eta=0, alpha=0.8, Dr=0.1):
     if Ly is None:
         Ly = Lx
 
@@ -353,7 +358,7 @@ def PD_rho0_seed(Lx=20, Ly=None, k=0.7, eta=0, alpha=0.8, Dr=0.1):
     plt.close()
 
 
-def PD_eta_seed(Lx=20, Ly=None, k=0.7, alpha=0.8, Dr=0.1, rho0=80):
+def PD_seed_eta(Lx=20, Ly=None, k=0.7, alpha=0.8, Dr=0.1, rho0=80):
     if Ly is None:
         Ly = Lx
     if Lx == Ly == 20 and k == 0.7 and Dr == 0.1 and alpha == 0.8:
@@ -390,17 +395,148 @@ def PD_eta_seed(Lx=20, Ly=None, k=0.7, alpha=0.8, Dr=0.1, rho0=80):
     plt.close()
 
 
+def PD_Dr_J(Lx, Ly=None, k=0.7, eta=-2, rho0=40, pA=None, pB=None):
+    if Ly is None:
+        Ly = Lx
+    if pA is None:
+        pA = rho0
+    if pB is None:
+        pB = rho0
+    
+    prefix = "/scratch03.local/yduan/QS5"
+    if Lx == 40 and Ly == 5 and eta == -2 and rho0 == 40:
+        J_arr = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+            1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0])
+        Dr_arr = np.array([0.02, 0.04, 0.1, 0.4, 1., 3.])
+        seed = 1200
+        folder = f"{prefix}/L{Lx}_{Ly}_k{k:g}_p{rho0}_beta"
+    elif Lx == 80 and Ly == 5 and eta == -2 and rho0 == 40:
+        J_arr = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        Dr_arr = np.array([0.02, 0.1, 3])
+        seed = 1200
+        folder = f"{prefix}/L{Lx}_{Ly}_k{k:g}_p{rho0}_beta"
+    file_pat = f"{folder}/L{Lx}_{Ly}_Dr%.3f_k{k:.2f}_p{rho0:g}_{rho0:g}" \
+        f"_r{rho0:g}_e{eta:.3f}_J%.3f_%.3f_{seed}.gsd"
+    fout_name = f"fig/PD/travelling_bands/L{Lx}_{Ly}_e{eta:g}_r{rho0:g}_s{seed}.png"
+
+    nrows = J_arr.size
+    ncols = Dr_arr.size
+    if Lx == 40 and Ly == 5:
+        figsize = (ncols * 2 + 1, nrows * 2 * Ly / Lx + 0.25)
+        rect = [0.05, -0.03, 1.02, 0.98] # left, bottom, right, top
+        fontsize = 15
+    elif Lx == 80 and Ly == 5:
+        figsize = (ncols * 3 + 2.2, nrows * 3 * Ly / Lx + 0.5)
+        rect = [0.05, -0.03, 1.03, 0.96] # left, bottom, right, top
+        fontsize = 16
+    else:
+        figsize = (ncols * 2 + 0.25, nrows * 2 * Ly / Lx + 0.25)
+        rect = [0, 0, 1, 1]
+        fontsize = 20
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
+
+    for j, J in enumerate(J_arr):
+            for i, Dr in enumerate(Dr_arr):
+                fin = file_pat % (Dr, J, -J)
+                print(fin)
+                plot_one_panel(fin, ax=axes[j, i], ms=0.1)
+                axes[j, i].axis("off")
+
+    plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1, rect=rect)
+
+    add_xlabel(fig, axes, "top", r"D_r", Dr_arr, fontsize)
+    add_ylabel(fig, axes, "left", r"\eta_{AB}", J_arr, fontsize, Lx == Ly, False)
+
+    plt.savefig(fout_name)
+    plt.close()
+
+
+def PD_J_seed(Lx, Ly=None, k=0.7, eta=-2, rho0=40, pA=None, pB=None, Dr=0.1):
+    if Ly is None:
+        Ly = Lx
+    if pA is None:
+        pA = rho0
+    if pB is None:
+        pB = rho0
+    
+    prefix = "/scratch03.local/yduan/QS5"
+    if Lx == 40 and Ly == 5 and eta == -2 and rho0 == 40 and Dr==0.1:
+        J_arr = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+        seed_arr = np.array([1200, 1201, 1202, 1203, 1204, 1205,
+            1206, 1207, 1208, 1209, 111200])
+        folder = f"{prefix}/L{Lx}_{Ly}_k{k:g}_p{rho0}_beta"
+    file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{rho0:g}_{rho0:g}" \
+        f"_r{rho0:g}_e{eta:.3f}_J%.3f_%.3f_%d.gsd"
+    fout_name = f"fig/PD/travelling_bands/L{Lx}_{Ly}_e{eta:g}_r{rho0:g}_Dr{Dr:g}.png"
+
+    nrows = seed_arr.size
+    ncols = J_arr.size
+    if Lx == 40 and Ly == 5:
+        figsize = (ncols * 2 + 0.5, nrows * 2 * Ly / Lx + 0.25)
+        rect = [0.03, -0.03, 1.005, 0.96] # left, bottom, right, top
+        fontsize = 18
+    else:
+        figsize = (ncols * 2 + 0.25, nrows * 2 * Ly / Lx + 0.25)
+        rect = [0, 0, 1, 1]
+        fontsize = 20
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
+
+    for j, seed in enumerate(seed_arr):
+            for i, J in enumerate(J_arr):
+                fin = file_pat % (J, -J, seed)
+                print(fin)
+                if os.path.exists(fin):
+                    plot_one_panel(fin, ax=axes[j, i], ms=0.1)
+                axes[j, i].axis("off")
+
+    plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1, rect=rect)
+
+    add_xlabel(fig, axes, "top", r"\eta_{AB}", J_arr, fontsize)
+    add_ylabel(fig, axes, "left", "replica", seed_arr, fontsize, Lx == Ly, False)
+    fig.text(0.01, 0.5, "replica", rotation="vertical", fontsize=fontsize, va="center")
+
+    plt.savefig(fout_name)
+    plt.close()
+
+
+def CSL40():    
+    prefix = "/scratch03.local/yduan/QS2_varied_Dr/L40_p200_r100_e0_a0.8_Dr0.1_Dt0"
+    pat = f"{prefix}/s%03d.gsd"
+    seed_arr = np.arange(11, 21)
+    fig, axes = plt.subplots(2, 5, figsize=(10, 4.0), constrained_layout=True)
+
+    for i, ax in enumerate(axes.flat):
+        fin = pat % (seed_arr[i])
+        print(fin)
+        plot_one_panel(fin, ax=ax, ms=0.03)
+        ax.axis("off")
+        ax.set_title(r"replica $%d$" % i)
+    title = f"$L_x=L_y=40, \\alpha=0.8, \\eta=0," \
+        f"\\phi_A=\\phi_B=\\rho_0=100$"
+    plt.suptitle(title, fontsize="x-large")
+    # plt.show()
+    plt.savefig("fig/snap/CS_L40.png")
+    plt.close()
+
+
 if __name__ == "__main__":
     # fin = r"D:\tmp\L40_k0.7_r40_e-2_J0.5\L40_40_Dr0.100_k0.70_p30_40_r40_e-2.000_J0.500_-0.500_1002.gsd"
     # plot_one_panel(fin)
     
-    # PD_pA_pB(Lx=80, J=0.5, rho0=20, eta=-2, Dr=0.1)
+    # PD_pA_pB(Lx=40, J=2.0, rho0=40, eta=-2, Dr=0.1)
 
     # PD_eta_J(Ly=5)
 
     # PD_JAB_JBA(Lx=40, rho0=20, Dr=0.1, eta=-2, Ly=40)
 
     ### CS
-    PD_J_seed(rho0=80)
+    # PD_J_seed(rho0=80)
     # PD_rho0_seed()
     # PD_eta_seed()
+    CSL40()
+
+    ## travelling bands
+    # PD_Dr_J(Lx=80, Ly=5)
+    # PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
