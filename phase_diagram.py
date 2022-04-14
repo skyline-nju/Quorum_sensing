@@ -151,13 +151,18 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
         Data dir:
         sftp://yduan@sohrab001/scratch03.local/yduan/QS5/L20_5_k0.7_alpha
     """
-    fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.png"
+    fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.pdf"
     fnpz = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.npz"
+    fdat = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_e{eta:g}.dat"
+    paras = read_txt(fdat, ["Dr", "alpha", "state"])
+    Dr = paras["Dr"]
+    alpha = paras["alpha"]
+    state = paras["state"]
 
     if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
-            alpha = data["alpha"]
-            Dr = data["Dr"]
+            # alpha = data["alpha"]
+            # Dr = data["Dr"]
             v_std = data["v_std"]
         print("load data from", fnpz)
     else:
@@ -166,39 +171,64 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
             seed = 1001
             # sftp://yduan@sohrab001
             folder = "/scratch03.local/yduan/QS5/L20_5_k0.7_alpha"
-            pat = f"{folder}/L{Lx}_{Ly}_*_k{k:.2f}_" \
+            pat = f"{folder}/L{Lx}_{Ly}_Dr%.3f_k{k:.2f}_" \
                 f"p{phiA:g}_{phiB:g}_r{rho0:g}_" \
-                f"e{eta:.3f}_*_{seed}.gsd"
-        files = glob.glob(pat)
-        alpha, Dr = np.zeros((2, len(files)))
+                f"e{eta:.3f}_a%.3f_{seed}.gsd"
         v_std = np.zeros_like(alpha)
 
-        for i, f in enumerate(files):
-            paras = get_paras(["Dr", "a"], f)
-            alpha[i] = paras['a']
-            Dr[i] = paras['Dr']
-            snap = read_one_frame(f, -1)
-            v_std[i] = np.std(snap.particles.charge)
+        for i in range(alpha.size):
+            fgsd = pat % (Dr[i], alpha[i])
+            tmp = 0.
+            count = 1
+            frames = read_frames(fgsd, -50)
+            for snap in frames:
+                tmp += np.std(snap.particles.charge)
+                count += 1
+            v_std[i] = tmp / count
         np.savez_compressed(fnpz, alpha=alpha, Dr=Dr, v_std=v_std)
     
     # plt.plot(alpha, Dr, "o")
     fig, ax = plt.subplots(constrained_layout=True)
-    sca = ax.scatter(alpha, Dr, c=v_std)
+
+    mask = state == 0
+    sca = ax.scatter(alpha[mask], Dr[mask], c=v_std[mask], vmin=0, vmax=v_std.max())
+
+    mask = state == 1
+    sca = ax.scatter(alpha[mask], Dr[mask], c=v_std[mask], marker="s", vmin=0, vmax=v_std.max())
+
+    from PD_rho_p_eq import PD_alpha_Dr
+    line = PD_alpha_Dr(0, qc=np.pi*2, ax=ax)
+    line.set_color("tab:green")
+    line.set_label(r"$q_-=2\pi$")
+    line = PD_alpha_Dr(0, qc=np.pi, ax=ax)
+    line.set_label(r"$q_-=\pi$")
+    line.set_color("tab:gray")
+    line = PD_alpha_Dr(0, qc=np.pi/2, ax=ax)
+    line.set_label(r"$q_-=\pi/2$")
+    line.set_color("tab:brown")
+    line = PD_alpha_Dr(0, qc=np.pi/4, ax=ax)
+    line.set_color("tab:cyan")
+    line.set_label(r"$q_-=\pi/4$")
+
+    ax.legend(loc="upper left")
     # x = np.linspace(0, 5)
     # y = x / np.sqrt(2)
     # plt.plot(x, y)
+
+    ax.set_xlim(0.09, 10.2)
+    ax.set_ylim(0.009, 3.5)
     ax.set_xscale("log")
     ax.set_yscale("log")
     cb = fig.colorbar(sca, ax=ax)
-    cb.set_label(r"$\Delta v$", fontsize="large")
+    cb.set_label(r"$\sigma_v$", fontsize="large")
     ax.set_xlabel(r"$\alpha$", fontsize="large")
     ax.set_ylabel(r"$D_r$", fontsize="large")
     title = f"$L_x={Lx},L_y={Ly}," \
         f"\\phi_A=\\phi_B=\\rho_0={phiA:g}," \
         f"\\kappa={k:g},\\eta={eta:g}$"
     fig.suptitle(title)
-    # plt.show()
-    plt.savefig(fout)
+    plt.show()
+    # plt.savefig(fout)
     plt.close()
 
 
@@ -220,8 +250,62 @@ def get_v_std_mean(fgsd, beg=-100):
     return v_std_mean
 
 
+def eta_vs_alpha_wo_v_std(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=0.02):
+    fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.pdf"
+    fdat = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.dat"
+
+    paras = read_txt(fdat, ["eta", "alpha", "state"])
+    eta = paras["eta"]
+    alpha = paras["alpha"]
+    state = paras["state"]
+    fig, ax = plt.subplots(constrained_layout=True)
+
+    # phase boundaries predicted by theory
+    x = np.linspace(0, 4.05, 100)
+    ax.plot(x, x, c="tab:red", label="$\Delta=0$", lw=2)
+    x = np.linspace(0, 4, 100)
+    y = (1 + x**2) / 2
+    ax.plot(x, y, c="tab:blue", label=r"$\Delta=\mu^2$")
+    ax.axhline(1, c="k", label=r"$\mu=0$", lw=2)
+
+    from PD_rho_p_eq import cal_minus_Delta_over_mu
+    y = np.linspace(-1, 0, 1000)
+    k = cal_minus_Delta_over_mu(Dr=Dr, v0=1, qc=np.pi*2)
+    x = np.sqrt((1+y)*k + y**2)
+    ax.plot(x, -y, c="tab:cyan", label=r"$q_-=2\pi$")
+
+    # k = cal_minus_Delta_over_mu(Dr=Dr, v0=1, qc=np.pi)
+    # x = np.sqrt((1+y)*k + y**2)
+    # ax.plot(x, -y, c="tab:gray", label=r"$q_-=\pi$")
+
+    # k = cal_minus_Delta_over_mu(Dr=Dr, v0=1, qc=np.pi/4)
+    # x = np.sqrt((1+y)*k + y**2)
+    # ax.plot(x, -y, c="tab:cyan", label=r"$q_-=\pi/4$")
+
+    mk = {0: "o", 1: "s", 2: "D"}
+    label = {0: "H", 1: "DP", 2: "SP"}
+    color = {0: "tab:blue", 1: "tab:red", 2:"tab:green"}
+
+    for state_id in mk.keys():
+        mask = state == state_id
+        ax.plot(alpha[mask], eta[mask], mk[state_id], c=color[state_id], label=label[state_id])
+
+    ax.set_ylim(-0.1, 4.1)
+    ax.set_xlim(0, 4.1)
+    ax.set_xlabel(r"$\alpha$", fontsize="large")
+    ax.set_ylabel(r"$-\eta$", fontsize="large")
+    ax.legend()
+    title = f"$L_x={Lx},L_y={Ly}," \
+        f"\\phi_A=\\phi_B=\\rho_0={phiA:g}," \
+        f"\\kappa=0.7,D_r={Dr:g}$"
+    fig.suptitle(title)
+    plt.show()
+    # plt.savefig(fout)
+    plt.close()
+
+
 def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scratch=False):
-    fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.png"
+    fout = f"fig/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.pdf"
     fnpz = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.npz"
     fdat = f"data/PD/L{Lx}_{Ly}_p{phiA}_{phiB}_r{rho0}_k{k}_Dr{Dr:g}.dat"
 
@@ -232,8 +316,6 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
 
     if not from_scratch and os.path.exists(fnpz):
         with np.load(fnpz, "r") as data:
-            # alpha = data["alpha"]
-            # eta = data["eta"]
             v_std = data["v_std"]
         print("load data from", fnpz)
     else:
@@ -255,14 +337,26 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
 
     # phase boundaries predicted by theory
     x = np.linspace(0, 4.05, 100)
-    ax.plot(x, x, "r-", label="EP line")
-    x = np.linspace(0, 1, 100)
+    ax.plot(x, x, c="tab:red", label="$\Delta=0$", lw=2)
+    x = np.linspace(0, 4, 100)
     y = (1 + x**2) / 2
-    ax.plot(x, y, "b-", label=r"$\lambda_+=0$")
-    x = np.linspace(1, 4.)
-    y = (1 + x**2) / 2
-    ax.plot(x, y, "-", label=r"$\lambda_-=0$", c="tab:orange")
-    ax.axhline(1, linestyle="--", c="k")
+    ax.plot(x, y, c="tab:blue", label=r"$\Delta=\mu^2$")
+    ax.axhline(1, c="k", label=r"$\mu=0$", lw=2)
+
+    # from PD_rho_p_eq import cal_minus_Delta_over_mu
+    # y = np.linspace(-1, 0, 1000)
+    # k = cal_minus_Delta_over_mu(Dr=3, v0=1, qc=np.pi*2)
+    # x = np.sqrt((1+y)*k + y**2)
+    # ax.plot(x, -y, c="tab:green", label=r"$q_-=2\pi$")
+
+    # k = cal_minus_Delta_over_mu(Dr=3, v0=1, qc=np.pi)
+    # x = np.sqrt((1+y)*k + y**2)
+    # ax.plot(x, -y, c="tab:gray", label=r"$q_-=\pi$")
+
+    # k = cal_minus_Delta_over_mu(Dr=3, v0=1, qc=np.pi/4)
+    # x = np.sqrt((1+y)*k + y**2)
+    # ax.plot(x, -y, c="tab:cyan", label=r"$q_-=\pi/4$")
+
 
     mk = {0: "o", 1: "s", 2: "D"}
     label = {0: "H", 1: "DP", 2: "SP"}
@@ -272,23 +366,28 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
             vmax=v_std.max(), marker=mk[state_id], label=label[state_id])
 
     ax.set_ylim(-0.1, 3.2)
+    ax.set_xlim(0, 4.1)
     cb = fig.colorbar(sca, ax=ax)
-    cb.set_label(r"$\Delta v$", fontsize="large")
+    cb.set_label(r"$\sigma_v$", fontsize="large")
     ax.set_xlabel(r"$\alpha$", fontsize="large")
-    ax.set_ylabel(r"$\eta$", fontsize="large")
+    ax.set_ylabel(r"$-\eta$", fontsize="large")
     ax.legend()
     title = f"$L_x={Lx},L_y={Ly}," \
         f"\\phi_A=\\phi_B=\\rho_0={phiA:g}," \
-        f"\\kappa={k:g},D_r={Dr:g}$"
+        f"\\kappa=0.7,D_r={Dr:g}$"
     fig.suptitle(title)
-    # plt.show()
-    plt.savefig(fout)
+    plt.show()
+    # plt.savefig(fout)
     plt.close()
 
 
 
 if __name__ == "__main__":
-    Dr_vs_alpha(from_scratch=True)
+    # Dr_vs_alpha(from_scratch=False)
 
-    # eta_vs_alpha(from_scratch=True)
+    # eta_vs_alpha(from_scratch=False)
     # Dr_alpha_eta0()
+
+    # eta_alpha_Dr()
+
+    eta_vs_alpha_wo_v_std(Dr=0.02)

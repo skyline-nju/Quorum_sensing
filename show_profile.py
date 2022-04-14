@@ -84,8 +84,62 @@ def plot_instant_profile(fname, i_frame=-1, bins=40):
     # plt.show()
     plt.close()
 
+def profiles_varied_etaAB():
+    prefix = "/scratch03.local/yduan/QS5/L40_5_k0.7_p40_beta"
+    J_arr = np.array([0.1, 0.3, 0.5, 0.8])
+    seed = 1200
+    Lx = 40
+    Ly = 5
+    k = 0.7
+    eta = -2.
+    rho0 = 40
+    bins = 40
+    Dr = 0.1
+
+    fig, axes = plt.subplots(3, 4, sharex=True, sharey="row",
+        figsize=(9, 4.5), constrained_layout=True)
+    for i, J in enumerate(J_arr):
+        fin = f"{prefix}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{rho0}_{rho0}_r{rho0}_" \
+            f"e{eta:.3f}_J{J:.3f}_{-J:.3f}_{seed}.gsd"
+        print(fin)
+        if J == 0.8:
+            i_frame = -2
+        else:
+            i_frame = -1
+        snap = read_one_frame(fin, i_frame)
+        t, x, rho_x, p_x, speed, m_x = get_profile(snap, bins=bins)
+
+        axes[0, i].plot(x, rho_x[0], label=r"$A$", c="tab:blue")
+        axes[0, i].plot(x, rho_x[1], label=r"$B$", c="tab:red")
+        axes[0, i].axhline(rho0, linestyle="dashed", c="k")
+    
+        axes[1, i].plot(x, speed[0], label=r"$A$", c="tab:blue")
+        axes[1, i].plot(x, speed[1], label=r"$B$", c="tab:red")
+        axes[1, i].axhline(1, linestyle="dashed", c="k")
+
+        axes[2, i].plot(x, p_x[0], label=r"$A$", c="tab:blue")
+        axes[2, i].plot(x, p_x[1], label=r"$B$", c="tab:red")
+        axes[2, i].axhline(0, linestyle="dashed", c="k")
+    
+    for ax in axes[-1]:
+        ax.set_xlabel(r"$x$", fontsize="x-large")
+        ax.set_xlim(0, 40)
+    for i, ax in enumerate(axes[0]):
+        ax.set_title(r"$\eta_{AB}=%g$" % J_arr[i])
+
+    ylabels = [r"$\langle\rho \rangle_y$", r"$\langle v_m\rangle_y$", r"$\langle \mathbf{p}_y/\rho\rangle_y$"]
+    for i, ax in enumerate(axes[:, 0]):
+        ax.set_ylabel(ylabels[i], fontsize="x-large")
+
+            
+    fout = f"fig/snap/40_5_e{eta:g}_Dr{Dr:g}.pdf"
+    plt.savefig(fout)
+    plt.close()
+
 
 if __name__ == "__main__":
     # fname = "D:/data/QS/20_5_200_100_0.00_2.00_1.0_0.02_0.gsd"
-    fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    plot_instant_profile(fname, bins=160, i_frame=-1)
+    # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
+    # plot_instant_profile(fname, bins=160, i_frame=-1)
+
+    profiles_varied_etaAB()

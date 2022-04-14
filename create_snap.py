@@ -42,7 +42,7 @@ def inverse(x, y, theta, xc, yc):
     return x_inv, y_inv, theta_inv
 
 
-def create_polar_patten(s):
+def flip_half(s):
     x, y, theta = s.particles.position.T
     Lx = s.configuration.box[0]
     mask1 = x < 0
@@ -62,12 +62,30 @@ def create_polar_patten(s):
     return s
 
 
+def create_nematic_patten(s, nb=2):
+    Lx = s.configuration.box[0]
+    s = flip_half(s)
+    if nb == 4:
+        x = s.particles.position[:, 0]
+        mask1 = np.logical_and(x >= -Lx/4, x < 0)
+        mask2 = np.logical_and(x >= 0, x <= Lx/4)
+        x[mask1] += Lx / 4
+        x[mask2] -= Lx / 4
+        s.particles.position[:, 0] = x
+    s.configuration.step = 0
+    return s
+
+
 if __name__ == "__main__":
-    folder = '/scratch03.local/yduan/QS5/onset_spiral'
-    basename = "L40_5_Dr0.100_k0.70_p30_50_r40_e-2.000_J0.500_-0.500_1000.gsd"
+    folder = '/scratch03.local/yduan/QS5/polar_bands'
+    basename = "L160_5_Dr0.100_k0.70_p40_40_r40_e-0.900_J0.500_-0.500_411200.gsd"
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
-    snap = duplicate(snap, 1, 16)
-    fout = 'data/snap/L40_80_Dr0.100_k0.70_p30_50_r40_e-2.000_J0.500_-0.500_1161000.gsd'
+    # snap = create_nematic_patten(snap, nb=4)
+    snap = duplicate(snap, 2, 1)
+    # snap.configuration.step = 0
+
+    fout = 'data/snap/L320_5_Dr0.100_k0.70_p40_40_r40_e-0.900_J0.500_-0.500_811200.gsd'
+    # fout = f"{folder}/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_41200.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
