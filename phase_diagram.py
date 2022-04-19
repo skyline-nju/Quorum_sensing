@@ -215,13 +215,8 @@ def Dr_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, eta=0, from_scrat
     # y = x / np.sqrt(2)
     # plt.plot(x, y)
 
-<<<<<<< HEAD
     ax.set_xlim(0.09, 10.2)
     ax.set_ylim(0.009, 3.5)
-=======
-    # ax.set_xlim(0.09, 10)
-    # ax.set_ylim(0.01, 4)
->>>>>>> cb8ace2f708e5dde592602f7967f830366009019
     ax.set_xscale("log")
     ax.set_yscale("log")
     cb = fig.colorbar(sca, ax=ax)
@@ -388,20 +383,9 @@ def eta_vs_alpha(Lx=20, Ly=5, phiA=80, phiB=80, rho0=80, k=0.7, Dr=3, from_scrat
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    # Dr_vs_alpha(from_scratch=False)
-
-    # eta_vs_alpha(from_scratch=False)
-    # Dr_alpha_eta0()
-
-    # eta_alpha_Dr()
-
-    eta_vs_alpha_wo_v_std(Dr=0.02)
-=======
     # Dr_vs_alpha(from_scratch=True)
 
     eta_vs_alpha(from_scratch=True)
     # Dr_alpha_eta0()
 
     # eta_alpha_Dr()
->>>>>>> cb8ace2f708e5dde592602f7967f830366009019

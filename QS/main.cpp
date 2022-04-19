@@ -7,23 +7,23 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 80;
-  double Ly = 80;
-  double phiA = atof(argv[1]);
-  double phiB = atof(argv[2]);
-  double rho0 = atof(argv[3]);
+  double Lx = 10;
+  double Ly = 10;
+  double phiA = 20;
+  double phiB = 20;
+  double rho0 = 20;
   double h = 0.01;
-  int n_step = 1000000;
+  int n_step = 10000;
 
   double kappa = 0.7; 
-  double eta = atof(argv[4]);
-  double alpha = atof(argv[5]);
+  double eta = 0;
+  double alpha = 1;
   double J_AB = alpha;
   double J_BA = -alpha;
-  double Dr = atof(argv[6]);
+  double Dr = 0.01;
   double Dt = 0;
   double v0 = 1;
-  int seed = atoi(argv[7]);
+  int seed = 123;
   std::string ini_mode = "new";  // should be "new" or "restart"
 
   int n_par_A = int(round(Lx * Ly * phiA));
@@ -56,14 +56,14 @@ int main(int argc, char* argv[]) {
   char basename[255];
   char log_file[255];
   char gsd_file[255];
-  char folder[] = "/scratch03.local/yduan/QS4/L80_Dt0_k0.7/";
+  char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
   snprintf(basename, 255, "L%g_%g_Dr%g_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%d", 
            Lx, Ly, Dr, kappa, phiA, phiB, rho0, eta, J_AB, J_BA, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
-  int snap_interval = 1000;
+  int snap_interval = 10000;
   int log_interval = 10000;
   exporter::LogExporter log(log_file, 0, n_step, log_interval, n_par);
   exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, ini_mode);
@@ -80,6 +80,8 @@ int main(int argc, char* argv[]) {
   } else {
     gsd.read_last_frame(p_arr);
   }
+  
+  cl.create(p_arr);
   
   float *v_buf = new float[n_par];
   for (int t = 1; t <= n_step; t++) {

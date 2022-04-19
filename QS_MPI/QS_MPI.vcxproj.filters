@@ -15,12 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ABP2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="boundary2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="cellList2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -30,42 +24,39 @@
     <ClInclude Include="domain2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="force2D.h">
+    <ClInclude Include="io2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="gsd.h">
+    <ClInclude Include="force2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="integrate2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="iodata2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="node.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="particle2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="rand.h">
+    <ClInclude Include="communicator2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NRQS.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cellList2D.cpp">
+    <ClCompile Include="gsd.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="domain2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="iodata2D.cpp">
+    <ClCompile Include="io2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ABP2D.cpp">
+    <ClCompile Include="NRQS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="gsd.c">
+    <ClCompile Include="particle2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

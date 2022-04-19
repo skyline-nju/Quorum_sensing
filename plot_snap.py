@@ -527,11 +527,7 @@ if __name__ == "__main__":
     # fin = r"D:\tmp\L40_k0.7_r40_e-2_J0.5\L40_40_Dr0.100_k0.70_p30_40_r40_e-2.000_J0.500_-0.500_1002.gsd"
     # plot_one_panel(fin)
     
-<<<<<<< HEAD
     # PD_pA_pB(Lx=40, J=0.9, rho0=40, eta=-2, Dr=0.02)
-=======
-    # PD_pA_pB(Lx=40, J=2.0, rho0=40, eta=-2, Dr=0.1)
->>>>>>> cb8ace2f708e5dde592602f7967f830366009019
 
     # PD_eta_J(Ly=5)
 
@@ -541,16 +537,8 @@ if __name__ == "__main__":
     # PD_J_seed(rho0=80)
     # PD_rho0_seed()
     # PD_eta_seed()
-<<<<<<< HEAD
     # CSL40()
 
     ## travelling bands
     # PD_Dr_J(Lx=80, Ly=5)
     PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
-=======
-    CSL40()
-
-    ## travelling bands
-    # PD_Dr_J(Lx=80, Ly=5)
-    # PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
->>>>>>> cb8ace2f708e5dde592602f7967f830366009019

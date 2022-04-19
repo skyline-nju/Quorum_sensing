@@ -18,6 +18,24 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cellList2D.h" />
+    <ClInclude Include="communicator2D.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="domain2D.h" />
+    <ClInclude Include="io2D.h" />
+    <ClInclude Include="force2D.h" />
+    <ClInclude Include="integrate2D.h" />
+    <ClInclude Include="NRQS.h" />
+    <ClInclude Include="particle2D.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="domain2D.cpp" />
+    <ClCompile Include="io2D.cpp" />
+    <ClCompile Include="gsd.c" />
+    <ClCompile Include="NRQS.cpp" />
+    <ClCompile Include="particle2D.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -29,26 +47,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -143,27 +161,6 @@
       <AdditionalLibraryDirectories>$(MSMPI_LIB64)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="ABP2D.h" />
-    <ClInclude Include="boundary2D.h" />
-    <ClInclude Include="cellList2D.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="domain2D.h" />
-    <ClInclude Include="force2D.h" />
-    <ClInclude Include="gsd.h" />
-    <ClInclude Include="integrate2D.h" />
-    <ClInclude Include="iodata2D.h" />
-    <ClInclude Include="node.h" />
-    <ClInclude Include="particle2D.h" />
-    <ClInclude Include="rand.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="ABP2D.cpp" />
-    <ClCompile Include="cellList2D.cpp" />
-    <ClCompile Include="domain2D.cpp" />
-    <ClCompile Include="gsd.c" />
-    <ClCompile Include="iodata2D.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -14,8 +14,6 @@
 *.out
 *.o
 .vscode
-gsd.c
-gsd.h
 *.gsd
 fig/
 

@@ -1,8 +1,16 @@
 #pragma once
-#include <typeinfo>
-#include "config.h"
 #include "vect.h"
+#include <iostream>
 #define M_PI 3.14159265358979323846
+
+template <typename T>
+void tangle_1D(T& x, T L) {
+  if (x < 0) {
+    x += L;
+  } else if (x >= L) {
+    x -= L;
+  }
+}
 
 template <typename TPar, typename TDomain>
 bool check_overlap_2(const TPar& p_new, const std::vector<TPar>& p_arr,
@@ -20,18 +28,17 @@ bool check_overlap_2(const TPar& p_new, const std::vector<TPar>& p_arr,
   return flag_overlap;
 }
 
-template <typename TPar, typename BdyCondi, typename TRan>
-void create_rand_par_2(std::vector<TPar>& p_arr, int n_par,
-                       const Vec_2<double>& origin, const Vec_2<double>& l,
-                       const BdyCondi& bc, TRan& myran, 
-                       double sigma = 1.) {
+template <typename TPar, typename TDomain, typename TRan>
+void create_rand_2(std::vector<TPar>& p_arr, int n, TRan& myran,
+                   const TDomain& dm, double sigma = 1.) {
   const double sigma_square = sigma * sigma;
-  for (int i = 0; i < n_par; i++) {
+  p_arr.reserve(n);
+  for (int i = 0; i < n; i++) {
     int count = 0;
     int max_count = 1000;
     while (count < max_count) {
-      TPar p_new(myran, l, origin);
-      bool flag_overlap = check_overlap_2(p_new, p_arr, sigma_square, bc);
+      TPar p_new(myran, dm.l(), dm.origin());
+      bool flag_overlap = check_overlap_2(p_new, p_arr, sigma_square, dm);
       if (!flag_overlap) {
         p_arr.push_back(p_new);
         break;
@@ -39,11 +46,21 @@ void create_rand_par_2(std::vector<TPar>& p_arr, int n_par,
       count++;
     }
     if (count >= max_count) {
-      std::cout << "failed to create particles, count = " << count << std::endl;
+      std::cout << "count = " << count << std::endl;
       exit(1);
     }
   }
-  //std::cout << "create " << n_par << " particles" << std::endl;
+
+  for (int i = 0; i < n - 1; i++) {
+    for (int j = i + 1; j < n; j++) {
+      Vec_2<double> r12_vec = p_arr[j].pos - p_arr[i].pos;
+      dm.untangle(r12_vec);
+      if (r12_vec.square() < sigma_square) {
+        std::cout << r12_vec << std::endl;
+        exit(1);
+      }
+    }
+  }
 }
 
 class BP_2 {
@@ -56,45 +73,9 @@ public:
   BP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
     : pos(o.x + myran.doub() * l.x, o.y + myran.doub() * l.y), f() {}
 
-  template <typename TInt>
-  void copy_pos_to(double* dest, TInt& idx) const;
-
-  template <typename TInt>
-  void copy_to(double* dest, TInt& idx) const { copy_pos_to(dest, idx); }
-
-  template <typename TInt>
-  void copy_pos_from(const double* source, TInt& idx);
-
-  template <typename TInt>
-  void copy_from(const double* source, TInt& idx) { copy_pos_from(source, idx); }
-
-  template <typename TInt>
-  void load_from_file(const float* buf, TInt& idx);
-
   Vec_2<double> pos;
   Vec_2<double> f;
 };
-
-template <typename TInt>
-void BP_2::copy_pos_to(double* dest, TInt& idx) const {
-  dest[idx] = pos.x;
-  dest[idx + 1] = pos.y;
-  idx += 2;
-}
-
-template <typename TInt>
-void BP_2::copy_pos_from(const double* source, TInt& idx) {
-  pos.x = source[idx];
-  pos.y = source[idx + 1];
-  idx += 2;
-}
-
-template <typename TInt>
-void BP_2::load_from_file(const float* buf, TInt& idx) {
-  pos.x = buf[idx];
-  pos.y = buf[idx + 1];
-  idx += 2;
-}
 
 class BP_u_2: public BP_2 {
 public:
@@ -109,53 +90,14 @@ public:
     u.y = sin(theta);
   }
 
-  template <typename TInt>
-  void copy_to(double* dest, TInt& idx) const;
-
-  template <typename TInt>
-  void copy_from(const double* source, TInt& idx);
-
-  template <typename TInt>
-  void load_from_file(const float* buf, TInt& idx);
-
   const Vec_2<double>& update_ori(double d_theta) { 
     u.rotate(d_theta); return u; }
-
-  double get_ori() const { return atan2(u.y, u.x); }
 
   Vec_2<double> u;
 #ifdef HAS_CELL_INDEX
   int ic = 0;
 #endif
 };
-
-template <typename TInt>
-void BP_u_2::copy_to(double* dest, TInt& idx) const {
-  dest[idx] = pos.x;
-  dest[idx + 1] = pos.y;
-  dest[idx + 2] = u.x;
-  dest[idx + 3] = u.y;
-  idx += 4;
-}
-
-template <typename TInt>
-void BP_u_2::copy_from(const double* source, TInt& idx) {
-  pos.x = source[idx];
-  pos.y = source[idx + 1];
-  u.x = source[idx + 2];
-  u.y = source[idx + 3];
-  idx += 4;
-}
-
-template <typename TInt>
-void BP_u_2::load_from_file(const float* buf, TInt& idx) {
-  pos.x = buf[idx];
-  pos.y = buf[idx + 1];
-  double theta = buf[idx + 2];
-  u.x = std::cos(theta);
-  u.y = std::sin(theta);
-  idx += 3;
-}
 
 class BP_u_tau_2 : public BP_u_2 {
 public:
@@ -186,44 +128,9 @@ public:
     const double s = std::sin(theta);
     return Vec_2<double>(c, s);
   }
-
-  template <typename TInt>
-  void copy_to(double* dest, TInt& idx) const;
-
-  template <typename TInt>
-  void copy_from(const double* source, TInt& idx);
-
-  template <typename TInt>
-  void load_from_file(const float* buf, TInt& idx);
-
-  double get_ori() const { return theta; }
-
   double theta;
 };
 
-template <typename TInt>
-void BP_theta_2::copy_to(double* dest, TInt& idx) const {
-  dest[idx] = pos.x;
-  dest[idx + 1] = pos.y;
-  dest[idx + 2] = theta;
-  idx += 3;
-}
-
-template <typename TInt>
-void BP_theta_2::copy_from(const double* source, TInt& idx) {
-  pos.x = source[idx];
-  pos.y = source[idx + 1];
-  theta = source[idx + 2];
-  idx += 3;
-}
-
-template <typename TInt>
-void BP_theta_2::load_from_file(const float* buf, TInt& idx) {
-  pos.x = buf[idx];
-  pos.y = buf[idx + 1];
-  theta = buf[idx + 2];
-  idx += 3;
-}
 
 class BP_theta_tau_2 : public BP_theta_2 {
 public:
@@ -239,29 +146,83 @@ public:
   double tau;
 };
 
-
 class QSP_2 {
 public:
-  Vec_2<double> pos;
-  Vec_2<double> u;
-  int type_id;
-  float rho_local[2]{};
-
-  QSP_2() : pos(), u(), type_id(0) {}
-  QSP_2(const Vec_2<double>& pos0) : pos(pos0), u(), type_id(0) {}
+  QSP_2() : u(), pos(), type_id(0) {}
+  QSP_2(const Vec_2<double>& pos0) : u(), pos(), type_id(0) {}
   QSP_2(const Vec_2<double>& pos0, const Vec_2<double>& u0)
-    : pos(pos0), u(u0), type_id(0) {}
+    :u(u0), pos(pos0), type_id(0) {}
   template <typename TRan>
   QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o);
 
-  const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u;}
+  double get_theta() const { return atan2(u.y, u.x); }
+
+  const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u; }
+
+  template <typename TInt>
+  void copy_pos_to(char* dest, TInt& idx) const;
+
+  template <typename TInt>
+  void copy_pos_from(const char* src, TInt& idx);
+
+  template <typename TInt>
+  void copy_to(char* dest, TInt& idx) const;
+
+  template <typename TInt>
+  void copy_from(const char* dest, TInt& idx);
+
+  double cal_v() const {
+    return v0_
+      * (1 + kappa_ * tanh(eta_[type_id][0] * (rho_local[0] - rho0_)))
+      * (1 + kappa_ * tanh(eta_[type_id][1] * (rho_local[1] - rho0_)));
+  };
+
+  static void set_QS_params(double v0, double kappa, double rho0,
+                            double eta_AA, double eta_AB,
+                            double eta_BA, double eta_BB);
+
+  Vec_2<double> u;
+  Vec_2<double> pos;
+  uint8_t type_id;
+  float rho_local[2]{};
+
+private:
+  static double v0_;
+  static double kappa_;
+  static double rho0_;
+  static double eta_[2][2];   // eta / (rho0 * kappa)
 };
 
 template <typename TRan>
-QSP_2::QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
-  : pos(o.x + myran.doub() * l.x, o.y + myran.doub() * l.y) {
+QSP_2::QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o) {
   double theta = myran.doub() * M_PI * 2.;
   u.x = cos(theta);
   u.y = sin(theta);
+  pos.x = o.x + myran.doub() * l.x;
+  pos.y = o.y + myran.doub() * l.y;
   type_id = 0;
+}
+
+template <typename TInt>
+void QSP_2::copy_pos_to(char* dest, TInt& idx) const {
+  std::memcpy(dest + idx, &pos.x, 17);
+  idx += 17;
+}
+
+template <typename TInt>
+void QSP_2::copy_pos_from(const char* src, TInt& idx) {
+  std::memcpy(&pos.x, src + idx, 17);
+  idx += 17;
+}
+
+template <typename TInt>
+void QSP_2::copy_to(char* dest, TInt& idx) const {
+  std::memcpy(dest + idx, &u.x, 33);
+  idx += 33;
+}
+
+template <typename TInt>
+void QSP_2::copy_from(const char* src, TInt& idx) {
+  std::memcpy(&u.x, src + idx, 33);
+  idx += 33;
 }
