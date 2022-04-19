@@ -77,7 +77,6 @@ def create_nematic_patten(s, nb=2):
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     folder = '/scratch03.local/yduan/QS5/polar_bands'
     basename = "L160_5_Dr0.100_k0.70_p40_40_r40_e-0.900_J0.500_-0.500_411200.gsd"
     fname = f"{folder}/{basename}"
@@ -88,13 +87,5 @@ if __name__ == "__main__":
 
     fout = 'data/snap/L320_5_Dr0.100_k0.70_p40_40_r40_e-0.900_J0.500_-0.500_811200.gsd'
     # fout = f"{folder}/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_41200.gsd"
-=======
-    folder = '/scratch03.local/yduan/QS5/L40_5_k0.7_p40_beta'
-    basename = "L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, 194)
-    snap = create_polar_patten(snap)
-    fout = 'data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_21200.gsd'
->>>>>>> cb8ace2f708e5dde592602f7967f830366009019
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
