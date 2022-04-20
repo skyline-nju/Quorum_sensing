@@ -50,17 +50,25 @@ void run(const Vec_2<double>& gl_l,
   // set output
   char basename[255];
   char log_file[255];
+  char order_para_file[255];
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   snprintf(basename, 255, "L%g_%g_Dr%.3f_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%lld",
     gl_l.x, gl_l.y, Dr, kappa, phiA, phiB, rho0, eta, J_AB, J_BA, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
+  snprintf(order_para_file, 255, "%sop_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
-  int log_dt = 10000;
   int gl_np = round(phiA * gl_l.x * gl_l.y) + round(phiB * gl_l.x * gl_l.y);
-  io::LogExporter log(log_file, n_step, log_dt, 0, gl_np, group_comm);
-  io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, 0, gl_l, gl_np, ini_mode, group_comm);
+  int start = 0;  // may be reset as the last time step of the gsd file
+  io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, start, gl_l, gl_np, ini_mode, group_comm);
+
+  int log_dt = 10000;
+  io::LogExporter log(log_file, n_step, log_dt, start, gl_np, group_comm);
+
+  int OP_dt = 100;
+  int flush_dt = snap_dt;
+  io::OrderParaExporter op(order_para_file, n_step, OP_dt, start, flush_dt, gl_np, group_comm);
 
   // initialize particles and celllist
   ini(p_arr, dm, cl, phiA, phiB, ini_mode, myran, gsd, 50.);
@@ -72,6 +80,7 @@ void run(const Vec_2<double>& gl_l,
     kernal.normalize(p_arr);
     integrate(p_arr, cl, one_par_move, comm);
     gsd.dump(t, p_arr);
+    op.dump(t, p_arr);
     log.record(t);
   }
 
@@ -88,17 +97,17 @@ int main(int argc, char* argv[]) {
 
   double Lx = 40;
   double Ly = 40;
-  double phiA = 20;
-  double phiB = 20;
-  double rho0 = 20;
+  double phiA = 10;
+  double phiB = 10;
+  double rho0 = 10;
   double h = 0.01;
-  int n_step = 1000;
-  int snap_dt = 100;
+  int n_step = 10000;
+  int snap_dt = 1000;
 
   double kappa = 0.7;
   double eta = 0;
-  double J_AB = 1;
-  double J_BA = -1;
+  double J_AB = 0.1;
+  double J_BA = 0.1;
   double Dr = 0.01;
   double Dt = 0.;
   double v0 = 1.;

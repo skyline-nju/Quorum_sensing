@@ -32,7 +32,7 @@ public:
   ExporterBase(int n_step, int sep, int start, MPI_Comm group_comm);
 
   bool need_export(const int i_step) {
-    return (i_step - start_) % sep_ == 0;
+    return i_step % sep_ == 0;
   }
 
 protected:
@@ -69,10 +69,69 @@ private:
 };
 
 
+class OrderParaExporter : public ExporterBase {
+public:
+  OrderParaExporter(const std::string& outfile, int n_step, int sep, int start,
+                    int flush_dt, int npar_gl, 
+                    MPI_Comm group_comm);
+
+  ~OrderParaExporter();
+
+  template <typename TPar>
+  void dump(int i_step, const std::vector<TPar>& p_arr);
+
+private:
+  std::ofstream fout_;
+  int flush_dt_;
+  int npar_gl_;
+};
+
+
+template<typename TPar>
+void io::OrderParaExporter::dump(int i_step, const std::vector<TPar>& p_arr){
+  if (need_export(i_step)) {
+    int n = p_arr.size();
+    double sum_rho[2]{};
+    double sum_rho_square[2]{};
+    double sum_rho_cross = 0;
+    double sum_v = 0;
+    double sum_v_square = 0;
+
+    for (const auto& p : p_arr) {
+      sum_rho[0] += p.rho_local[0];
+      sum_rho_square[0] += p.rho_local[0] * p.rho_local[0];
+      sum_rho[1] += p.rho_local[1];
+      sum_rho_square[1] += p.rho_local[1] * p.rho_local[1];
+      sum_rho_cross += p.rho_local[0] * p.rho_local[1];
+      double v = p.cal_v();
+      sum_v += v;
+      sum_v_square += v * v;
+    }
+
+    double sum_local[7] = {sum_rho[0], sum_rho[1],
+                           sum_rho_square[0], sum_rho_square[1], sum_rho_cross,
+                           sum_v, sum_v_square};
+    double sum[7]{};
+    MPI_Reduce(sum_local, sum, 7, MPI_DOUBLE, MPI_SUM, 0, comm_);
+    
+    if (my_rank_ == 0) {
+      double D_rho_A = sum[2] / npar_gl_ - (sum[0] / npar_gl_) * (sum[0] / npar_gl_);
+      double D_rho_B = sum[3] / npar_gl_ - (sum[1] / npar_gl_) * (sum[1] / npar_gl_);
+      double D_rho_c = sum[4] / npar_gl_ - (sum[0] / npar_gl_) * (sum[1] / npar_gl_);
+      double D_v = sum[6] / npar_gl_ - (sum[5] / npar_gl_) * (sum[5] / npar_gl_);
+      fout_ << std::fixed << std::setw(10) << std::setprecision(8) << start_ + i_step 
+        << "\t" << D_v << "\t" << D_rho_A << "\t" << D_rho_B << "\t" << D_rho_c << "\n";
+      if (i_step % flush_dt_ == 0) {
+        fout_ << std::flush;
+      }
+    }
+  }
+}
+
 class Snap_GSD_2 : public ExporterBase {
 public:
   Snap_GSD_2(const std::string& filename,
-             int n_step, int sep, int start,
+             int n_step, int sep, int &start,
              const Vec_2<double>& gl_l,
              size_t n_par_gl,
              const std::string& open_flag,
@@ -85,6 +144,8 @@ public:
                          float* pos, uint32_t* type_id, float* v);
 
   uint64_t get_time_step();
+
+  int reset_start_time_step();
 
   template <typename TPar>
   void dump(int i_step, const std::vector<TPar>& p_arr);
@@ -182,7 +243,8 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
     get_data_from_par(p_arr, pos, type_id, v);
     uint32_t n_par = gl_np_;
     if (my_rank_ == 0) {
-      uint64_t step = get_time_step();
+      //uint64_t step = get_time_step();
+      uint64_t step = start_ + i_step;
       std::cout << "dump frame " << step << std::endl;
       gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
       gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);

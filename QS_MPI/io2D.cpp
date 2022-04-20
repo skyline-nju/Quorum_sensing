@@ -12,7 +12,7 @@ io::LogExporter::LogExporter(const std::string& outfile,
                              int np_gl, MPI_Comm group_comm)
   : ExporterBase(n_step, sep, start, group_comm), n_par_(np_gl){
   if (my_rank_ == 0) {
-    fout.open(outfile);
+    fout.open(outfile, std::ios::app);
     t_start_ = std::chrono::system_clock::now();
     auto start_time = std::chrono::system_clock::to_time_t(t_start_);
     char str[100];
@@ -57,13 +57,33 @@ void io::LogExporter::record(int i_step) {
     const auto hour = floor(dt / 3600);
     const auto min = floor((dt - hour * 3600) / 60);
     const int sec = dt - hour * 3600 - min * 60;
-    fout << i_step << "\t" << hour << ":" << min << ":" << sec << std::endl;
+    fout << i_step + start_ << "\t" << hour << ":" << min << ":" << sec << std::endl;
   }
   step_count_++;
 }
 
+io::OrderParaExporter::OrderParaExporter(const std::string& outfile,
+                                         int n_step, int sep, int start,
+                                         int flush_dt, int npar_gl,
+                                         MPI_Comm group_comm)
+  : ExporterBase(n_step, sep, start, group_comm),
+    flush_dt_(flush_dt), npar_gl_(npar_gl) {
+  if (my_rank_ == 0) {
+    fout_.open(outfile, std::ios::app);
+  }
+  MPI_Barrier(group_comm);
+}
+
+
+io::OrderParaExporter::~OrderParaExporter() {
+  if (my_rank_ == 0) {
+    fout_.close();
+  }
+}
+
+
 io::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
-                           int n_step, int sep, int start,
+                           int n_step, int sep, int &start,
                            const Vec_2<double>& gl_l,
                            size_t n_par_gl,
                            const std::string& open_flag,
@@ -101,6 +121,7 @@ io::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
       std::cout << "Wrong open flag, which must be one of 'rand' or 'resume'!" << std::endl;
       exit(1);
     }
+    start = reset_start_time_step();
   }
   MPI_Barrier(group_comm);
 }
@@ -129,3 +150,22 @@ uint64_t io::Snap_GSD_2::get_time_step() {
   }
   return step;
 }
+
+int io::Snap_GSD_2::reset_start_time_step() {
+  size_t n_frame = gsd_get_nframes(handle_);
+  if (n_frame == 0) {
+    start_ = 0;
+  } else {
+    const gsd_index_entry* chunk = gsd_find_chunk(handle_, n_frame - 1, "configuration/step");
+    if (chunk) {
+      uint64_t last_step;
+      gsd_read_chunk(handle_, &last_step, chunk);
+      start_ = last_step;
+    } else {
+      std::cout << "Error, failed to read the time step of the last frame" << std::endl;
+      exit(1);
+    }
+  }
+  return start_;
+}
+
