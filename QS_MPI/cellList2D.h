@@ -73,8 +73,8 @@ protected:
                                   { 1,  0 },        // upper
                                   { 1,  1 } };      // upper-right
 
-  RectBlock_2<int> inner_shell_[4];
-  RectBlock_2<int> outer_shell_[4];
+  //RectBlock_2<int> inner_shell_[4];
+  //RectBlock_2<int> outer_shell_[4];
 };
 
 template <class TDomain, class TGrid>

@@ -16,12 +16,11 @@ void run(const Vec_2<double>& gl_l,
   std::vector<node_t> p_arr;
   const double r_cut = 1.0;
 
-  // Vec_2<int> proc_size = decompose_domain(gl_l, group_comm);
-  Vec_2<int> proc_size = Vec_2<int>(2, 1);
+  Vec_2<int> proc_size = Vec_2<int>(4, tot_proc/4);
   Grid_2 grid(gl_l, r_cut, proc_size, group_comm);
   PeriodicDomain_2 dm(gl_l, grid, proc_size, group_comm);
   CellListNode_2<node_t> cl(dm, grid);
-  Communicator_2 comm(dm, grid, phiA + phiB, 200.);
+  Communicator_2 comm(dm, grid, phiA + phiB, 50.);
 
   // cal force
   LinearDensityKernal kernal(r_cut);
@@ -53,7 +52,7 @@ void run(const Vec_2<double>& gl_l,
   char log_file[255];
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
-  snprintf(basename, 255, "L%g_%g_Dr%g_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%lld",
+  snprintf(basename, 255, "L%g_%g_Dr%.3f_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%lld",
     gl_l.x, gl_l.y, Dr, kappa, phiA, phiB, rho0, eta, J_AB, J_BA, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
@@ -64,7 +63,7 @@ void run(const Vec_2<double>& gl_l,
   io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, 0, gl_l, gl_np, ini_mode, group_comm);
 
   // initialize particles and celllist
-  ini(p_arr, dm, cl, phiA, phiB, ini_mode, myran, gsd, 100.);
+  ini(p_arr, dm, cl, phiA, phiB, ini_mode, myran, gsd, 50.);
 
   // run
   for (int t = 1; t <= n_step; t++) {
@@ -76,20 +75,25 @@ void run(const Vec_2<double>& gl_l,
     log.record(t);
   }
 
+  if (my_rank == 0) {
+    std::cout << "Finish simulation!" << std::endl;
+  }
+  MPI_Barrier(group_comm);
+
 }
 
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 
-  double Lx = 20;
-  double Ly = 10;
-  double phiA = 40;
-  double phiB = 40;
-  double rho0 = 40;
+  double Lx = 40;
+  double Ly = 40;
+  double phiA = 20;
+  double phiB = 20;
+  double rho0 = 20;
   double h = 0.01;
-  int n_step = 10000;
-  int snap_dt = 10000;
+  int n_step = 1000;
+  int snap_dt = 100;
 
   double kappa = 0.7;
   double eta = 0;
@@ -102,10 +106,7 @@ int main(int argc, char* argv[]) {
 
   std::string ini_mode = "rand"; // should be 'rand' or 'resume'
 
-  typedef BiNode<QSP_2> node_t;
-  Ranq2 myran(seed);
   Vec_2<double> gl_l(Lx, Ly);
-  double r_cut = 1;
 
   run(gl_l, phiA, phiB, rho0,
       eta, J_AB, J_BA, kappa,

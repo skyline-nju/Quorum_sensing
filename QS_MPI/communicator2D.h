@@ -130,7 +130,8 @@ public:
 
   template <typename T>
   size_t get_max_buf_size(const T rho0, double amplification,
-                          const Vec_2<double> &l) const;
+                          const Vec_2<double> &l,
+                          const Vec_2<double> &gl_l) const;
 
   template <typename T>
   void set_comm_shell(const Vec_2<T> &cells_size);
@@ -154,6 +155,7 @@ private:
   int my_rank_ = 0;
 
   Vec_2<bool> flag_comm_{};
+  MPI_Comm comm_;
   int neighbor_[2][2]{};
   Vec_2<RectBlock_2<int>> inner_shell_[2]{};
   Vec_2<RectBlock_2<int>> outer_shell_[2]{};
@@ -163,12 +165,12 @@ private:
   size_t max_buf_size_ = 0;
 
   std::vector<int> vacant_pos_;
-  MPI_Comm comm_;
 };
 
 template <typename T>
 size_t Communicator_2::get_max_buf_size(const T rho0, double amplification,
-                                        const Vec_2<double>& l) const {
+                                        const Vec_2<double>& l,
+                                        const Vec_2<double>& gl_l) const {
   std::vector<double> area;
   if (flag_comm_.x) {
     area.push_back(l.y);
@@ -185,14 +187,11 @@ size_t Communicator_2::get_max_buf_size(const T rho0, double amplification,
     std::sort(area.begin(), area.end(), [](double x, double y) {return x > y; });
 
     size_t n0 = size_t(rho0 * area[0] * amplification);
-    max_buf_size = 33 * n0;
-    int my_rank;
-    MPI_Comm_rank(comm_, &my_rank);
-
-    if (my_rank == 0) {
-      std::cout << "max area = " << area[0] << std::endl;
-      std::cout << "max particle number per communication: " << n0 << " particles" << std::endl;
+    size_t n_gl = size_t(rho0 * gl_l.x * gl_l.y);
+    if (n0 > n_gl) {
+      n0 = n_gl;
     }
+    max_buf_size = 33 * n0;
   }
   return max_buf_size;
 }
@@ -217,26 +216,31 @@ void Communicator_2::set_comm_shell(const Vec_2<T>& cells_size) {
 }
 
 template <class TDomain, class TGrid>
-Communicator_2::Communicator_2(const TDomain& dm, const TGrid& grid, double rho0, double amplification):
+Communicator_2::Communicator_2(const TDomain& dm, const TGrid& grid,
+                               double rho0, double amplification):
                                flag_comm_(dm.proc_size().x > 1, dm.proc_size().y > 1),
                                comm_(dm.comm()) {
-  my_rank_ = dm.proc_rank().x + dm.proc_rank().y * dm.proc_size().x;
-  tot_proc_ = dm.proc_size().x * dm.proc_size().y;
-
+  MPI_Comm_rank(comm_, &my_rank_);
+  MPI_Comm_size(comm_, &tot_proc_);
   dm.find_neighbor(neighbor_);
   set_comm_shell(grid.n());
-  max_buf_size_ = get_max_buf_size(rho0, amplification, dm.l());
+  max_buf_size_ = get_max_buf_size(rho0, amplification, dm.l(), dm.gl_l());
   for (int i = 0; i < 4; i++) {
     buf_[i] = new char[max_buf_size_];
     buf_size_[i] = max_buf_size_;
   }
+  vacant_pos_.reserve(max_buf_size_/33/4);
+  if (my_rank_ == 0) {
+    std::cout << "ini communicator with buf size " << max_buf_size_ << std::endl;
+  }
+  MPI_Barrier(comm_);
 
-  vacant_pos_.reserve(max_buf_size_/33);
 }
 
 template <typename TPack, typename TUnpack, typename TFunc>
 void Communicator_2::exchange_particle(int prev_proc, int next_proc, int tag_bw, int tag_fw,
-                                       const RectBlock_2<int>& prev_block, const RectBlock_2<int>& next_block,
+                                       const RectBlock_2<int>& prev_block,
+                                       const RectBlock_2<int>& next_block,
                                        TPack pack, TUnpack unpack, TFunc do_sth) {
   MPI_Request req[4];
   MPI_Status stat[4];

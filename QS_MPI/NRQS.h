@@ -17,9 +17,12 @@
 
 template <typename TDomain, typename TPar, typename TRan>
 void ini(std::vector<TPar>& p_arr, const TDomain& dm, CellListNode_2<TPar>& cl,
-  double phiA, double phiB, const std::string& ini_mode,
-  TRan& myran, io::Snap_GSD_2& gsd,
-  double amplification) {
+         double phiA, double phiB, const std::string& ini_mode,
+         TRan& myran,
+         io::Snap_GSD_2& gsd,
+         double amplification) {
+  int my_rank;
+  MPI_Comm_rank(dm.comm(), &my_rank);
   double area_gl = dm.gl_l().x * dm.gl_l().y;
   double area = dm.l().x * dm.l().y;
   size_t n_A_gl = size_t(round(phiA * area_gl));
@@ -32,12 +35,11 @@ void ini(std::vector<TPar>& p_arr, const TDomain& dm, CellListNode_2<TPar>& cl,
   }
   p_arr.reserve(n_max_per_core);
 
-  double* x = new double[n_gl] {};
-  double* y = new double[n_gl] {};
-  double* theta = new double[n_gl] {};
+  double* x = new double[n_gl]{};
+  double* y = new double[n_gl]{};
+  double* theta = new double[n_gl]{};
   uint8_t* type_id = new uint8_t[n_gl]{};
 
-  int my_rank = dm.proc_rank().x + dm.proc_rank().y * dm.proc_size().x;
   if (my_rank == 0) {
     if (ini_mode == "rand") {
       for (size_t i = 0; i < n_gl; i++) {
@@ -59,7 +61,7 @@ void ini(std::vector<TPar>& p_arr, const TDomain& dm, CellListNode_2<TPar>& cl,
     }
 
   }
-
+  MPI_Barrier(dm.comm());
   MPI_Bcast(x, n_gl, MPI_DOUBLE, 0, dm.comm());
   MPI_Bcast(y, n_gl, MPI_DOUBLE, 0, dm.comm());
   MPI_Bcast(theta, n_gl, MPI_DOUBLE, 0, dm.comm());
@@ -89,6 +91,7 @@ void ini(std::vector<TPar>& p_arr, const TDomain& dm, CellListNode_2<TPar>& cl,
   }
   cl.create(p_arr);
 
+  MPI_Barrier(dm.comm());
   delete[] x;
   delete[] y;
   delete[] theta;

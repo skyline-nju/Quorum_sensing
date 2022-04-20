@@ -8,8 +8,8 @@ io::ExporterBase::ExporterBase(int n_step, int sep, int start,
 }
 
 io::LogExporter::LogExporter(const std::string& outfile, 
-                                   int n_step, int sep, int start,
-                                   int np_gl, MPI_Comm group_comm)
+                             int n_step, int sep, int start,
+                             int np_gl, MPI_Comm group_comm)
   : ExporterBase(n_step, sep, start, group_comm), n_par_(np_gl){
   if (my_rank_ == 0) {
     fout.open(outfile);
@@ -25,6 +25,7 @@ io::LogExporter::LogExporter(const std::string& outfile,
     std::strftime(str, 100, "%c", &now_time);
     fout << "Started simulation at " << str << "\n";
   }
+  MPI_Barrier(group_comm);
 }
 
 
@@ -45,7 +46,7 @@ io::LogExporter::~LogExporter() {
     fout << "speed=" << std::scientific << step_count_ * double(n_par_) / elapsed_seconds.count()
       << " particle time step per second per core\n";
     fout.close();
-}
+  }
 }
 
 void io::LogExporter::record(int i_step) {
@@ -70,7 +71,6 @@ io::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
   : ExporterBase(n_step, sep, start, group_comm), gl_l_(gl_l), gl_np_(n_par_gl) {
   unsigned int version = gsd_make_version(1, 4);
   handle_ = new gsd_handle;
-  MPI_Comm_rank(comm_, &my_rank_);
   if (my_rank_ == 0) {
     if (open_flag == "rand") {
       int flag = gsd_create(filename.c_str(), "cpp", "hoomd", version);
@@ -102,6 +102,7 @@ io::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
       exit(1);
     }
   }
+  MPI_Barrier(group_comm);
 }
 
 io::Snap_GSD_2::~Snap_GSD_2() {

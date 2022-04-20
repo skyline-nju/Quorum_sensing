@@ -28,8 +28,8 @@ Grid_2::Grid_2(const Vec_2<double>& gl_l, double r_cut,
   } else {
     n_.y = n_per_proc.y;
   }
-  int* nx = new int[proc_size.x]{};
-  int* ny = new int[proc_size.y]{};
+  int* nx = new int[proc_size.x * proc_size.y]{};
+  int* ny = new int[proc_size.x * proc_size.y]{};
   MPI_Gather(&n_.x, 1, MPI_INT, nx, 1, MPI_INT, 0, group_comm);
   MPI_Gather(&n_.y, 1, MPI_INT, ny, 1, MPI_INT, 0, group_comm);
 
@@ -45,6 +45,7 @@ Grid_2::Grid_2(const Vec_2<double>& gl_l, double r_cut,
     }
     std::cout << std::endl;
   }
+  MPI_Barrier(group_comm);
   delete[] nx;
   delete[] ny;
 }
@@ -91,4 +92,9 @@ PeriodicDomain_2::PeriodicDomain_2(const Vec_2<double>& gl_l,
   gl_half_l_.y = gl_l.y * 0.5;
   flag_PBC_.x = proc_size_.x == 1;
   flag_PBC_.y = proc_size_.y == 1;
+  if (proc_rank_.x == 0 and proc_rank_.y == 0) {
+    std::cout << "create periodic domains, each of which has size (" << l_.x
+      << ", " << l_.y << ")" << std::endl;
+  }
+  MPI_Barrier(group_comm);
 }
