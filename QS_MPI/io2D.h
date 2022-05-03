@@ -88,7 +88,7 @@ private:
 
 
 template<typename TPar>
-void io::OrderParaExporter::dump(int i_step, const std::vector<TPar>& p_arr){
+void OrderParaExporter::dump(int i_step, const std::vector<TPar>& p_arr){
   if (need_export(i_step)) {
     int n = p_arr.size();
     double sum_rho[2]{};
