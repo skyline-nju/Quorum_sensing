@@ -64,10 +64,12 @@ def plot_instant_profile(fname, i_frame=-1, bins=40):
     ax2.plot(x, speed[1], label=r"$B$", c="tab:red")
     ax2.axhline(1, linestyle="dashed", c="k")
 
-    ax3.plot(x, p_x[0], label=r"$A$", c="tab:blue")
-    ax3.plot(x, p_x[1], label=r"$B$", c="tab:red")
+    # ax3.plot(x, p_x[0], label=r"$A$", c="tab:blue")
+    # ax3.plot(x, p_x[1], label=r"$B$", c="tab:red")
+    ax3.plot(x, rho_x[0] * speed[0], label=r"$A$", c="tab:blue")
+    ax3.plot(x, rho_x[1] * speed[1], label=r"$B$", c="tab:red")
     ax3.axhline(0, linestyle="dashed", c="k")
-    ax3.set_ylim(-0.75, 0.75)
+    # ax3.set_ylim(-0.75, 0.75)
 
     ax4.plot(x, m_x[0], label=r"$A$", c="tab:blue")
     ax4.plot(x, m_x[1], label=r"$B$", c="tab:red")
@@ -80,8 +82,8 @@ def plot_instant_profile(fname, i_frame=-1, bins=40):
 
     ax2.legend()
 
-    plt.savefig("fig/snap/%s_%g.png" % (os.path.basename(fname).rstrip(".gsd"), t))
-    # plt.show()
+    # plt.savefig("fig/snap/%s_%g.png" % (os.path.basename(fname).rstrip(".gsd"), t))
+    plt.show()
     plt.close()
 
 def profiles_varied_etaAB():
@@ -138,8 +140,8 @@ def profiles_varied_etaAB():
 
 
 if __name__ == "__main__":
-    # fname = "D:/data/QS/20_5_200_100_0.00_2.00_1.0_0.02_0.gsd"
+    fname = "data/snap/L120_40_Dr0.100_k0.70_p40_6_r40_38_8_e-2.000_J0.500_-0.500_1000.gsd"
     # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    # plot_instant_profile(fname, bins=160, i_frame=-1)
+    plot_instant_profile(fname, bins=120, i_frame=-1)
 
-    profiles_varied_etaAB()
+    # profiles_varied_etaAB()

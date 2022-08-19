@@ -6,31 +6,32 @@ from read_gsd import read_one_frame
 
 
 def plot_one_panel(fname, i_frame=-1, ax=None, ms=0.05):
-    if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6), constrained_layout=True)
-        flag_show = True
-    else:
-        flag_show = False
-    
     snap = read_one_frame(fname, i_frame)
-    Lx = snap.configuration.box[0]
-    Ly = snap.configuration.box[1]
-    x = snap.particles.position[:, 0] + Lx / 2
-    y = snap.particles.position[:, 1] + Ly / 2
-    type_id = snap.particles.typeid
+    if snap is not None:
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=(6, 6), constrained_layout=True)
+            flag_show = True
+        else:
+            flag_show = False
+        
+        Lx = snap.configuration.box[0]
+        Ly = snap.configuration.box[1]
+        x = snap.particles.position[:, 0] + Lx / 2
+        y = snap.particles.position[:, 1] + Ly / 2
+        type_id = snap.particles.typeid
 
-    mask0 = type_id == 0
-    mask1 = type_id == 1
-    ax.plot(x[mask0], y[mask0], ".", ms=ms, c="b", alpha=1)
-    ax.plot(x[mask1], y[mask1], ".", ms=ms, c="r", alpha=0.7)
+        mask0 = type_id == 0
+        mask1 = type_id == 1
+        ax.plot(x[mask0], y[mask0], ".", ms=ms, c="b", alpha=1)
+        ax.plot(x[mask1], y[mask1], ".", ms=ms, c="r", alpha=0.7)
 
-    ax.axis("scaled")
-    ax.set_xlim(0, Lx)
-    ax.set_ylim(0, Ly)
+        ax.axis("scaled")
+        ax.set_xlim(0, Lx)
+        ax.set_ylim(0, Ly)
 
-    if flag_show:
-        plt.show()
-        plt.close()
+        if flag_show:
+            plt.show()
+            plt.close()
 
 
 def add_xlabel(fig, axes, loc, para_name, para_arr, fontsize):
@@ -464,7 +465,7 @@ def PD_J_seed(Lx, Ly=None, k=0.7, eta=-2, rho0=40, pA=None, pB=None, Dr=0.1):
     
     prefix = "/scratch03.local/yduan/QS5"
     if Lx == 40 and Ly == 5 and eta == -2 and rho0 == 40 and Dr==0.1:
-        J_arr = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+        J_arr = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 0.8, 1.0])
         seed_arr = np.array([1200, 1201, 1202, 1203, 1204, 1205,
             1206, 1207, 1208, 1209, 111200])
         folder = f"{prefix}/L{Lx}_{Ly}_k{k:g}_p{rho0}_beta"
@@ -540,5 +541,5 @@ if __name__ == "__main__":
     # CSL40()
 
     ## travelling bands
-    # PD_Dr_J(Lx=80, Ly=5)
+    # PD_Dr_J(Lx=40, Ly=5)
     PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
