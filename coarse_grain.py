@@ -52,6 +52,16 @@ def coarse_grain_one_frame(i_frame: int,
 
 
 def coarse_grain(fin: str, fout: str, dx: float):
+    if os.path.exists(fout):
+        with np.load(fout, "r") as data:
+            t0 = data["t"]
+            x0 = data["x"]
+            y0 = data["y"]
+            fields0 = data["fields"]
+            fields_name0 = data["fields_name"]
+            existed_frames = t0.size
+    else:
+        existed_frames = 0
     with fl.open(name=fin, mode="rb") as fgsd:
         if fgsd.nframes == 0:
             print("Warning, zero frame found in", fin)
@@ -69,7 +79,11 @@ def coarse_grain(fin: str, fout: str, dx: float):
             # one frame = [rho_A, rho_B, mx_A, mx_B, my_A, my_B, v_A, v_B]
             fields = np.zeros((nframes, 8, nrows, ncols), np.single)
 
-            for i_frame in range(nframes):
+            if existed_frames > 0:
+                t[:existed_frames] = t0
+                fields[:existed_frames] = fields0
+
+            for i_frame in range(existed_frames, nframes):
                 t[i_frame] = fgsd.read_chunk(frame=i_frame, name="configuration/step")[0]
                 print("processing frame %d/%d, t=%g..." % (i_frame, nframes, t[i_frame]))
                 coarse_grain_one_frame(i_frame, fgsd, fields, dx, Lx, Ly)
@@ -101,6 +115,8 @@ if __name__ == "__main__":
     
     # prefix = "/scratch03.local/yduan/QS_MPI/L480_160"
     prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J0.5"
+    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan//QS_MPI_noself/L640_r20_20_20"
+
     coarse_grain_all(prefix, dx=1)
 
     # basename = "L480_160_Dr0.100_k0.70_p40_40_r40_e-1.000_J1.000_-1.000_1000.gsd"
