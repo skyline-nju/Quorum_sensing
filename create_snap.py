@@ -184,18 +184,18 @@ def create_nematic_patten(s, nb=2):
 
 
 if __name__ == "__main__":
-    folder = '/scratch03.local/yduan/QS_MPI_noself/L240_80_r40_6_30'
-    basename = "L240_80_Dr0.100_k0.70_p3_46_r40_6_30_e-2.000_J2.000_-2.000_20246.gsd"
+    folder = '/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40'
+    basename = "L120_40_Dr0.100_k0.70_p16_50_r40_40_40_e-2.000_J2.000_-2.000_21450.gsd"
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
-    snap = adjust_density(snap, 4, 46, mode="copy")
+    snap = adjust_density(snap, 18, 50, mode="copy")
     # snap = scale(snap, 2, 2)
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 2, 2)
+    # snap = duplicate(snap, 1, 3)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
-    fout = f"{folder}/L240_80_Dr0.100_k0.70_p4_46_r40_6_30_e-2.000_J2.000_-2.000_20346.gsd"
+    fout = f"{folder}/L120_40_Dr0.100_k0.70_p18_50_r40_40_40_e-2.000_J2.000_-2.000_21650.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

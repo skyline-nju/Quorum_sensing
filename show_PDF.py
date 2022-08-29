@@ -129,7 +129,7 @@ def plot_density_PDF(i_frame, npzdata=None, fin=None, ncols=2):
             fields[i_frame][1].flatten(), fields[i_frame][0].flatten(), bins=40, range=hist_range, density=True)
         print(H.shape)
         extent=[yedges[0], yedges[-1], xedges[0], xedges[-1]]
-        im2 = ax2.imshow(H, origin='lower', extent=extent, vmax=0.002)
+        im2 = ax2.imshow(H, origin='lower', extent=extent, vmax=0.002, aspect="auto")
         plt.colorbar(im2, ax=ax2)
     else:
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4), constrained_layout=True)
@@ -155,23 +155,63 @@ def plot_density_PDF(i_frame, npzdata=None, fin=None, ncols=2):
     plt.close()
 
 
+def compare_PDF():
+    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40/coarse_grain_dx2"
+    f1 = f"{prefix}/L120_40_Dr0.100_k0.70_p10_70_r40_40_40_e-2.000_J2.000_-2.000_220140.npz"
+    f2 = f"{prefix}/L120_40_Dr0.100_k0.70_p10_70_r40_40_40_e-2.000_J2.000_-2.000_1000.npz"
+
+    data1 = np.load(f1, "r")
+    fields1 = data1["fields"]
+
+    data2 = np.load(f2, "r")
+    fields2 = data2["fields"]
+
+    i1 = -1
+    i2 = -2
+    ms = 1
+    plt.plot(fields1[i1][0], fields1[i1][1], "o", c="tab:blue", ms=ms, fillstyle="none")
+    plt.plot(fields2[i2][0], fields2[i2][1], "o", c="tab:red", ms=ms, fillstyle="none")
+    plt.show()
+    plt.close()
+
+    mask1 = fields1[i1][1] <=30
+    rA_1, rB_1 = fields1[i1][0][mask1], fields1[i1][1][mask1]
+
+    mask2 = fields2[i2][1] <=30
+    rA_2, rB_2 = fields2[i2][0][mask2], fields2[i2][1][mask2]
+
+    plt.plot(rA_1, rB_1, "o", c="tab:blue", ms=ms, fillstyle="none")
+    plt.plot(rA_2, rB_2, "o", c="tab:red", ms=ms, fillstyle="none")
+
+    print(np.mean(rA_1), np.mean(rA_2))
+    print(rA_1.size, rA_2.size)
+    print(rA_1.size * np.mean(rA_1), rA_2.size * np.mean(rA_2))
+
+    plt.show()
+    plt.close()
+
+
 if __name__ == "__main__":
-    from datetime import datetime
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L160_e-2.0_J0.5/coarse_grain_dx4"
+    # from datetime import datetime
     # prefix = "/home/yduan/data/tmp"
-    basename = "L160_160_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_1000.npz"
-    fin = f"{prefix}/{basename}"
+    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L160_e-2.0_J0.5/coarse_grain_dx4"
+    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40/coarse_grain_dx2"
 
-    data = np.load(fin, "r")
-    t, x, y = data["t"], data["x"], data["y"]
-    fields = data["fields"]
+    # basename = "L120_40_Dr0.100_k0.70_p10_70_r40_40_40_e-2.000_J2.000_-2.000_220140.npz"
+    # fin = f"{prefix}/{basename}"
 
-    i_frame = -2
+    # data = np.load(fin, "r")
+    # t, x, y = data["t"], data["x"], data["y"]
+    # fields = data["fields"]
 
-    plot_density_fields(i_frame, npzdata=data)
-    plot_profile(i_frame, npzdata=data)
+    # i_frame = -1
 
-    plot_density_PDF(i_frame, npzdata=data)
+    # plot_density_fields(i_frame, npzdata=data)
+    # plot_profile(i_frame, npzdata=data)
+
+    # plot_density_PDF(i_frame, npzdata=data)
+
+    compare_PDF()
 
     
 

@@ -20,8 +20,12 @@ def coarse_grain_one_frame(i_frame: int,
     mx, my, v = np.zeros((3, 2, nrows, ncols))
 
     pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
-    speed = fgsd.read_chunk(frame=i_frame, name="particles/charge")
     id_type = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+    try:
+        speed = fgsd.read_chunk(frame=i_frame, name="particles/charge")
+    except KeyError:
+        print("Warning, not found speed[%d]" % i_frame)
+        speed = np.zeros(id_type.size, np.single)
 
     x = pos[:,0] + Lx / 2
     y = pos[:,1] + Ly / 2
@@ -68,6 +72,9 @@ def coarse_grain(fin: str, fout: str, dx: float):
         else:
             nframes = fgsd.nframes
             print(nframes, "frames found for", fin)
+            # print(fgsd.find_matching_chunk_names(""))
+            # for j in range(fgsd.nframes):
+            #     print(j, fgsd.chunk_exists(frame=j, name='particles/charge'))
             Lx, Ly = fgsd.read_chunk(frame=0, name="configuration/box")[:2]
             ncols = int(Lx / dx)
             nrows = int(Ly / dx)
@@ -84,7 +91,11 @@ def coarse_grain(fin: str, fout: str, dx: float):
                 fields[:existed_frames] = fields0
 
             for i_frame in range(existed_frames, nframes):
-                t[i_frame] = fgsd.read_chunk(frame=i_frame, name="configuration/step")[0]
+                try:
+                    t[i_frame] = fgsd.read_chunk(frame=i_frame, name="configuration/step")[0]
+                except KeyError:
+                    t[i_frame] = 0
+                    print("Warning, not found t[%d]" % i_frame)
                 print("processing frame %d/%d, t=%g..." % (i_frame, nframes, t[i_frame]))
                 coarse_grain_one_frame(i_frame, fgsd, fields, dx, Lx, Ly)
             
@@ -92,12 +103,12 @@ def coarse_grain(fin: str, fout: str, dx: float):
             np.savez_compressed(fout, t=t, x=x, y=y, fields=fields, fields_name=fields_name)
 
 
-def coarse_grain_all(prefix, dx, forced_updating=False):
+def coarse_grain_all(prefix, dx, forced_updating=False, pat="*.gsd"):
     out_folder = f"{prefix}/coarse_grain_dx{dx:g}"
     if not os.path.exists(out_folder):
         os.mkdir(out_folder)
     
-    fins = glob.glob(f"{prefix}/*.gsd")
+    fins = glob.glob(f"{prefix}/{pat}")
     for fin in fins:
         basename = os.path.basename(fin)
         out_basename = basename.replace(".gsd", ".npz")
@@ -114,10 +125,14 @@ if __name__ == "__main__":
     from datetime import datetime
     
     # prefix = "/scratch03.local/yduan/QS_MPI/L480_160"
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J0.5"
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan//QS_MPI_noself/L640_r20_20_20"
+    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J0.5"
+    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L640_r20_20_20"
+    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J2.0"
 
-    coarse_grain_all(prefix, dx=1)
+    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40"
+    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r16_16_16"
+
+    coarse_grain_all(prefix, dx=2, pat="*e-2.000_J2.000_-2.000_*.gsd")
 
     # basename = "L480_160_Dr0.100_k0.70_p40_40_r40_e-1.000_J1.000_-1.000_1000.gsd"
     # fin = f"{prefix}/{basename}"

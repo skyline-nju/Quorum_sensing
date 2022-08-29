@@ -175,8 +175,8 @@ if __name__ == "__main__":
     # pB_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, subfix="LC")
 
-    pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
-    pB_arr = np.array([60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80])
+    pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
+    pB_arr = np.array([16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90])
     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
 
     
