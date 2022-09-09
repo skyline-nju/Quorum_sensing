@@ -191,14 +191,38 @@ def compare_PDF():
     plt.close()
 
 
-if __name__ == "__main__":
-    # from datetime import datetime
-    # prefix = "/home/yduan/data/tmp"
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L160_e-2.0_J0.5/coarse_grain_dx4"
-    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40/coarse_grain_dx2"
+def show_PDF_varied_dx():
+    basename = "L160_160_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.npz"
+    dx_arr = [1, 2, 4]
 
-    # basename = "L120_40_Dr0.100_k0.70_p10_70_r40_40_40_e-2.000_J2.000_-2.000_220140.npz"
-    # fin = f"{prefix}/{basename}"
+    figsize = (4 * len(dx_arr), 8)
+    fig, axes = plt.subplots(2, len(dx_arr), figsize=figsize, constrained_layout=True)
+
+    hist_range = None
+    i_frame = -1
+    for i, dx in enumerate(dx_arr):
+        fname = f"{root_rudabeh}/QS_MPI_noself/L160_r20_20_20/coarse_grain_dx{dx}/{basename}"
+        with np.load(fname, "r") as npzdata:
+            t, x, y = npzdata["t"], npzdata["x"], npzdata["y"]
+            fields = npzdata["fields"]
+        axes[0, i].plot(fields[i_frame][0], fields[i_frame][1], ".", c="tab:blue", ms=0.2)
+        H, xedges, yedges = np.histogram2d(
+            fields[i_frame][1].flatten(), fields[i_frame][0].flatten(), bins=40, range=hist_range, density=True)
+        extent=[yedges[0], yedges[-1], xedges[0], xedges[-1]]
+        im2 = axes[1, i].imshow(H, origin='lower', extent=extent, vmax=0.002, aspect="auto")
+
+    plt.show()
+    plt.close()
+
+
+
+
+if __name__ == "__main__":
+    root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan"
+    root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
+
+    # basename = "L160_160_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.npz"
+    # fin = f"{root_rudabeh}/QS_MPI_noself/L160_r20_20_20/coarse_grain_dx1/{basename}"
 
     # data = np.load(fin, "r")
     # t, x, y = data["t"], data["x"], data["y"]
@@ -211,7 +235,9 @@ if __name__ == "__main__":
 
     # plot_density_PDF(i_frame, npzdata=data)
 
-    compare_PDF()
+    # compare_PDF()
+
+    show_PDF_varied_dx()
 
     
 

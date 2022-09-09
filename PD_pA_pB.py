@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from plot_snap import plot_one_panel, add_xlabel, add_ylabel
 
 
-def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_drho=False, inc_self=True, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=None):
+def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_drho=False, inc_self=True, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=None, ms=0.05):
     if ncols is not None and nrows is not None:
         pA_arr = np.arange(1, ncols+1) * 10
         pB_arr = np.arange(1, nrows+1) * 10
@@ -70,7 +70,7 @@ def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_
             fin = file_pat % (pA, pB)
             print(fin)
             if os.path.exists(fin):
-                plot_one_panel(fin, ax=axes[j, i])
+                plot_one_panel(fin, ax=axes[j, i], ms=ms)
             axes[j, i].axis("off")
     
     fontsize = 30
@@ -176,10 +176,32 @@ if __name__ == "__main__":
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, subfix="LC")
 
     pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
-    pB_arr = np.array([16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90])
+    pB_arr = np.array([16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84
+        #  ,86, 88, 90
+        ])
     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
 
-    
+    pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
+    pB_arr = np.array([4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84
+        ]) / 2
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
+
+    pA_arr = np.array([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+    pB_arr = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30])
+
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1000, ms=0.1, bar_rhoA=19, bar_rhoB=4)
+
+    pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+    pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
+
+    pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
+    pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
+
+    for Dr in [0.1, 0.2, 0.3, 1]:
+        square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=Dr, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08)
+
     # pA_arr = np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
     # pB_arr = np.array([0, 4, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36])
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=40, bar_rhoB=10)

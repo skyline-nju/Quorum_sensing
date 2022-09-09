@@ -2,7 +2,6 @@ import os
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from read_gsd import get_para, read_one_frame
 from gsd import fl
 
 
@@ -127,12 +126,15 @@ if __name__ == "__main__":
     # prefix = "/scratch03.local/yduan/QS_MPI/L480_160"
     # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J0.5"
     # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L640_r20_20_20"
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J2.0"
 
-    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r40_40_40"
-    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r16_16_16"
+    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r10_10_10"
 
-    coarse_grain_all(prefix, dx=2, pat="*e-2.000_J2.000_-2.000_*.gsd")
+    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r20_20_20"
+    coarse_grain_all(prefix, dx=1, pat="L120_40_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.gsd")
+
+    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L480_40_r10_10_10"
+    coarse_grain_all(prefix, dx=1)
+
 
     # basename = "L480_160_Dr0.100_k0.70_p40_40_r40_e-1.000_J1.000_-1.000_1000.gsd"
     # fin = f"{prefix}/{basename}"

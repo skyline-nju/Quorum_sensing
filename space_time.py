@@ -113,5 +113,5 @@ def show_osi_snaps():
 
 
 if __name__ == "__main__":
-    # band_osi_static(Lx=120)
+    band_osi_static(Lx=120)
     show_osi_snaps()
