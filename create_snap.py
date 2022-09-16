@@ -183,20 +183,65 @@ def create_nematic_patten(s, nb=2):
     return s
 
 
+def create_flat_band(Lx, Ly, phi_A, phi_B, rho_A, rho_B, fname):
+    s = hoomd.Snapshot()
+    s.configuration.box = [Lx, Ly, 1, 0, 0, 0]
+    s.configuration.step = 0
+    nA = int(Lx * Ly * phi_A)
+    nB = int(Lx * Ly * phi_B)
+    n_tot = nA + nB
+    s.particles.N = n_tot
+
+    s.particles.types = ['A', 'B']
+    s.particles.typeid = np.zeros(n_tot, np.uint32)
+    s.particles.typeid[nA:] = 1
+
+    pos = np.zeros((n_tot, 3), np.float32)
+    l_A = Lx * (phi_A - rho_A[1]) / (rho_A[0] - rho_A[1])
+    l_B = Lx * (phi_B - rho_B[1]) / (rho_B[0] - rho_B[1])
+    nA_lt = int(l_A * Ly * rho_A[0])
+    nB_lt = int(l_B * Ly * rho_B[0])
+    nA_rt = nA - nA_lt
+    nB_rt = nB - nB_lt
+    pos[:nA_lt, 0] = np.random.rand(nA_lt) * l_A
+    pos[nA_lt: nA, 0] = np.random.rand(nA_rt) * (Lx - l_A) + l_A
+    pos[nA: nA+nB_lt, 0] = np.random.rand(nB_lt) * l_B
+    pos[nA+nB_lt:, 0] = np.random.rand(nB_rt) * (Lx - l_B) + l_B 
+    pos[:, 0] -= 0.5 * Lx
+    pos[:, 1] = (np.random.rand(n_tot) - 0.5) * Ly
+    pos[:, 2] = (np.random.rand(n_tot) - 0.5) * np.pi * 2
+    s.particles.position = pos
+
+    s.particles.charge = np.ones(n_tot, np.float32)
+
+    with hoomd.open(name=fname, mode="wb") as f:
+        f.append(s)
+
+
 if __name__ == "__main__":
-    folder = '/scratch03.local/yduan/QS_MPI_noself/L240_80_r40_6_30'
-    basename = "L240_80_Dr0.100_k0.70_p2_46_r40_6_30_e-2.000_J2.000_-2.000_20246.gsd"
+    folder = '/scratch03.local/yduan/QS_MPI_noself/L480_160_r10_10_10'
+    basename = "L480_160_Dr0.100_k0.70_p9.5_13.075_r10_10_10_e-2.000_J0.500_-0.500_2000.gsd"
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
-    snap = adjust_density(snap, 1, 23, mode="copy")
+
+    snap = adjust_density(snap, 10.5, 12.75, mode="copy")
     # snap = scale(snap, 2, 2)
     # # snap = create_nematic_patten(snap, nb=4)
     # snap = duplicate(snap, 1, 3)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
-    fout = f"{folder}/L240_80_Dr0.100_k0.70_p1_23_r20_3_15_e-2.000_J2.000_-2.000_20246.gsd"
+    fout = f"{folder}/L480_160_Dr0.100_k0.70_p10.5_12.75_r10_10_10_e-2.000_J0.500_-0.500_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
+
+    # fname = "/home/yduan/data/tmp/L160_160_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_2000.gsd"
+    # Lx = 160
+    # Ly = 160
+    # phi_A = 5
+    # phi_B = 33
+    # rho_A = [2.251, 11.149]
+    # rho_B = [44.173, 8.870]
+    # create_flat_band(Lx, Ly, phi_A, phi_B, rho_A, rho_B, fname)
 

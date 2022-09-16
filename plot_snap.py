@@ -297,7 +297,7 @@ def PD_seed_J(Lx=20, Ly=None, k=0.7, rho0=40, pA=None, pB=None, eta=0, Dr=0.1):
     folder = f"{prefix}/CS_L{Lx}_k0.7_beta"
     file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{pA:g}_{pB:g}_" \
         f"r{rho0:g}_e{eta:.3f}_J%.3f_%.3f_%d.gsd"
-    fout_name = f"fig/PD/CS/L{Lx}_Dr{Dr:g}_r{rho0:g}_e{eta:g}.png"
+    fout_name = f"fig/PD/CS/L{Lx}_Dr{Dr:g}_r{rho0:g}_e{eta:g}.jpeg"
 
     nrows = J_arr.size
     ncols = seed_arr.size
@@ -335,7 +335,7 @@ def PD_seed_rho0(Lx=20, Ly=None, k=0.7, eta=0, alpha=0.8, Dr=0.1):
     folder = f"{prefix}/CS_L{Lx}_k0.7_beta"
     file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p%g_%g_" \
         f"r%g_e{eta:.3f}_J{alpha:.3f}_{-alpha:.3f}_%d.gsd"
-    fout_name = f"fig/PD/CS/L{Lx}_Dr{Dr:g}_J{alpha:.2f}_e{eta:g}.png"
+    fout_name = f"fig/PD/CS/L{Lx}_Dr{Dr:g}_J{alpha:.2f}_e{eta:g}.jpeg"
 
     nrows = rho0_arr.size
     ncols = seed_arr.size
@@ -373,7 +373,7 @@ def PD_seed_eta(Lx=20, Ly=None, k=0.7, alpha=0.8, Dr=0.1, rho0=80):
     folder = f"{prefix}/CS_L{Lx}_k0.7_beta"
     file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{rho0:g}_{rho0:g}" \
         f"_r{rho0:g}_e%.3f_J{alpha:.3f}_{-alpha:.3f}_%d.gsd"
-    fout_name = f"fig/PD/CS/L{Lx}_{Ly}_Dr{Dr:g}_J{alpha:.2f}_r{rho0:g}.png"
+    fout_name = f"fig/PD/CS/L{Lx}_{Ly}_Dr{Dr:g}_J{alpha:.2f}_r{rho0:g}.jpeg"
 
     nrows = eta_arr.size
     ncols = seed_arr.size
@@ -471,7 +471,7 @@ def PD_J_seed(Lx, Ly=None, k=0.7, eta=-2, rho0=40, pA=None, pB=None, Dr=0.1):
         folder = f"{prefix}/L{Lx}_{Ly}_k{k:g}_p{rho0}_beta"
     file_pat = f"{folder}/L{Lx}_{Ly}_Dr{Dr:.3f}_k{k:.2f}_p{rho0:g}_{rho0:g}" \
         f"_r{rho0:g}_e{eta:.3f}_J%.3f_%.3f_%d.gsd"
-    fout_name = f"fig/PD/travelling_bands/L{Lx}_{Ly}_e{eta:g}_r{rho0:g}_Dr{Dr:g}.png"
+    fout_name = f"fig/PD/travelling_bands/L{Lx}_{Ly}_e{eta:g}_r{rho0:g}_Dr{Dr:g}.jpeg"
 
     nrows = seed_arr.size
     ncols = J_arr.size
@@ -520,7 +520,7 @@ def CSL40():
         f"\\phi_A=\\phi_B=\\rho_0=100$"
     plt.suptitle(title, fontsize="x-large")
     # plt.show()
-    plt.savefig("fig/snap/CS_L40.png")
+    plt.savefig("fig/snap/CS_L40.jpeg")
     plt.close()
 
 
@@ -535,11 +535,11 @@ if __name__ == "__main__":
     # PD_JAB_JBA(Lx=40, rho0=40, Dr=0.1, eta=-1.1, Ly=40)
 
     ### CS
-    # PD_J_seed(rho0=80)
-    # PD_rho0_seed()
-    # PD_eta_seed()
-    # CSL40()
+    # PD_seed_J(rho0=40)
+    CSL40()
+    # PD_seed_eta()
+    # PD_seed_rho0()
 
     ## travelling bands
     # PD_Dr_J(Lx=40, Ly=5)
-    PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
+    # PD_J_seed(Lx=40, Ly=5, rho0=40, Dr=0.1)
