@@ -183,61 +183,44 @@ if __name__ == "__main__":
     # pB_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, subfix="LC")
 
+ 
+    # pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 2
+    # pB_arr = np.array([4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88
+    #     ]) / 2
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
 
-    pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 2
-    pB_arr = np.array([4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88
-        ]) / 2
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
+    # pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
+    # pB_arr = np.array([16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84
+    #     #  ,86, 88, 90
+    #     ])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
 
-    pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
-    pB_arr = np.array([16, 18, 20, 22, 24, 30, 40, 50, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84
-        #  ,86, 88, 90
-        ])
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004)
-
-    pA_arr = np.array([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
-    pB_arr = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30])
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1000, ms=0.1, bar_rhoA=19, bar_rhoB=4)
-
-    pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
-    pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
-
-    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
-    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
-    for eta in [-0.5, -0.75, -1]:
-        square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=0.1, eta=eta, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
-
-    pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
-    pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
-
-    for Dr in [0.1, 0.2, 0.3, 1]:
-        square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=Dr, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08)
+    # pA_arr = np.array([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+    # pB_arr = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1000, ms=0.1, bar_rhoA=19, bar_rhoB=4)
+    # pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+    # pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
+    # pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 4
+    # pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 4
+    # for Dr in [0.2, 0.3, 0.5, 1]:
+    #     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=Dr, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
 
 
-    # pA_arr = np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
-    # pB_arr = np.array([0, 4, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36])
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=40, bar_rhoB=10)
+    # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+    # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160]) / 4
+    # for eta in [-0.5, -0.75, -1]:
+    #     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=10, Dr=0.1, eta=eta, inc_self=False, zero_drho=False, seed=1004, ms=0.1)
 
-    # pA_arr = np.array([20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
-    # pB_arr = np.array([2, 6, 10, 14, 16, 18, 20, 22, 24, 26, 30, 34, 38, 42, 46, 50])
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=3.0, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=38, bar_rhoB=8)
+    # pA_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
+    # pB_arr = np.array([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50, 60, 70, 80]) / 2
 
-
-    # pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 50, 60])
-    # pB_arr = np.array([16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=8, bar_rhoB=38)
-
-
-    # pA_arr = np.array([18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82])
-    # pB_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 50, 60])
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=38, bar_rhoB=8)
-
-
-    # pA_arr = np.array([0, 2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
-    # pB_arr = np.array([14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62, 66, 70])
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=6, bar_rhoB=30)
-
+    # for Dr in [0.1, 0.2, 0.3, 1, 3]:
+    #     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=Dr, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08)
+ 
+    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
+    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="full")
     # sohrab003
 
     # # eta = -2, eta_AB = 2
@@ -271,3 +254,28 @@ if __name__ == "__main__":
     # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=1, rho0=40, Dr=0.1, eta=-1, inc_self=False, zero_drho=False, seed=1004)
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=1, rho0=40, Dr=3, eta=-1, inc_self=False, zero_drho=False, seed=1004)
+
+
+    # # rudabeh003
+    # pA_arr = np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
+    # pB_arr = np.array([0, 4, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=40, bar_rhoB=10)
+
+    # pA_arr = np.array([20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
+    # pB_arr = np.array([2, 6, 10, 14, 16, 18, 20, 22, 24, 26, 30, 34, 38, 42, 46, 50])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=3.0, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=38, bar_rhoB=8)
+
+
+    # pA_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 50, 60])
+    # pB_arr = np.array([16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=8, bar_rhoB=38)
+
+
+    # pA_arr = np.array([18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82])
+    # pB_arr = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 50, 60])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=38, bar_rhoB=8)
+
+
+    # pA_arr = np.array([0, 2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
+    # pB_arr = np.array([14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62, 66, 70])
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=2, rho0=40, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, bar_rhoA=6, bar_rhoB=30)

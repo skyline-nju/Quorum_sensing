@@ -122,7 +122,11 @@ def plot_density_PDF(i_frame, npzdata=None, fin=None, ncols=2):
 
     if ncols == 2:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), constrained_layout=True)
-        ax1.plot(fields[i_frame][0], fields[i_frame][1], ".", c="tab:blue", ms=0.2)
+        ax1.plot(fields[i_frame][0], fields[i_frame][1], ".", c="tab:blue", ms=0.4)
+        ax1.set_xlabel(r"$\rho_A$")
+        ax1.set_ylabel(r"$\rho_B$")
+        ax2.set_xlabel(r"$\rho_A$")
+
         # hist_range = [[0, 150], [0, 120]]
         hist_range = None
         H, xedges, yedges = np.histogram2d(
@@ -130,7 +134,12 @@ def plot_density_PDF(i_frame, npzdata=None, fin=None, ncols=2):
         print(H.shape)
         extent=[yedges[0], yedges[-1], xedges[0], xedges[-1]]
         im2 = ax2.imshow(H, origin='lower', extent=extent, vmax=0.002, aspect="auto")
-        plt.colorbar(im2, ax=ax2)
+        cb = plt.colorbar(im2, ax=ax2)
+        cb.set_label("PDF")
+        ax1.set_title("(a)")
+        ax2.set_title("(b)")
+        # title = r"$D_r=0.1, \eta=-2,\eta_{AB}=-\eta_{BA}=0.5, \phi_A=\phi_B=40,\rho_0=\bar{\rho}_{A,B}=20$"
+        # fig.suptitle(title)
     else:
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4), constrained_layout=True)
         hist, bin_edges = np.histogram(fields[i_frame][0], bins=20, density=True)
@@ -149,7 +158,8 @@ def plot_density_PDF(i_frame, npzdata=None, fin=None, ncols=2):
         print(H.shape)
         extent=[yedges[0], yedges[-1], xedges[0], xedges[-1]]
         im3 = ax3.imshow(H, origin='lower', extent=extent, vmax=0.002)
-        plt.colorbar(im3, ax=ax3)
+        cb = plt.colorbar(im3, ax=ax3)
+        cb.set_label("PDF")
 
     plt.show()
     plt.close()
@@ -221,23 +231,24 @@ if __name__ == "__main__":
     root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan"
     root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
 
-    # basename = "L160_160_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.npz"
-    # fin = f"{root_rudabeh}/QS_MPI_noself/L160_r20_20_20/coarse_grain_dx1/{basename}"
+    dx = 4
+    basename = "L120_40_Dr0.100_k0.70_p5_20_r20_20_20_e-2.000_J0.500_-0.500_1000.npz"
+    fin = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20/coarse_grain_dx{dx}/{basename}"
 
-    # data = np.load(fin, "r")
-    # t, x, y = data["t"], data["x"], data["y"]
-    # fields = data["fields"]
+    data = np.load(fin, "r")
+    t, x, y = data["t"], data["x"], data["y"]
+    fields = data["fields"]
 
-    # i_frame = -1
+    i_frame = -1
 
     # plot_density_fields(i_frame, npzdata=data)
     # plot_profile(i_frame, npzdata=data)
 
-    # plot_density_PDF(i_frame, npzdata=data)
+    plot_density_PDF(i_frame, npzdata=data)
 
     # compare_PDF()
 
-    show_PDF_varied_dx()
+    # show_PDF_varied_dx()
 
     
 

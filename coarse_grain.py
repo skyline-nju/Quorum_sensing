@@ -129,6 +129,19 @@ if __name__ == "__main__":
 
     # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r10_10_10"
 
+    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r20_20_20"
+    pat = "L120_40_Dr0.100_k0.70_p5_20_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
+    coarse_grain_all(prefix, dx=1, pat=pat)
+    coarse_grain_all(prefix, dx=2, pat=pat)
+    coarse_grain_all(prefix, dx=4, pat=pat)
+
+    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r20_20_20"
+    pat = "L320_320_Dr0.100_k0.70_p40_40_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
+    coarse_grain_all(prefix, dx=1, pat=pat)
+    coarse_grain_all(prefix, dx=2, pat=pat)
+    coarse_grain_all(prefix, dx=4, pat=pat)
+    coarse_grain_all(prefix, dx=8, pat=pat)
+
     prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L80_r20_20_20"
     pat = "L80_80_Dr0.100_k0.70_p40_40_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
     coarse_grain_all(prefix, dx=1, pat=pat)

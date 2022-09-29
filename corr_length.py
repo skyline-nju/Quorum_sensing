@@ -74,11 +74,16 @@ def get_corr_length(q_radial, Sq):
     return corr_len
 
 
-def get_R_t(fin, dx=1, dt=0.01):
+def get_R_t(fin, dx=1, dt=0.01, q_thresh=None):
     """ cal domain length Rt for A, B particles respectively"""
 
     folder, basename = os.path.split(fin)
-    fcache = f"{folder}/cache/Rt/{basename}"
+    if q_thresh is None:
+        cache_folder = f"{folder}/cache/Rt"
+    else:
+        cache_folder = f"{folder}/cache/Rt_qthresh{q_thresh:g}"
+    fcache = f"{cache_folder}/{basename}"
+
     if os.path.exists(fcache) and os.path.getmtime(fcache) > os.path.getmtime(fin):
         with np.load(fcache) as cache_data:
             t, R_t_A, R_t_B, R_t_tot = cache_data["t"], cache_data["R_t_A"], cache_data["R_t_B"], cache_data["R_t_tot"]
@@ -97,9 +102,14 @@ def get_R_t(fin, dx=1, dt=0.01):
         qy = np.fft.fftshift(qy)
         qx_ij, qy_ij = np.meshgrid(qx, qy)
         q_module = np.sqrt(qx_ij **2 + qy_ij ** 2)
-        R_t_A = np.zeros(t.size)
-        R_t_B = np.zeros(t.size)
-        R_t_tot = np.zeros(t.size)
+        if q_thresh is None:
+            R_t_A = np.zeros(t.size)
+            R_t_B = np.zeros(t.size)
+            R_t_tot = np.zeros(t.size)
+        else:
+            R_t_A = np.zeros((2, t.size))
+            R_t_B = np.zeros((2, t.size))
+            R_t_tot = np.zeros((2, t.size))
         for i, t_i in enumerate(t):
             rhoA_m, rhoB_m = np.mean(fields[i][0]), np.mean(fields[i][1])
             rhoA_q = np.fft.fft2(fields[i][0]-rhoA_m, norm="ortho")
@@ -116,19 +126,28 @@ def get_R_t(fin, dx=1, dt=0.01):
             S_B_q = get_S_tilde(S_B, q_radial, q_module)
             S_tot_q = get_S_tilde(S_tot, q_radial, q_module)
 
-            R_t_A[i] = get_corr_length(q_radial, S_A_q)
-            R_t_B[i] = get_corr_length(q_radial, S_B_q)
-            R_t_tot[i] = get_corr_length(q_radial, S_tot_q)
-        
-        if not os.path.exists(f"{folder}/cache/Rt"):
-            os.makedirs(f"{folder}/cache/Rt")
+            if q_thresh is None:
+                R_t_A[i] = get_corr_length(q_radial, S_A_q)
+                R_t_B[i] = get_corr_length(q_radial, S_B_q)
+                R_t_tot[i] = get_corr_length(q_radial, S_tot_q)
+            else:
+                mask = q_radial < q_thresh
+                R_t_A[0, i] = get_corr_length(q_radial[mask], S_A_q[mask])
+                R_t_B[0, i] = get_corr_length(q_radial[mask], S_B_q[mask])
+                R_t_tot[0, i] = get_corr_length(q_radial[mask], S_tot_q[mask])
+                mask = q_radial >= q_thresh
+                R_t_A[1, i] = get_corr_length(q_radial[mask], S_A_q[mask])
+                R_t_B[1, i] = get_corr_length(q_radial[mask], S_B_q[mask])
+                R_t_tot[1, i] = get_corr_length(q_radial[mask], S_tot_q[mask])
+        if not os.path.exists(cache_folder):
+            os.makedirs(cache_folder)
         np.savez_compressed(fcache, t=t, R_t_A=R_t_A, R_t_B=R_t_B, R_t_tot=R_t_tot)
         print("updating cache:", fcache)
     return t, R_t_A, R_t_B, R_t_tot
 
 
-def plot_Rt(ax, fin, labels, which="both", ms=4):
-    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin)
+def plot_Rt(ax, fin, labels, which="both", ms=4, dt=0.01):
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin, dt=dt)
     if which == "both":
         line, = ax.plot(t, Rt_A, "o", fillstyle="none", ms=ms, label=labels[0])
         ax.plot(t, Rt_B, ">", c=line.get_c(), fillstyle="none", ms=ms, label=labels[1])
@@ -196,7 +215,7 @@ def plot_rho_A_B(fin, idx_frame, dx=1, dt=0.01, vmin=(None, None), vmax=(None, N
     plt.close()
 
 
-def plot_rhoA_B_Sq(fin, i_frame, dx=1, dt=0.01, vmin=(None, None), vmax=(None, None)):
+def plot_rhoA_B_Sq(fin, i_frame, dx=1, dt=0.01, vmin=(None, None), vmax=(None, None), show_qm=False):
     def plot_one_frame(i, axes):
         im1 = axes[0].imshow(fields[i][0], origin="lower", extent=[0, Lx, 0, Lx], vmin=vmin[0], vmax=vmax[0])
         im2 = axes[1].imshow(fields[i][1], origin="lower", extent=[0, Lx, 0, Lx], vmin=vmin[1], vmax=vmax[1])
@@ -212,9 +231,29 @@ def plot_rhoA_B_Sq(fin, i_frame, dx=1, dt=0.01, vmin=(None, None), vmax=(None, N
         
         S_A_q = get_S_tilde(S_A, q_radial, q_module)
         S_B_q = get_S_tilde(S_B, q_radial, q_module)
+        line1, = axes[2].plot(q_radial, S_A_q, label=r"$\tilde{S}_A$")
+        line2, = axes[2].plot(q_radial, S_B_q, label=r"$\tilde{S}_B$")
 
-        axes[2].plot(q_radial, S_A_q, label=r"$\tilde{S}_A$")
-        axes[2].plot(q_radial, S_B_q, label=r"$\tilde{S}_B$")
+        if show_qm:
+            q_A = np.pi * 2 / get_corr_length(q_radial, S_A_q)
+            q_B = np.pi * 2 / get_corr_length(q_radial, S_B_q)
+            axes[2].axvline(q_A, linestyle="dotted", c=line1.get_c())
+            axes[2].axvline(q_B, linestyle="dotted", c=line2.get_c())
+
+    
+        q_max = 0.25
+        mask = q_radial < q_max
+        q_A = np.pi * 2 / get_corr_length(q_radial[mask], S_A_q[mask])
+        q_B = np.pi * 2 / get_corr_length(q_radial[mask], S_B_q[mask])
+        # axes[2].axvline(q_A, linestyle="dotted", c=line1.get_c())
+        # axes[2].axvline(q_B, linestyle="dotted", c=line2.get_c())
+
+        mask = q_radial >= q_max
+        q_A = np.pi * 2 / get_corr_length(q_radial[mask], S_A_q[mask])
+        q_B = np.pi * 2 / get_corr_length(q_radial[mask], S_B_q[mask])
+        # axes[2].axvline(q_A, linestyle="dashed", c=line1.get_c())
+        # axes[2].axvline(q_B, linestyle="dashed", c=line2.get_c())
+    
         axes[2].set_xscale("log")
         axes[2].set_yscale("log")
         axes[2].legend()
@@ -1106,7 +1145,7 @@ def plot_Rt_varied_L_12():
     ax1.set_xscale("log")
     ax1.set_yscale("log")
     ax1.set_title(r"(a) $\phi_A=\phi_B=\rho_0=5$")
-    ax2.set_title(r"(b) $\phi_A=6,\phi_B=3, \rho_0=5$")
+    ax2.set_title(r"(b) $\phi_A=6,\phi_B=3, \rho_0=10$")
 
     title = r"$\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,D_r=0.1,\rho_0=\bar{\rho}_{A,B}$"
     fig.suptitle(title)
@@ -1172,15 +1211,440 @@ def plot_Rt_lower_left(r0=10, L=320):
     plt.show()
     plt.close()
 
+
+def plot_Rt_varied_L_lower_left(r0=10):
+    prefix0 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10"
+    coarse_grain_all(prefix0, dx=1, pat="*_p%g_*_r%g_%g_%g_*.gsd" % (4.5, r0, r0, r0))
+    coarse_grain_all(prefix0, dx=1, pat="*_p%g_*_r%g_%g_%g_*.gsd" % (5, r0, r0, r0))
+    folder0 = f"{prefix0}/coarse_grain_dx1"
+
+    prefix1 = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10"
+    coarse_grain_all(prefix1, dx=1, pat="*_p*_6_*.gsd")
+    folder1 = f"{prefix1}/coarse_grain_dx1"
+
+    prefix2 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10"
+    coarse_grain_all(prefix2, dx=1, pat="*_p*_6_*.gsd")
+    folder2 = f"{prefix2}/coarse_grain_dx1"
+
+    ms = 3.5
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.5), sharex=True, sharey=True, constrained_layout=True)
+    
+    fins = [f"{folder0}/L320_320_Dr0.100_k0.70_p4.5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder1}/L640_640_Dr0.100_k0.70_p4.5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=320$", r"$R_B:L=320$"],
+              [r"$R_A:L=640$", r"$R_B:L=640$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax1, fin, labels[i], ms=ms)
+
+    fins = [f"{folder0}/L320_320_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder1}/L640_640_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder2}/L1280_1280_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=320$", r"$R_B:L=320$"],
+              [r"$R_A:L=640$", r"$R_B:L=640$"],
+              [r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax2, fin, labels[i], ms=ms)
+
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.set_ylabel(r"$R$")
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax1.legend()
+    ax2.legend()
+    ax1.set_title(r"(a) $\phi_A=4.5$")
+    ax2.set_title(r"(b) $\phi_A=5$")
+
+    title = r"$D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=%g,\phi_B=%g$" % (r0, 6)
+    fig.suptitle(title)
+
+    add_line(ax1, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    add_line(ax2, 0.5, 0.2, 0.6, 1, label="1", xl=0.6, yl=0.4, fontsize="large")
+    add_line(ax2, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    add_line(ax2, 0.6, 0.7, 0.9, 0.25, label="0.25", xl=0.8, yl=0.8, fontsize="large")
+    add_line(ax2, 0.6, 0.85, 0.9, 0.14, label="0.14", xl=0.6, yl=0.9, fontsize="large")
+
+
+
+    plt.show()
+    plt.close()
+
+
+def plot_Rt_SP():
+    # prefix0 = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10"
+    # coarse_grain_all(prefix0, dx=1, pat="L640_640_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    # coarse_grain_all(prefix0, dx=1, pat="L640_640_Dr0.100_k0.70_p4.5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    # folder0 = f"{prefix0}/coarse_grain_dx1"
+    prefix1 = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10"
+    coarse_grain_all(prefix1, dx=1, pat="*_p*_6_*.gsd")
+    folder1 = f"{prefix1}/coarse_grain_dx1"
+
+    ms = 3.5
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4.5), sharex=True, sharey=True, constrained_layout=True)
+    
+
+    fins = [f"{folder1}/L640_640_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=640$", r"$R_B:L=640$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax1, fin, labels[i], ms=ms)
+    fins = [f"{folder1}/L640_640_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=640$", r"$R_B:L=640$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax2, fin, labels[i], ms=ms)
+    fins = [f"{folder1}/L640_640_Dr0.100_k0.70_p4.5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=640$", r"$R_B:L=640$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax3, fin, labels[i], ms=ms)
+
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.set_ylabel(r"$R$")
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax1.legend()
+    ax2.legend()
+    ax1.set_title(r"(a) $\phi_A=0,\phi_B=6$")
+    ax2.set_title(r"(b) $\phi_A=3,\phi_B=6$")
+    ax3.set_title(r"(c) $\phi_A=4.5,\phi_B=6$")
+
+    title = r"$D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=%g$" % (10)
+    fig.suptitle(title)
+
+    add_line(ax1, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    add_line(ax2, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+
+    add_line(ax3, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4.5), constrained_layout=True)
+    fins = [f"{folder1}/L640_640_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder1}/L640_640_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fins[-1])
+    ax.plot(t, Rt_B, "s", ms=ms, fillstyle="none", c="tab:grey", label="one species: $\phi_A=0,\phi_B=6$")
+
+    labels = [[r"$R_A:\phi_A=3,\phi_B=6$", r"$R_B: \phi_A=3,\phi_B=6$"]]
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fins[0])
+    ax.plot(t, Rt_A, "o", ms=ms, fillstyle="none", label=labels[0][0])
+    ax.plot(t, Rt_B, ">", ms=ms, fillstyle="none", label=labels[0][1])
+
+    # for i, fin in enumerate(fins[:1]):
+    #     plot_Rt(ax, fin, labels[i], ms=ms)
+    # t, Rt_A, Rt_B, Rt_tot = get_R_t(fin)
+
+    ax.legend()
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel(r"$t$", fontsize="large")
+    ax.set_ylabel(r"$R$", fontsize="large")
+
+    title = r"$L=640,D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=%g$" % (10)
+    fig.suptitle(title)
+    add_line(ax, 0.1, 0., 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+
+    plt.show()
+    plt.close()
+
+
+
+def plot_Rt_near_gas_binodal():
+    prefix1 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10"
+    coarse_grain_all(prefix1, dx=1, pat="L320_320_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    coarse_grain_all(prefix1, dx=1, pat="L320_320_Dr0.100_k0.70_p5_2.32_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    folder1 = f"{prefix1}/coarse_grain_dx1"
+    prefix2 = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10"
+    coarse_grain_all(prefix2, dx=1, pat="L640_640_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    coarse_grain_all(prefix2, dx=1, pat="L640_640_Dr0.100_k0.70_p5_2.32_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    folder2 = f"{prefix2}/coarse_grain_dx1"
+    prefix3 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10"
+    coarse_grain_all(prefix3, dx=1, pat="L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.gsd")
+    folder3 = f"{prefix3}/coarse_grain_dx1"
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.2), constrained_layout=True)
+    ms = 3.5
+    fins = [f"{folder1}/L320_320_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder1}/L320_320_Dr0.100_k0.70_p5_2.32_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:\phi_A=5.5,\phi_B=3.85$", r"$R_B:\phi_A=5.5,\phi_B=3.85$"], [r"$R_A:\phi_A=5,\phi_B=2.32$", r"$R_B:\phi_A=5,\phi_B=2.32$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax1, fin, labels[i], ms=ms)
+
+    fins = [f"{folder1}/L320_320_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder2}/L640_640_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder3}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"]
+    labels = [[r"$R_A:L=320$", r"$R_B:L=320$"], [r"$R_A:L=640$", r"$R_B:L=640$"], [r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax2, fin, labels[i], ms=ms)
+    
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+    # ax1.set_xlim(xmax=2e4)
+    ax1.set_title(r"(a) $L=320$")
+    ax2.set_title("(b) $\phi_A=5.5,\phi_B=3.85$")
+    ax1.set_ylabel(r"$R$")
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.legend()
+    ax2.legend()
+
+    # add_line(ax1, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    add_line(ax2, 0.1, 0.1, 0.9, 0.33, label="0.33", xl=0.45, yl=0.6, fontsize="large")
+    add_line(ax2, 0.6, 0.1, 0.75, 1, label="1", xl=0.7, yl=0.3, fontsize="large")
+
+    add_line(ax2, 0.7, 0.7, 0.95, 0.25, label="0.25", xl=0.45, yl=0.7, fontsize="large")
+    add_line(ax2, 0.7, 0.85, 0.95, 0.14, label="0.14", xl=0.45, yl=0.8, fontsize="large")
+
+    title = r"$D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=%g$" % (10)
+    fig.suptitle(title)
+    plt.show()
+    plt.close()
+
+
+def plot_Rt_mix_L_S():
+    prefix = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10"
+    coarse_grain_all(prefix, dx=1)
+    folder = f"{prefix}/coarse_grain_dx1"
+    fin = f"{folder}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.4), sharex=True, sharey=True, constrained_layout=True)
+    ms = 4
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin)
+    ax1.plot(t, Rt_A, "o", fillstyle="none", label=r"$R_{\rm mix}$", ms=ms)
+    ax2.plot(t, Rt_B, "o", fillstyle="none", label=r"$R_{\rm mix}$", ms=ms)
+
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin, q_thresh=0.25)
+
+    t_thresh = 500
+    mask = t >= t_thresh
+    ax1.plot(t[mask], Rt_A[0][mask], "^", fillstyle="none", label=r"$R_L$", ms=ms)
+    ax2.plot(t[mask], Rt_B[0][mask], "^", fillstyle="none", label=r"$R_L$", ms=ms)
+    ax1.plot(t[mask], Rt_A[1][mask], "v", fillstyle="none", label=r"$R_S$", ms=ms)
+    ax2.plot(t[mask], Rt_B[1][mask], "v", fillstyle="none", label=r"$R_S$", ms=ms)
+    ax1.axvline(t_thresh, linestyle="dotted", c="tab:red")
+    ax2.axvline(t_thresh, linestyle="dotted", c="tab:red")
+
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.set_ylabel(r"$R$")
+    ax1.set_title(r"(a) $R_A$")
+    ax2.set_title(r"(b) $R_B$")
+    ax1.legend()
+    ax2.legend()
+
+
+    title = r"$L=1280,D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=10,\phi_A=6,\phi_B=3$"
+    fig.suptitle(title)
+
+    # add_line(ax1, 0.7, 0.7, 0.95, 0.25, label="0.25", xl=0.45, yl=0.7, fontsize="large")
+    # add_line(ax1, 0.7, 0.5, 0.95, 0.25, label="0.25", xl=0.45, yl=0.7, fontsize="large")
+
+    add_line(ax1, 0.7, 0.84, 0.95, 0.12, label="0.12", xl=0.85, yl=0.8, fontsize="large")
+    add_line(ax1, 0.7, 0.60, 0.95, 0.14, label="0.14", xl=0.85, yl=0.6, fontsize="large")
+    add_line(ax2, 0.7, 0.84, 0.96, 0.12, label="0.12", xl=0.80, yl=0.83, fontsize="large")
+    add_line(ax2, 0.7, 0.70, 0.95, 0.14, label="0.14", xl=0.80, yl=0.65, fontsize="large")
+
+    add_line(ax1, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(ax2, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+
+    plt.show()
+    plt.close()
+
+    prefix = f"{root_rudabeh}/QS_MPI_noself/L1280_r5_5_5"
+    coarse_grain_all(prefix, dx=1)
+    folder = f"{prefix}/coarse_grain_dx1"
+    fin = f"{folder}/L1280_1280_Dr0.100_k0.70_p5_5_r5_5_5_e-2.000_J0.500_-0.500_1000.npz"
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.4), sharex=True, sharey=True, constrained_layout=True)
+    ms = 4
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin)
+    ax1.plot(t, Rt_A, "o", fillstyle="none", label=r"$R_{\rm mix}$", ms=ms)
+    ax2.plot(t, Rt_B, "o", fillstyle="none", label=r"$R_{\rm mix}$", ms=ms)
+
+    t, Rt_A, Rt_B, Rt_tot = get_R_t(fin, q_thresh=0.25)
+
+    t_thresh = 100
+    mask = t >= t_thresh
+    ax1.plot(t[mask], Rt_A[0][mask], "^", fillstyle="none", label=r"$R_L$", ms=ms)
+    ax2.plot(t[mask], Rt_B[0][mask], "^", fillstyle="none", label=r"$R_L$", ms=ms)
+    ax1.plot(t[mask], Rt_A[1][mask], "v", fillstyle="none", label=r"$R_S$", ms=ms)
+    ax2.plot(t[mask], Rt_B[1][mask], "v", fillstyle="none", label=r"$R_S$", ms=ms)
+    ax1.axvline(t_thresh, linestyle="dotted", c="tab:red")
+    ax2.axvline(t_thresh, linestyle="dotted", c="tab:red")
+
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.set_ylabel(r"$R$")
+    ax1.set_title(r"(a) $R_A$")
+    ax2.set_title(r"(b) $R_B$")
+    ax1.legend()
+    ax2.legend()
+
+
+    title = r"$L=1280,D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=5,\phi_A=5,\phi_B=5$"
+    fig.suptitle(title)
+
+    # add_line(ax1, 0.7, 0.7, 0.95, 0.25, label="0.25", xl=0.45, yl=0.7, fontsize="large")
+    add_line(ax1, 0.7, 0.4, 0.95, 0.25, label="0.25", xl=0.7, yl=0.5, fontsize="large")
+    add_line(ax1, 0.7, 0.28, 0.95, 0.2, label="0.2", xl=0.8, yl=0.25, fontsize="large")
+
+    add_line(ax2, 0.7, 0.5, 0.99, 0.25, label="0.25", xl=0.85, yl=0.5, fontsize="large")
+    add_line(ax1, 0.65, 0.7, 0.9, 0.14, label="0.14", xl=0.8, yl=0.7, fontsize="large")
+    add_line(ax2, 0.7, 0.75, 0.99, 0.18, label="0.18", xl=0.85, yl=0.77, fontsize="large")
+
+
+
+    # add_line(ax1, 0.7, 0.84, 0.95, 0.12, label="0.12", xl=0.85, yl=0.8, fontsize="large")
+    # add_line(ax1, 0.7, 0.60, 0.95, 0.14, label="0.14", xl=0.85, yl=0.6, fontsize="large")
+    # add_line(ax2, 0.7, 0.84, 0.96, 0.12, label="0.12", xl=0.80, yl=0.83, fontsize="large")
+    # add_line(ax2, 0.7, 0.70, 0.95, 0.14, label="0.14", xl=0.80, yl=0.65, fontsize="large")
+
+    add_line(ax1, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(ax2, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+
+    plt.show()
+    plt.close()
+
+
+def varied_dt():
+    prefix1 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10"
+    coarse_grain_all(prefix1, dx=1)
+    folder1 = f"{prefix1}/coarse_grain_dx1"
+
+    prefix2 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.1"
+    coarse_grain_all(prefix2, dx=1)
+    folder2 = f"{prefix2}/coarse_grain_dx1"
+
+    prefix3 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.2"
+    coarse_grain_all(prefix3, dx=1)
+    folder3 = f"{prefix3}/coarse_grain_dx1"
+
+    prefix4 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.3"
+    coarse_grain_all(prefix4, dx=1)
+    folder4 = f"{prefix4}/coarse_grain_dx1"
+
+    prefix5 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.333"
+    coarse_grain_all(prefix5, dx=1)
+    folder5 = f"{prefix5}/coarse_grain_dx1"
+
+    prefix6 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10"
+    coarse_grain_all(prefix6, dx=1)
+    folder6 = f"{prefix6}/coarse_grain_dx1"
+
+    prefix7 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10_h0.333"
+    coarse_grain_all(prefix7, dx=1)
+    folder7 = f"{prefix7}/coarse_grain_dx1"
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.2), constrained_layout=True, sharex=True, sharey=True)
+    ms = 3.5
+    fins = [f"{folder1}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder2}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.1_1000.npz",
+            f"{folder3}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.2_1000.npz",
+            f"{folder4}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.3_1000.npz",
+            f"{folder5}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:h=0.01$", r"$R_B:h=0.01$"],
+              [r"$R_A:h=0.1$", r"$R_B:h=0.1$"],
+              [r"$R_A:h=0.2$", r"$R_B:h=0.2$"],
+              [r"$R_A:h=0.3$", r"$R_B:h=0.3$"],
+              [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
+    dt = [0.01, 0.1, 0.2, 0.3, 1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax1, fin, labels[i], ms=ms, dt=dt[i])
+    
+    fins = [f"{folder6}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder7}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:h=0.01$", r"$R_B:h=0.01$"],
+              [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
+    dt = [0.01, 1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(ax2, fin, labels[i], ms=ms, dt=dt[i])
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax1.set_xlabel(r"$t$")
+    ax2.set_xlabel(r"$t$")
+    ax1.set_ylabel(r"$R$")
+    ax1.legend()
+    ax2.legend()
+
+    add_line(ax1, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(ax2, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+
+
+    plt.show()
+    plt.close()
+
+
+def dt_one_third():
+    prefix1 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10_h0.333"
+    coarse_grain_all(prefix1, dx=1)
+    folder1 = f"{prefix1}/coarse_grain_dx1"
+
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8.2), constrained_layout=True, sharex=True, sharey=True)
+    ms = 3.5
+    fins = [f"{folder1}/L1280_1280_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    dt = [1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[0, 0], fin, labels[i], ms=ms, dt=dt[i])
+
+    fins = [f"{folder1}/L1280_1280_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    dt = [1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[0, 1], fin, labels[i], ms=ms, dt=dt[i])
+
+    fins = [f"{folder1}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    dt = [1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[1, 0], fin, labels[i], ms=ms, dt=dt[i])
+
+    fins = [f"{folder1}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:L=1280$", r"$R_B:L=1280$"]]
+    dt = [1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[1, 1], fin, labels[i], ms=ms, dt=dt[i])
+    axes[0, 0].set_xscale("log")
+    axes[0, 0].set_yscale("log")
+
+    add_line(axes[0, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[0, 1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 0], 0.1, 0.4, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 0], 0.1, 0.6, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
+
+
+    add_line(axes[1, 1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 1], 0.1, 0.6, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 1], 0.1, 0.4, 0.95, 0.25, label="0.25", xl=0.40, yl=0.75, fontsize="large")
+
+
+
+    plt.show()
+    plt.close()
+
+
 if __name__ == "__main__":
-    # f0 = "/home/yduan/data/tmp/L320_320_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"
+    # f0 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10/coarse_grain_dx1/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"
     # show_t(f0)
 
-    # plot_rhoA_B_Sq(f0, [0, 8, 21, 33, 54, 74], vmin=None, vmax=(40, 100))
+    # plot_rhoA_B_Sq(f0, [0, 8, 21, 33, 54, 64], vmin=None, vmax=(15, 15), show_qm=True)
 
-    # f0 = f"{root_rudabeh}/QS_MPI_noself/L320_r20_20_20/coarse_grain_dx1/L320_320_Dr0.100_k0.70_p40_40_r20_20_20_e-2.000_J0.500_-0.500_1000.npz"
+    # f0 = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10/coarse_grain_dx1/L640_640_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz"
+    # plot_rhoA_B_Sq(f0, [0, 8, 21, 33, 57, 122], vmin=None, vmax=(15, 15), show_qm=True)
+
     # show_t(f0)
-    # plot_rhoA_B_Sq(f0, [0, 8, 21, 33, 54], vmin=None, vmax=(120, 120))
+    # plot_rhoA_B_Sq(f0, [16, 17, 18, 19, 20, 21], vmin=None, vmax=(15, 15))
+
+
 
     # f0 = "/home/yduan/data/tmp/L640_640_Dr0.100_k0.70_p14_10_r20_20_20_e-2.000_J0.500_-0.500_1000.npz"
     # show_t(f0)
@@ -1191,26 +1655,39 @@ if __name__ == "__main__":
     # plot_rhoA_B_Sq(f0, [0, 8, 21, 33, 50], vmin=None, vmax=(100, 100))
 
 
-    # plot_Rt_L320_r16()
+    # # plot_Rt_L320_r16()
+    # # plot_Rt_L160()
 
     # plot_Rt_SP_osi_band()
-
     # plot_Rt_SP_spiral_cluster()
-
-    # plot_Rt_L160()
-
     # plot_Rt_bubble_burst()
     # plot_Rt_varied_composition()
-
     # plot_Rt_one_5th()
-
     # plot_Rt_one_3rd()
 
-    # plot_Rt_varied_r0()
+    # # # plot_Rt_varied_r0()
 
     # plot_Rt_varied_L()
     # plot_Rt_varied_L_12()
 
 
-    plot_Rt_lower_left(r0=10, L=320)
+    # plot_Rt_lower_left(r0=10, L=320)
+    # plot_Rt_varied_L_lower_left()
+    # plot_Rt_SP()
 
+    # plot_Rt_near_gas_binodal()
+
+    # plot_Rt_mix_L_S()
+
+    # varied_dt()
+    dt_one_third()
+
+    # a = np.logspace(0, 1, 11, endpoint=True)
+    # b = np.linspace(0, 1, 11, endpoint=True)
+    # print(b)
+    # for i in range(a.size):
+    #     print("%.16f, %.16f" % (a[i], 10**b[i]))
+
+
+   
+    

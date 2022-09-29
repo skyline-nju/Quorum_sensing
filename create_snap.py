@@ -220,18 +220,18 @@ def create_flat_band(Lx, Ly, phi_A, phi_B, rho_A, rho_B, fname):
 
 if __name__ == "__main__":
     folder = '/scratch03.local/yduan/QS_MPI_noself/L480_160_r10_10_10'
-    basename = "L480_160_Dr0.100_k0.70_p9.5_13.075_r10_10_10_e-2.000_J0.500_-0.500_2000.gsd"
+    basename = "L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_27510.gsd"
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
 
-    snap = adjust_density(snap, 10.5, 12.75, mode="copy")
+    # snap = adjust_density(snap, 60, 60, mode="copy")
     # snap = scale(snap, 2, 2)
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 1, 3)
+    # snap = duplicate(snap, 2, 2)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
-    fout = f"{folder}/L480_160_Dr0.100_k0.70_p10.5_12.75_r10_10_10_e-2.000_J0.500_-0.500_2000.gsd"
+    fout = f"{folder}/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
