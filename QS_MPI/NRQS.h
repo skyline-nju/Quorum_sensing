@@ -99,10 +99,11 @@ void ini(std::vector<TPar>& p_arr, const TDomain& dm, CellListNode_2<TPar>& cl,
 }
 
 void run(const Vec_2<double>& gl_l,
-         double phiA, double phiB, double rho0,
+         double phiA, double phiB,
+         double rho0, double bar_rho_A, double bar_rho_B,
          double eta, double J_AB, double J_BA, double kappa,
          double Dt, double Dr, double h, double v0,
-         int n_step, int snap_dt,
+         int n_step, int snap_dt, double snap_log_dt,
          const std::string& ini_mode,
          unsigned long long seed,
          MPI_Comm group_comm);
