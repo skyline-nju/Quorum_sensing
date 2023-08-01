@@ -176,7 +176,7 @@ template <typename TPar>
 void LinearDensityKernal::normalize(std::vector<TPar>& p_arr) const {
   double norm = 3. / M_PI;
   for (auto& p : p_arr) {
-    p.rho_local[p.type_id] += 1;
+//    p.rho_local[p.type_id] += 1;
     p.rho_local[0] *= norm;
     p.rho_local[1] *= norm;
   }

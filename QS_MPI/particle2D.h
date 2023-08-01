@@ -174,11 +174,13 @@ public:
 
   double cal_v() const {
     return v0_
-      * (1 + kappa_ * tanh(eta_[type_id][0] * (rho_local[0] - rho0_)))
-      * (1 + kappa_ * tanh(eta_[type_id][1] * (rho_local[1] - rho0_)));
+      * (1 + kappa_ * tanh(eta_[type_id][0] * (rho_local[0] - rhoA_)))
+      * (1 + kappa_ * tanh(eta_[type_id][1] * (rho_local[1] - rhoB_)));
   };
 
-  static void set_QS_params(double v0, double kappa, double rho0,
+  static void set_QS_params(double v0, double kappa,
+                            double rho0, double bar_rho_A, double bar_rho_B,
+                            double phiA, double phiB,
                             double eta_AA, double eta_AB,
                             double eta_BA, double eta_BB);
 
@@ -191,6 +193,8 @@ private:
   static double v0_;
   static double kappa_;
   static double rho0_;
+  static double rhoA_;
+  static double rhoB_;
   static double eta_[2][2];   // eta / (rho0 * kappa)
 };
 

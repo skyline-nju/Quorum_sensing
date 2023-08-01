@@ -72,6 +72,7 @@ protected:
 
 template<typename TPar, class BdyCondi, class TRan>
 void ABP_EM::update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const {
+  // maximum d_theta should be smaller then pi
   const double d_theta = (myran.doub() - 0.5) * Dr_;
   Vec_2<double> u = p.update_ori(d_theta);
 

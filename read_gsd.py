@@ -39,6 +39,7 @@ def get_one_snap(f, i_frame):
     if f.chunk_exists(frame=i_frame, name="configuration/step"):
         s.configuration.step = f.read_chunk(frame=i_frame,
                                             name="configuration/step")[0]
+        print(s.configuration.step)
     else:
         if i_frame == 0:
             s.configuration.step = 0
@@ -67,11 +68,16 @@ def get_one_snap(f, i_frame):
 
 def read_one_frame(fname, i_frame):
     with fl.open(name=fname, mode="rb") as f:
-        if i_frame < 0:
-            i = i_frame + f.nframes
+        if f.nframes == 0:
+            print("Warning, zero frame found in", fname)
+            return None
         else:
-            i = i_frame
-        return get_one_snap(f, i)
+            if i_frame < 0:
+                i = i_frame + f.nframes
+            else:
+                i = i_frame
+            print("read frame %d in total %d frames" % (i, f.nframes))
+            return get_one_snap(f, i)
 
 
 def read_frames(fname, beg=0, end=None, sep=1):

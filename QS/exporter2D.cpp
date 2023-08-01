@@ -1,22 +1,5 @@
 #include "exporter2D.h"
 
-void exporter::ExporterBase::set_lin_frame(int start, int n_step, int sep) {
-  n_step_ = n_step;
-  for (auto i = start + sep; i <= n_step_; i += sep) {
-    frames_arr_.push_back(i);
-  }
-  frame_iter_ = frames_arr_.begin();
-}
-
-bool exporter::ExporterBase::need_export(int i_step) {
-  bool flag = false;
-  if (!frames_arr_.empty() && i_step == (*frame_iter_)) {
-    frame_iter_++;
-    flag = true;
-  }
-  return flag;
-}
-
 #ifdef USE_MPI
 exporter::LogExporter::LogExporter(const std::string& outfile, 
                                    int start, int n_step, int sep, 
@@ -44,7 +27,7 @@ exporter::LogExporter::LogExporter(const std::string& outfile,
 exporter::LogExporter::LogExporter(const std::string& outfile,
                                    int start, int n_step, int sep, int np)
   : ExporterBase(start, n_step, sep), n_par_(np) {
-  fout.open(outfile);
+  fout.open(outfile, std::ios::app);
   t_start_ = std::chrono::system_clock::now();
   auto start_time = std::chrono::system_clock::to_time_t(t_start_);
   char str[100];
@@ -107,14 +90,25 @@ void exporter::LogExporter::record(int i_step) {
   step_count_++;
 }
 
+exporter::OrderParaExporter::OrderParaExporter(const std::string& outfile,
+                                               int n_step, int sep, int start,
+                                               int flush_dt, int npar_gl)
+  : ExporterBase(start, n_step, sep), flush_dt_(flush_dt), npar_gl_(npar_gl) {
+  fout_.open(outfile, std::ios::app);
+}
+
+exporter::OrderParaExporter::~OrderParaExporter() {
+  fout_.close();
+}
+
 exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
-                                 int start, int n_step, int sep,
+                                 int& start, int n_step, int sep,
                                  const Vec_2<double>& gl_l,
                                  const std::string& open_flag)
   : ExporterBase(start, n_step, sep) {
   unsigned int version = gsd_make_version(1, 4);
   handle_ = new gsd_handle;
-  if (open_flag == "new") {
+  if (open_flag == "rand") {
     int flag = gsd_create(filename.c_str(), "cpp", "hoomd", version);
     if (flag != 0) {
       std::cout << "Error when create " << filename << "; state=" << flag << std::endl;
@@ -131,7 +125,7 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
     
     char types[] = {'A', 'B'};
     gsd_write_chunk(handle_, "particles/types", GSD_TYPE_INT8, 2, 1, 0, types);
-  } else if (open_flag == "restart") {
+  } else if (open_flag == "resume") {
     int flag = gsd_open(handle_, filename.c_str(), GSD_OPEN_READWRITE);
     if (flag != 0) {
       std::cout << "Error when open " << filename << "; state=" << flag << std::endl;
@@ -144,6 +138,7 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
     exit(1);
   }
   half_l_ = Vec_2<double>(gl_l.x / 2, gl_l.y / 2);
+  start = reset_start_time_step();
 }
 
 exporter::Snap_GSD_2::~Snap_GSD_2() {
@@ -167,4 +162,22 @@ uint64_t exporter::Snap_GSD_2::get_time_step() {
     }
   }
   return step;
+}
+
+int exporter::Snap_GSD_2::reset_start_time_step() {
+  size_t n_frame = gsd_get_nframes(handle_);
+  if (n_frame == 0) {
+    start_ = 0;
+  } else {
+    const gsd_index_entry* chunk = gsd_find_chunk(handle_, n_frame - 1, "configuration/step");
+    if (chunk) {
+      uint64_t last_step;
+      gsd_read_chunk(handle_, &last_step, chunk);
+      start_ = last_step;
+    } else {
+      std::cout << "Error, failed to read the time step of the last frame" << std::endl;
+      exit(1);
+    }
+  }
+  return start_;
 }
