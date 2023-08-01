@@ -9,18 +9,21 @@
 int main(int argc, char* argv[]) {
   double Lx = 10;
   double Ly = 10;
-  double phiA = 20;
-  double phiB = 20;
-  double rho0 = 20;
+  double phiA = 10;
+  double phiB = 10;
+  double rho0 = 10;
   double h = 0.01;
-  int n_step = 10000;
+  int n_step = 30000;
+
+  double sigma = 0.1;
+  double spring_coeff = 50;
 
   double kappa = 0.7; 
   double eta = 0;
-  double alpha = 1;
+  double alpha = 2;
   double J_AB = alpha;
   double J_BA = -alpha;
-  double Dr = 0.01;
+  double Dr = 0.1;
   double Dt = 0;
   double v0 = 1;
   int seed = 123;
@@ -30,7 +33,7 @@ int main(int argc, char* argv[]) {
   int n_par_B = int(round(Lx * Ly * phiB));
   int n_par = n_par_A + n_par_B;
 
-  typedef BiNode<QSP_2> node_t;
+  typedef BiNode<Rep_QSP_2> node_t;
   Ranq2 myran(seed);
   Vec_2<double> gl_l(Lx, Ly);
   double r_cut = 1;
@@ -40,10 +43,10 @@ int main(int argc, char* argv[]) {
   std::vector<node_t> p_arr;
   
   // ini integrator
-  EM_QS_iso integrator(h, Dt, Dr);
+  EM_QS_iso integrator(h, Dt, Dr, true);
 
   // cal force
-  LinearDensityKernal kernal(r_cut);
+  LinearDensityKernal_w_Rep kernal(r_cut, sigma, spring_coeff);
   auto f1 = [&kernal](node_t* p1, node_t* p2) {
     kernal(*p1, *p2);
   };
@@ -58,12 +61,12 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%g_k%.2f_p%g_%g_r%g_e%.3f_J%.3f_%.3f_%d", 
-           Lx, Ly, Dr, kappa, phiA, phiB, rho0, eta, J_AB, J_BA, seed);
+  snprintf(basename, 255, "L%g_%g_Dr%g_p%g_%g_r%g_e%.3f_J%.3f_%.3f_s%g_k%g_%d", 
+           Lx, Ly, Dr, phiA, phiB, rho0, eta, J_AB, J_BA, sigma, spring_coeff, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
-  int snap_interval = 10000;
+  int snap_interval = 1000;
   int log_interval = 10000;
   exporter::LogExporter log(log_file, 0, n_step, log_interval, n_par);
   exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, ini_mode);
@@ -92,7 +95,7 @@ int main(int argc, char* argv[]) {
       integrator.update(p_arr[i], pdm, myran, v);
       v_buf[i] = v;
     }
-    kernal.reset_local_density(p_arr);
+    kernal.reset_local_density_and_force(p_arr);
     cl.recreate(p_arr);
     gsd.dump(t, p_arr, v_buf);
     log.record(t);

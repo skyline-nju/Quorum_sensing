@@ -16,7 +16,7 @@
 .vscode
 *.gsd
 fig/
-
+data/
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
