@@ -18,38 +18,76 @@ def get_Lx(fname):
     return Lx
 
 
-def get_para(fname):
+def get_para(fname, subfix=".npz"):
     basename = os.path.basename(fname)
-    s = basename.rstrip(".npz").split("_")
+    s = basename.rstrip(subfix).split("_")
     para = {}
-    if len(s) == 13:
-        para["Lx"] = float(s[0].lstrip("L"))
-        para["Ly"] = float(s[1])
-        para["Dr"] = float(s[2].lstrip("Dr"))
-        para["kappa"] = float(s[3].lstrip("k"))
-        para["pA"] = float(s[4].lstrip("p"))
-        para["pB"] = float(s[5])
-        para["rho0"] = float(s[6].lstrip("r"))
-        para["bar_rho_A"] = float(s[7])
-        para["bar_rho_B"] = float(s[8])
-        para["eta"] = float(s[9].lstrip("e"))
-        para["eta_AB"] = float(s[10].lstrip("J"))
-        para["eta_BA"] = float(s[11])
-        para["seed"] = int(s[12])
-    elif len(s) == 11:
-        para["Lx"] = float(s[0].lstrip("L"))
-        para["Ly"] = float(s[1])
-        para["Dr"] = float(s[2].lstrip("Dr"))
-        para["kappa"] = float(s[3].lstrip("k"))
-        para["pA"] = float(s[4].lstrip("p"))
-        para["pB"] = float(s[5])
-        para["rho0"] = float(s[6].lstrip("r"))
-        para["bar_rho_A"] = para["rho0"]
-        para["bar_rho_B"] = para["rho0"]
-        para["eta"] = float(s[7].lstrip("e"))
-        para["eta_AB"] = float(s[8].lstrip("J"))
-        para["eta_BA"] = float(s[9])
-        para["seed"] = int(s[10])
+    if "_h" not in basename:
+        para["h"] = 0.01
+        if len(s) == 13:
+            para["Lx"] = float(s[0].lstrip("L"))
+            para["Ly"] = float(s[1])
+            para["Dr"] = float(s[2].lstrip("Dr"))
+            para["kappa"] = float(s[3].lstrip("k"))
+            para["pA"] = float(s[4].lstrip("p"))
+            para["pB"] = float(s[5])
+            para["rho0"] = float(s[6].lstrip("r"))
+            para["bar_rho_A"] = float(s[7])
+            para["bar_rho_B"] = float(s[8])
+            para["eta"] = float(s[9].lstrip("e"))
+            para["eta_AB"] = float(s[10].lstrip("J"))
+            para["eta_BA"] = float(s[11])
+            para["seed"] = int(s[12])
+        elif len(s) == 11:
+            para["Lx"] = float(s[0].lstrip("L"))
+            para["Ly"] = float(s[1])
+            para["Dr"] = float(s[2].lstrip("Dr"))
+            para["kappa"] = float(s[3].lstrip("k"))
+            para["pA"] = float(s[4].lstrip("p"))
+            para["pB"] = float(s[5])
+            para["rho0"] = float(s[6].lstrip("r"))
+            para["bar_rho_A"] = para["rho0"]
+            para["bar_rho_B"] = para["rho0"]
+            para["eta"] = float(s[7].lstrip("e"))
+            para["eta_AB"] = float(s[8].lstrip("J"))
+            para["eta_BA"] = float(s[9])
+            para["seed"] = int(s[10])
+    else:
+        if len(s) == 14:
+            para["Lx"] = float(s[0].lstrip("L"))
+            para["Ly"] = float(s[1])
+            para["Dr"] = float(s[2].lstrip("Dr"))
+            para["kappa"] = float(s[3].lstrip("k"))
+            para["pA"] = float(s[4].lstrip("p"))
+            para["pB"] = float(s[5])
+            para["rho0"] = float(s[6].lstrip("r"))
+            para["bar_rho_A"] = float(s[7])
+            para["bar_rho_B"] = float(s[8])
+            para["eta"] = float(s[9].lstrip("e"))
+            para["eta_AB"] = float(s[10].lstrip("J"))
+            para["eta_BA"] = float(s[11])
+            para["h"] = float(s[12].lstrip("h"))
+            if para["h"] == 0.333:
+                para["h"] = 1 / 3.
+            para["seed"] = int(s[13])
+        elif len(s) == 15:
+            para["Lx"] = float(s[0].lstrip("L"))
+            para["Ly"] = float(s[1])
+            para["Dr"] = float(s[2].lstrip("Dr"))
+            para["Dr"] = float(s[3].lstrip("Dt"))
+            para["kappa"] = float(s[4].lstrip("k"))
+            para["pA"] = float(s[5].lstrip("p"))
+            para["pB"] = float(s[6])
+            para["rho0"] = float(s[7].lstrip("r"))
+            para["bar_rho_A"] = float(s[8])
+            para["bar_rho_B"] = float(s[9])
+            para["eta"] = float(s[10].lstrip("e"))
+            para["eta_AB"] = float(s[11].lstrip("J"))
+            para["eta_BA"] = float(s[12])
+            para["h"] = float(s[13].lstrip("h"))
+            if para["h"] == 0.333:
+                para["h"] = 1 / 3.
+            para["seed"] = int(s[14])
     return para
 
 
@@ -1519,11 +1557,11 @@ def varied_dt():
     coarse_grain_all(prefix1, dx=1)
     folder1 = f"{prefix1}/coarse_grain_dx1"
 
-    prefix2 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.1"
+    prefix2 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.100"
     coarse_grain_all(prefix2, dx=1)
     folder2 = f"{prefix2}/coarse_grain_dx1"
 
-    prefix3 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.2"
+    prefix3 = f"{root_rudabeh}/QS_MPI_noself/L320_r10_10_10_h0.200"
     coarse_grain_all(prefix3, dx=1)
     folder3 = f"{prefix3}/coarse_grain_dx1"
 
@@ -1543,11 +1581,15 @@ def varied_dt():
     coarse_grain_all(prefix7, dx=1)
     folder7 = f"{prefix7}/coarse_grain_dx1"
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.2), constrained_layout=True, sharex=True, sharey=True)
+    prefix8 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10_h0.200"
+    coarse_grain_all(prefix8, dx=1)
+    folder8 = f"{prefix8}/coarse_grain_dx1"
+
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8.2), constrained_layout=True, sharex=True, sharey=True)
     ms = 3.5
     fins = [f"{folder1}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
-            f"{folder2}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.1_1000.npz",
-            f"{folder3}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.2_1000.npz",
+            f"{folder2}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.npz",
+            f"{folder3}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.200_1000.npz",
             f"{folder4}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.3_1000.npz",
             f"{folder5}/L320_320_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
     labels = [[r"$R_A:h=0.01$", r"$R_B:h=0.01$"],
@@ -1557,7 +1599,7 @@ def varied_dt():
               [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
     dt = [0.01, 0.1, 0.2, 0.3, 1/3.]
     for i, fin in enumerate(fins):
-        plot_Rt(ax1, fin, labels[i], ms=ms, dt=dt[i])
+        plot_Rt(axes[0, 0], fin, labels[i], ms=ms, dt=dt[i])
     
     fins = [f"{folder6}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
             f"{folder7}/L1280_1280_Dr0.100_k0.70_p6_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
@@ -1565,18 +1607,45 @@ def varied_dt():
               [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
     dt = [0.01, 1/3.]
     for i, fin in enumerate(fins):
-        plot_Rt(ax2, fin, labels[i], ms=ms, dt=dt[i])
-    ax1.set_xscale("log")
-    ax1.set_yscale("log")
-    ax1.set_xlabel(r"$t$")
-    ax2.set_xlabel(r"$t$")
-    ax1.set_ylabel(r"$R$")
-    ax1.legend()
-    ax2.legend()
+        plot_Rt(axes[0, 1], fin, labels[i], ms=ms, dt=dt[i])
+    
+    fins = [f"{folder6}/L1280_1280_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder8}/L1280_1280_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_h0.200_1000.npz",
+            f"{folder7}/L1280_1280_Dr0.100_k0.70_p5_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:h=0.01$", r"$R_B:h=0.01$"],
+              [r"$R_A:h=0.2$", r"$R_B:h=0.2$"],
+              [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
+    dt = [0.01, 0.2, 1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[1, 0], fin, labels[i], ms=ms, dt=dt[i])
 
-    add_line(ax1, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
-    add_line(ax2, 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    fins = [f"{folder6}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_1000.npz",
+            f"{folder8}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.200_1000.npz",
+            f"{folder7}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    labels = [[r"$R_A:h=0.01$", r"$R_B:h=0.01$"],
+              [r"$R_A:h=0.2$", r"$R_B:h=0.2$"],
+              [r"$R_A:h=0.333$", r"$R_B:h=0.333$"]]
+    dt = [0.01, 0.2, 1/3.]
+    for i, fin in enumerate(fins):
+        plot_Rt(axes[1, 1], fin, labels[i], ms=ms, dt=dt[i])
+    
+    axes[0, 0].set_xscale("log")
+    axes[0, 0].set_yscale("log")
+    axes[1, 0].set_xlabel(r"$t$")
+    axes[1, 1].set_xlabel(r"$t$")
+    axes[0, 0].set_ylabel(r"$R$")
+    axes[1, 0].set_ylabel(r"$R$")
 
+    axes[0, 0].legend()
+    axes[0, 1].legend()
+    axes[1, 0].legend()
+    axes[1, 1].legend()
+
+
+    add_line(axes[0, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[0, 1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[1, 1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
 
     plt.show()
     plt.close()
@@ -1586,6 +1655,10 @@ def dt_one_third():
     prefix1 = f"{root_rudabeh}/QS_MPI_noself/L1280_r10_10_10_h0.333"
     coarse_grain_all(prefix1, dx=1)
     folder1 = f"{prefix1}/coarse_grain_dx1"
+
+    prefix2 = f"{root_tahmineh}/QS_MPI_noself/L2560_r10_10_10_h0.333"
+    coarse_grain_all(prefix2, dx=1)
+    folder2 = f"{prefix2}/coarse_grain_dx1"
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 8.2), constrained_layout=True, sharex=True, sharey=True)
     ms = 3.5
@@ -1617,6 +1690,7 @@ def dt_one_third():
 
     add_line(axes[0, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
     add_line(axes[0, 1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[0, 1], 0.1, 0.6, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
     add_line(axes[1, 0], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
     add_line(axes[1, 0], 0.1, 0.4, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
     add_line(axes[1, 0], 0.1, 0.6, 0.95, 0.14, label="0.14", xl=0.40, yl=0.75, fontsize="large")
@@ -1679,8 +1753,8 @@ if __name__ == "__main__":
 
     # plot_Rt_mix_L_S()
 
-    # varied_dt()
     dt_one_third()
+    varied_dt()
 
     # a = np.logspace(0, 1, 11, endpoint=True)
     # b = np.linspace(0, 1, 11, endpoint=True)

@@ -4,13 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gsd import fl
 
+root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
+root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan"
+root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
+
 
 def coarse_grain_one_frame(i_frame: int,
                            fgsd: fl.GSDFile,
                            fields: np.ndarray,
                            dx: float,
                            Lx: float,
-                           Ly: float):
+                           Ly: float,
+                           vxvy: bool = False,
+                           only_rho: bool = False):
     ncols = int(Lx / dx)
     nrows = int(Ly / dx)
     bin_area = dx ** 2
@@ -18,8 +24,14 @@ def coarse_grain_one_frame(i_frame: int,
     par_num = np.zeros((2, nrows, ncols), int)
     mx, my, v = np.zeros((3, 2, nrows, ncols))
 
+    if vxvy:
+        vx, vy = np.zeros((2, 2, nrows, ncols))
+
     pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
-    id_type = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+    try:
+        id_type = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+    except KeyError:
+        id_type = np.zeros(pos.shape[0], np.int32)
     try:
         speed = fgsd.read_chunk(frame=i_frame, name="particles/charge")
     except KeyError:
@@ -46,15 +58,23 @@ def coarse_grain_one_frame(i_frame: int,
         mx[my_id, my_row, my_col] += ux[j]
         my[my_id, my_row, my_col] += uy[j]
         v[my_id, my_row, my_col] += speed[j]
+        if vxvy:
+            vx[my_id, my_row, my_col] += ux[j] * speed[j]
+            vy[my_id, my_row, my_col] += uy[j] * speed[j]
     
     fields[i_frame][0:2] = par_num / bin_area
-    fields[i_frame][2:4] = mx / bin_area
-    fields[i_frame][4:6] = my / bin_area
-    mask = par_num > 0
-    fields[i_frame][6:8][mask] = v[mask] / par_num[mask]
+    if not only_rho:
+        fields[i_frame][2:4] = mx / bin_area
+        fields[i_frame][4:6] = my / bin_area
+        mask = par_num > 0
+        fields[i_frame][6:8][mask] = v[mask] / par_num[mask]
+        if vxvy:
+            # fields[i_frame][8:10][mask] = vx[mask] / par_num[mask]
+            # fields[i_frame][10:12][mask] = vy[mask] / par_num[mask]
+            fields[i_frame][8:10][mask] = vx[mask]
+            fields[i_frame][10:12][mask] = vy[mask]
 
-
-def coarse_grain(fin: str, fout: str, dx: float):
+def coarse_grain(fin: str, fout: str, dx: float, vxvy:bool=False, only_rho:bool=False):
     if os.path.exists(fout):
         with np.load(fout, "r") as data:
             t0 = data["t"]
@@ -82,8 +102,14 @@ def coarse_grain(fin: str, fout: str, dx: float):
             
             t = np.zeros(nframes, int)
 
-            # one frame = [rho_A, rho_B, mx_A, mx_B, my_A, my_B, v_A, v_B]
-            fields = np.zeros((nframes, 8, nrows, ncols), np.single)
+            if only_rho:
+                fields = np.zeros((nframes, 2, nrows, ncols), np.single)
+            elif not vxvy:
+                # one frame = [rho_A, rho_B, mx_A, mx_B, my_A, my_B, v_A, v_B]
+                fields = np.zeros((nframes, 8, nrows, ncols), np.single)
+            else:
+                # one frame = [rho_A, rho_B, mx_A, mx_B, my_A, my_B, v_A, v_B, vx_A, vx_B, vy_A, vy_B]
+                fields = np.zeros((nframes, 12, nrows, ncols), np.single)
 
             if existed_frames > 0:
                 t[:existed_frames] = t0
@@ -95,14 +121,21 @@ def coarse_grain(fin: str, fout: str, dx: float):
                 except KeyError:
                     t[i_frame] = 0
                     print("Warning, not found t[%d]" % i_frame)
-                print("processing frame %d/%d, t=%g..." % (i_frame, nframes, t[i_frame]))
-                coarse_grain_one_frame(i_frame, fgsd, fields, dx, Lx, Ly)
+                print("coarse-graining frame %d/%d, t=%g..." % (i_frame, nframes, t[i_frame]))
+                coarse_grain_one_frame(i_frame, fgsd, fields, dx, Lx, Ly, vxvy=vxvy, only_rho=only_rho)
             
-            fields_name = np.array(["rho_A", "rho_B", "mx_A", "mx_B", "my_A", "my_B", "v_A", "v_B"])
+            if only_rho:
+                fields_name = np.array(["rho_A", "rho_B"])
+            elif not vxvy:
+                fields_name = np.array(["rho_A", "rho_B", "mx_A", "mx_B", "my_A", "my_B", "v_A", "v_B"])
+            else:
+                fields_name = np.array(["rho_A", "rho_B", "mx_A", "mx_B", "my_A", "my_B", "v_A", "v_B",
+                    "vx_A", "vx_B", "vy_A", "vy_B"])
+
             np.savez_compressed(fout, t=t, x=x, y=y, fields=fields, fields_name=fields_name)
 
 
-def coarse_grain_all(prefix, dx, forced_updating=False, pat="*.gsd"):
+def coarse_grain_all(prefix, dx, forced_updating=False, pat="*.gsd", vxvy=False, only_rho=False):
     out_folder = f"{prefix}/coarse_grain_dx{dx:g}"
     if not os.path.exists(out_folder):
         os.mkdir(out_folder)
@@ -116,74 +149,110 @@ def coarse_grain_all(prefix, dx, forced_updating=False, pat="*.gsd"):
             if not forced_updating and os.path.getmtime(fout) > os.path.getmtime(fin):
                 print("skipping", fin)
                 continue
-        coarse_grain(fin, fout, dx)
+        coarse_grain(fin, fout, dx, vxvy=vxvy, only_rho=only_rho)
             
 
 
 if __name__ == "__main__":
     from datetime import datetime
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_Turing_v3_1"
+    # coarse_grain_all(prefix, dx=1, pat="*.gsd", vxvy=True)
     
-    # prefix = "/scratch03.local/yduan/QS_MPI/L480_160"
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J0.5"
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L640_r20_20_20"
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_Turing"
+    # coarse_grain_all(prefix, dx=1, pat="*.gsd", vxvy=True)
 
-    # prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r10_10_10"
-
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r20_20_20"
-    pat = "L120_40_Dr0.100_k0.70_p5_20_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
-    coarse_grain_all(prefix, dx=1, pat=pat)
-    coarse_grain_all(prefix, dx=2, pat=pat)
-    coarse_grain_all(prefix, dx=4, pat=pat)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L320_r20_20_20"
-    pat = "L320_320_Dr0.100_k0.70_p40_40_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
-    coarse_grain_all(prefix, dx=1, pat=pat)
-    coarse_grain_all(prefix, dx=2, pat=pat)
-    coarse_grain_all(prefix, dx=4, pat=pat)
-    coarse_grain_all(prefix, dx=8, pat=pat)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L80_r20_20_20"
-    pat = "L80_80_Dr0.100_k0.70_p40_40_r20_20_20_e-2.000_J0.500_-0.500_1000.gsd"
-    coarse_grain_all(prefix, dx=1, pat=pat)
-    coarse_grain_all(prefix, dx=2, pat=pat)
-    coarse_grain_all(prefix, dx=4, pat=pat)
-    coarse_grain_all(prefix, dx=8, pat=pat)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L240_80_r10_10_10"
-    coarse_grain_all(prefix, dx=1)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r20_20_20"
-    coarse_grain_all(prefix, dx=1)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L480_160_r10_10_10"
-    coarse_grain_all(prefix, dx=1)
-    coarse_grain_all(prefix, dx=2)
-    coarse_grain_all(prefix, dx=4)
-    coarse_grain_all(prefix, dx=8)
-
-    prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L120_40_r10_10_10"
-    coarse_grain_all(prefix, dx=1)
-    # coarse_grain_all(prefix, dx=1, pat="L120_40_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.gsd")
-    # coarse_grain_all(prefix, dx=1, pat="L120_40_Dr0.100_k0.70_p6.4825_27.115_r20_20_20_e-2.000_J2.000_-2.000_1000.gsd")
-
-    prefix = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan/QS_MPI_noself/L480_40_r10_10_10"
-    coarse_grain_all(prefix, dx=1)
-
-    # prefix = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan/QS_MPI/L320_e-2.0_J2.0"
-    # coarse_grain_all(prefix, dx=1)
-    # coarse_grain_all(prefix, dx=2)
-    # coarse_grain_all(prefix, dx=4)
-    # coarse_grain_all(prefix, dx=8)
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333"
+    # coarse_grain_all(prefix, dx=1, pat="*_p20_*.gsd", vxvy=True)
 
 
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_varied_Dt_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=True, pat="L320_320_Dr0.100_Dt0_k0.70_p*_22.5_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.gsd")
 
-    # basename = "L480_160_Dr0.100_k0.70_p40_40_r40_e-1.000_J1.000_-1.000_1000.gsd"
-    # fin = f"{prefix}/{basename}"
-    # out_basename = basename.replace(".gsd", ".npz")
-    # fout = f"{prefix}/coarse_grain_dx4/{out_basename}"
+    # prefix = f"{root_rudabeh}/QS_MPI_noself/L120_40_r80_12_60_h0.333"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_40_r40_40_40_varied_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r40_40_40_varied_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20_varied_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_40_r20_20_20_varied_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r10_10_10_varied_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L240_160_r10_10_10"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10"
+    # coarse_grain_all(prefix, dx=1, vxvy=False)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_h0.333"
+    # coarse_grain_all(prefix, dx=1, vxvy=True)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333"
+    # coarse_grain_all(prefix, dx=1, vxvy=True)
+
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1"
+    # coarse_grain_all(prefix, pat="*_1002.gsd", dx=0.25, vxvy=True)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L40_16_v1_1"
+    # coarse_grain_all(prefix, dx=1, vxvy=True)
+
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_32_v1_1"
+    # coarse_grain_all(prefix, dx=0.5, vxvy=True)
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25"
+    # coarse_grain_all(prefix, dx=0.5, vxvy=True, pat="L30_10_Dr6_12_v8_1_r60*.gsd")
+
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1"
+    # coarse_grain_all(prefix, dx=1, vxvy=True)
 
 
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1/coarse_grain_dx1"
+    prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25/coarse_grain_dx0.5"
+    J_AB = -1
+    Lx = 80
+    # basename = "L80_10_Dr0.100_r20_e-2.000_-2.000_J%.6f_%.6f_h0.100_1000.npz" % (J_AB, -0.25**2/J_AB)
+    basename = "L30_10_Dr6_12_v8_1_r60_e-0.9725_-1.5091_J%.6f_%.6f_h0.025_2000.npz" % ((J_AB, -0.25**2/J_AB))
+    fin = f"{prefix}/{basename}"
+    with np.load(fin, "r") as data:
+        t = data["t"]
+        x = data["x"]
 
+        rho_A = np.zeros((t.size, x.size))
+        rho_B = np.zeros((t.size, x.size))
 
+        fields = data["fields"]
+        for i in range(t.size):
+            rho_A[i] = np.mean(fields[i][0], axis=0)
+            rho_B[i] = np.mean(fields[i][1], axis=0)
 
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 6), sharex=True, sharey=True, constrained_layout=True)
+        ax1.imshow(rho_A, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
+        ax2.imshow(rho_B, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
+        # ax1.axis("a")
+
+        ax1.set_xlabel(r"$x$", fontsize="large")
+        ax2.set_xlabel(r"$x$", fontsize="large")
+        ax1.set_ylabel(r"$t$", fontsize="x-large")
+        ax1.set_title(r"(a) $\langle\rho_A(\mathbf{r}, t)\rangle_y$")
+        ax2.set_title(r"(b) $\langle\rho_B(\mathbf{r}, t)\rangle_y$")
+
+        plt.show()
+        plt.close()
+        
+        # for i in range(500, 505):
+        #     plt.plot(x, rho_A[i])
+        #     plt.plot(x, rho_B[i])
+        #     plt.show()
+        #     plt.close()
 

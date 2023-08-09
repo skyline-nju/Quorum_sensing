@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from gsd import hoomd
 from read_gsd import read_one_frame
@@ -218,20 +219,142 @@ def create_flat_band(Lx, Ly, phi_A, phi_B, rho_A, rho_B, fname):
         f.append(s)
 
 
-if __name__ == "__main__":
-    folder = '/scratch03.local/yduan/QS_MPI_noself/L480_160_r10_10_10'
-    basename = "L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_27510.gsd"
-    fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, -1)
+def shift_v_slice(s: hoomd.Snapshot, x1: float, x2: float, dy: float) -> hoomd.Snapshot:
+    Ly = s.configuration.box[1]
+    x = s.particles.position[:, 0]
+    y = s.particles.position[:, 1]
 
-    # snap = adjust_density(snap, 60, 60, mode="copy")
-    # snap = scale(snap, 2, 2)
+    mask = np.logical_and(x >= x1, x < x2)
+    y[mask] += dy
+    y[y >= Ly / 2] -= Ly
+    s.particles.position[:, 1] = y
+    return s
+
+
+def shift_pos(s: hoomd.Snapshot, dx: float, dy: float) -> hoomd.Snapshot:
+    Ly = s.configuration.box[1]
+    Lx = s.configuration.box[0]
+
+    x = s.particles.position[:, 0]
+    y = s.particles.position[:, 1]
+
+    x += dx
+    y += dy
+    if dy > 0:
+        y[y >= Ly / 2] -= Ly
+    else:
+        y[y < -Ly / 2] += Ly
+    if dx > 0:
+        x[x >= Lx / 2] -= Lx
+    else:
+        x[x < -Lx / 2] += Lx
+    s.particles.position[:, 0] = x
+    s.particles.position[:, 1] = y
+    return s
+
+
+def swap_h(s: hoomd.Snapshot, x1: float, x2: float, dx: float) -> hoomd.Snapshot:
+    Lx = s.configuration.box[0]
+    x = s.particles.position[:, 0]
+
+    mask_a = np.logical_and(x >= x1, x < x2)
+    mask_b = np.logical_and(x >= x1 + dx, x < x2 + dx)
+    x[mask_a] += dx
+    x[mask_b] -= dx
+    x[x>= Lx/2] -= Lx/2
+    x[x< -Lx/2] += Lx/2
+    s.particles.position[:, 0] = x
+    return s
+
+
+def hstack(s1: hoomd.Snapshot, s2: hoomd.Snapshot) -> hoomd.Snapshot:
+    lx1 = s1.configuration.box[0]
+    ly1 = s1.configuration.box[1]
+    lx2 = s2.configuration.box[0]
+    ly2 = s2.configuration.box[1]
+    if ly1 != ly2:
+        print("Error, Ly=%g,%g" % (ly1, ly2))
+        sys.exit(1)
+    n1 = s1.particles.N
+    N = n1 + s2.particles.N
+    Lx, Ly = lx1 + lx2, ly1
+    pos = np.zeros((N, 3), dtype=np.float32)
+    type_id = np.zeros(N, dtype=np.uint32)
+    charge = np.zeros(N, dtype=np.float32)
+
+    dx1 = -lx2/2
+    dx2 = lx1/2
+    pos[:n1, 0] = s1.particles.position[:, 0] + dx1
+    pos[n1:, 0] = s2.particles.position[:, 0] + dx2
+    pos[:n1, 1] = s1.particles.position[:, 1]
+    pos[n1:, 1] = s2.particles.position[:, 1]
+    pos[:n1, 2] = s1.particles.position[:, 2]
+    pos[n1:, 2] = s2.particles.position[:, 2]
+    type_id[:n1] = s1.particles.typeid
+    type_id[n1:] = s2.particles.typeid
+    charge[:n1] = s1.particles.charge
+    charge[n1:] = s2.particles.charge
+
+    s2 = hoomd.Snapshot()
+    s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
+    s2.particles.N = N
+    s2.particles.position = pos
+    s2.particles.typeid = type_id
+    s2.particles.charge = charge
+    s2.particles.types = s1.particles.types
+    s2.configuration.step = 0
+    return s2
+
+def rot90(s: hoomd.Snapshot) -> hoomd.Snapshot:
+    # Ly = s.configuration.box[1]
+    # Lx = s.configuration.box[0]
+
+    x = s.particles.position[:, 0].copy()
+    y = s.particles.position[:, 1].copy()
+    theta = s.particles.position[:, 2]
+
+    # x, y = -y, x
+    theta += np.pi / 2
+    theta[theta>np.pi] -= np.pi * 2
+    s.particles.position[:, 0] = -y
+    s.particles.position[:, 1] = x
+    s.particles.position[:, 2] = theta
+    return s
+
+
+if __name__ == "__main__":
+    # folder = "/scratch03.local/yduan/QS_MPI_noself/L160_80_v3_1"
+    # basename = "L160_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e1.000_-2.200_J-3.12500_0.32000_h0.100_2000.gsd"
+
+    # fname = f"{folder}/{basename}"
+    # snap = read_one_frame(fname, -1)
+
+
+    folder1 = "/scratch03.local/yduan/QS_MPI_noself/L480_80_r10_10_10_h0.333"
+    folder2 = "/scratch03.local/yduan/QS_MPI_noself/L640_80_r10_10_10_h0.333"
+    fname1 = f"{folder1}/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    s1 = read_one_frame(fname1, -1)
+    fname2 = f"{folder2}/L640_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    s2 = read_one_frame(fname2, -1)
+    s1 = shift_pos(s1, 320, 0)
+    snap = hstack(s1, s2)
+
+
+    # snap = shift_pos(snap, 40, -10)
+    # snap = shift_v_slice(snap, -120, 0, 80)
+
+    # snap = swap_h(snap, 20, 35, -40)
+    # snap = adjust_density(snap, 20, 20, mode="copy")
+    # snap = scale(snap, 2, 1)
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 2, 2)
+    # snap = duplicate(snap, 1, 2)
+
+    # snap = rot90(snap)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
-    fout = f"{folder}/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
+    fout = f"{folder1}/L1120_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2001.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

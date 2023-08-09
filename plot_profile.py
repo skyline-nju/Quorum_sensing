@@ -315,6 +315,71 @@ def D1S1():
     plt.close()
 
 
+def D1S1_dense():
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10/coarse_grain_dx1"
+    f1 = f"{prefix}/L480_160_Dr0.100_k0.70_p16.6_13.6_r10_10_10_e-2.000_J0.500_-0.500_21510.npz"
+    Lx = get_Lx(f1)
+    para = get_para(f1)
+    dt = 0.01
+    with np.load(f1, "r") as data:
+        t, x, y = data["t"] * dt, data["x"], data["y"]
+        fields = data["fields"]
+    i_frame = -1
+    plot_instant_profile(t[i_frame], x, fields[i_frame], normed=True, para=para)
+
+    x, fx = get_time_ave_profile(f1, beg_frame=150, end_frame=None, inversed_A=True, inversed_B=True, shifting_mode="A")
+
+    normed = True
+    r1, r2 = None, None
+    fig, axes = plt.subplots(5, 1, figsize=(6, 6), constrained_layout=True, sharex=True)
+    if normed:
+        fx[2] /= fx[0]
+        fx[4] /= fx[0]
+        fx[3] /= fx[1]
+        fx[5] /= fx[1]
+    
+    for i, ax in enumerate(axes[:4]):
+        ax.plot(x, fx[2*i], label="A")
+        ax.plot(x, fx[2*i+1], label="B")
+
+    axes[4].plot(x, fx[8])
+    axes[4].plot(x, fx[9])
+    axes[0].set_xlim(0, Lx)
+
+    # axes[1].set_ylim(-0.05, 0.05)
+    # axes[2].set_ylim(-0.05, 0.05)
+
+
+    axes[-1].set_xlabel(r"$x$", fontsize="large")
+    ylabels = [r"$\langle \rho \rangle_{y,t}$",
+               r"$\langle \mathbf{m}_x\rangle_{y,t}$",
+               r"$\langle \mathbf{m}_y\rangle_{y,t}$",
+               r"$\langle v\rangle_{y,t}$",
+               r"$\langle \rho v\rangle_{y,t}$"]
+    if normed:
+        ylabels[1] = r"$\langle \mathbf{m}_x\rangle_{y,t} / \langle \rho \rangle_{y,t}$"
+        ylabels[2] = r"$\langle \mathbf{m}_y\rangle_{y,t} / \langle \rho \rangle_{y,t}$"
+    axes[0].legend()
+    for i, ax in enumerate(axes):
+        ax.set_ylabel(ylabels[i], fontsize="large")
+    
+    if r1 is not None:
+        axes[0].axhline(r1[0], linestyle="dotted")
+        axes[0].axhline(r1[1], linestyle="dotted")
+    if r2 is not None:
+        axes[0].axhline(r2[0], linestyle="dashed")
+        axes[0].axhline(r2[1], linestyle="dashed")
+    if para is None:
+        title = r"$t=%g$" % t
+    else:
+        title = "$L_x=%g,L_y=%g,D_r=%g,\\eta=%g,\\eta_{AB}=-\\eta_{BA}=%g,\\rho_0=\\bar{\\rho}_{A,B}=%g,$\n$\\phi_A=%g,\\phi_B=%g$" % (
+            para["Lx"], para["Ly"], para["Dr"], para["eta"], para["eta_AB"], para["rho0"], para['pA'], para['pB']
+        )
+    fig.suptitle(title)
+    plt.show()
+    plt.close()
+
+
 def D1S2():
     prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10/coarse_grain_dx1"
     f1 = f"{prefix}/L480_160_Dr0.100_k0.70_p15_10_r10_10_10_e-2.000_J0.500_-0.500_212510.npz"
@@ -329,7 +394,7 @@ def D1S2():
     i_frame = -1
     plot_instant_profile(t[i_frame], x, fields[i_frame], normed=True, para=para)
 
-    x, fx = get_time_ave_profile(f1, beg_frame=60, end_frame=None, inversed_A=False, inversed_B=False, shifting_mode="B")
+    x, fx = get_time_ave_profile(f1, beg_frame=100, end_frame=None, inversed_A=False, inversed_B=False, shifting_mode="B")
 
     normed = True
     r1, r2 = None, None
@@ -383,8 +448,10 @@ def D1S2():
 
 
 def phase_transform():
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10/coarse_grain_dx1"
-    f1 = f"{prefix}/L480_160_Dr0.100_k0.70_p6.5_14.05_r10_10_10_e-2.000_J0.500_-0.500_2000.npz"
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_h0.333"
+    # f1 = f"{prefix}/coarse_grain_dx1/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333"
+    f1 = f"{prefix}/coarse_grain_dx1/L960_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
     Lx = get_Lx(f1)
     para = get_para(f1)
     dt = 0.01
@@ -400,18 +467,44 @@ def phase_transform():
     #     print("frame %d/%d" % (i_frame, t.size))
     #     plot_instant_profile(t[i_frame], x, fields[i_frame], normed=True, para=para, r1=r1, r2=r2)
     
-    beg = 70
-    # shifting_mode = "separated"
-    shifting_mode = "B"
-    x, rA_1, rB_1 = get_time_ave_density_profile(f1, beg, t.size, inversed_A=False, inversed_B=False, shifting_mode=shifting_mode)
-    
+    # # lower-center and center-left SP
+    # x, rA_1, rB_1 = get_time_ave_density_profile(f1, 50, t.size, inversed_A=False, inversed_B=False, shifting_mode="B")
+
+    # # upper-center SP
+    # x, rA_1, rB_1 = get_time_ave_density_profile(f1, 50, t.size, inversed_A=False, inversed_B=False, shifting_mode="B")
+
+    # # LAB + LA
+    # x, rA_1, rB_1 = get_time_ave_density_profile(f1, 3, t.size, inversed_A=False, inversed_B=False, shifting_mode="A")
+
+    # # DC + LA
+    # x, rA_1, rB_1 = get_time_ave_density_profile(f1, beg_frame=2, end_frame=None, inversed_A=True, inversed_B=True, shifting_mode="A")
+
+    # D1 + dense S1
+    x, rA_1, rB_1 = get_time_ave_density_profile(f1, beg_frame=100, end_frame=None, inversed_A=False, inversed_B=False, shifting_mode="B")
+
     lineA, = plt.plot(x, rA_1)
     lineB, = plt.plot(x, rB_1)
 
-    # x_edge_1 = [32, 456]
-    # x_edge_2 = [200, 280]
-    x_edge_1 = [35, 440]
-    x_edge_2 = [210, 280]
+    # # center-left and lower-center SP
+    # x_edge_1 = [20, 100]
+    # x_edge_2 = [44, 76]
+
+    # # upper-center SP
+    # x_edge_1 = [20, 1000]
+    # x_edge_2 = [40, 80]
+
+    # LAB + LA
+    # x_edge_1 = [20, 100]
+    # x_edge_2 = [45, 75]
+
+    ### L = 240
+    # x_edge_1 = [10, 230]
+    # x_edge_2 = [100, 130]
+
+    # x_edge_1 = [60, 420]
+    # x_edge_2 = [215, 280]
+    x_edge_1 = [120, 840]
+    x_edge_2 = [360, 600]
 
     plt.axvline(x_edge_1[0], linestyle="dashed", c="tab:grey")
     plt.axvline(x_edge_1[1], linestyle="dashed", c="tab:grey")
@@ -422,6 +515,7 @@ def phase_transform():
     r1 = [np.mean(rA_1[mask1]), np.mean(rB_1[mask1])]
     mask2 = np.logical_and(x > x_edge_2[0], x <= x_edge_2[1])
     r2 = [np.mean(rA_1[mask2]), np.mean(rB_1[mask2])]
+    # print(r1, r2)
 
     plt.axhline(r1[0], c=lineA.get_c(), linestyle="dashed", label="%.4f" % r1[0])
     plt.axhline(r1[1], c=lineB.get_c(), linestyle="dashed", label="%.4f" % r1[1])
@@ -444,21 +538,30 @@ def phase_transform():
     drhoA = r2[0] - r1[0]
     drhoB = r2[1] - r1[1]
 
-    dl = -80
-    phiA_new = phiA + drhoA * dl / Lx
-    phiB_new = phiB + drhoB * dl / Lx
-    print(phiA_new, phiB_new)
-
     plt.xlim(0, Lx)
     plt.show()
     plt.close()
 
+    dl = -60
+    phiA_new = phiA + drhoA * dl / Lx
+    phiB_new = phiB + drhoB * dl / Lx
+    print(phiA_new, phiB_new)
+
+    plt.plot(phiA, phiB, "s")
+    plt.plot([r1[0], r2[0]], [r1[1], r2[1]], ':o')
+    # plt.plot([r1[0], r2[0]], [r1[1], r2[1]], '')
+    plt.axvline(6)
+    plt.axvline(10)
 
 
-def level_rule():
+    plt.show()
+    plt.close()
+
+def lever_rule():
     prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10/coarse_grain_dx1"
     fins = [f"{prefix}/L480_160_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_21010.npz",
-            f"{prefix}/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_27510.npz"
+            f"{prefix}/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_27510.npz",
+            f"{prefix}/L480_160_Dr0.100_k0.70_p9.73_16.77_r10_10_10_e-2.000_J0.500_-0.500_28613.npz"
     ]
 
     fig = plt.figure(figsize=(10, 4.2), constrained_layout=True)
@@ -470,12 +573,20 @@ def level_rule():
     ax1.plot([3.8935, 10.5367], [1.2001, 21.6776], linestyle="dotted", c="tab:grey")
     ax1.plot(3.8935, 1.2001, "v", fillstyle="none", c="tab:grey", label="liquid binodal")
     ax1.plot(10.5367, 21.6776, "^", fillstyle="none", c="tab:brown", label="gas binodal")
+
+    ax1.plot([3.7562, 11.0441], [1.111, 23.3980], linestyle="-", c="k")
+    ax1.plot([3.8868, 11.6549], [1.11095, 23.3816], linestyle="-", c="r")
+
+    ax1.plot(9.597, 16.152, "ko")
+    ax1.plot(7.6525, 10.5875, "ko")
+
+
     ax1.set_xlabel(r"$\phi_A$", fontsize="large")
     ax1.set_ylabel(r"$\phi_B$", fontsize="large")
     ax1.legend()
 
     (ax2, ax3) = subfigs[1].subplots(2, 1, sharex=True)
-    begs = [70, 70]
+    begs = [100, 100, 70]
     for i, fin in enumerate(fins):
         x, rA, rB = get_time_ave_density_profile(fin, begs[i], inversed_A=False, inversed_B=False)
         ax2.plot(x, rA)
@@ -501,9 +612,61 @@ def level_rule():
     plt.close()
 
 
+def profiles_two_Lx():
+    prefix1 = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_h0.333/coarse_grain_dx1"
+    fins1 = [f"{prefix1}/L480_160_Dr0.100_k0.70_p7.71_10.5725_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz",
+            f"{prefix1}/L480_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz",
+            f"{prefix1}/L480_160_Dr0.100_k0.70_p9.53875_16.1475_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+    ]
+    prefix2 = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333/coarse_grain_dx1"
+    fins2 = [f"{prefix2}/L960_160_Dr0.100_k0.70_p7.6525_10.5675_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz",
+             f"{prefix2}/L960_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz",
+             f"{prefix2}/L960_160_Dr0.100_k0.70_p9.597_16.152_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+    ]
+
+    fig, axes = plt.subplots(4, 1, figsize=(10, 8), constrained_layout=True)
+    
+
+    begs1 = [100, 100, 100]
+    begs2 = [100, 100, 100]
+    for i in range(3):
+        x, rA, rB = get_time_ave_density_profile(fins1[i], begs1[i], inversed_A=False, inversed_B=False)
+        axes[0].plot(x, rA)
+        axes[1].plot(x, rB)
+
+        x, rA, rB = get_time_ave_density_profile(fins2[i], begs2[i], inversed_A=False, inversed_B=False)
+        axes[2].plot(x, rA)
+        axes[3].plot(x, rB)
+
+    
+    # ax2.axhline(3.8935, linestyle="dotted", c="tab:grey")
+    # ax2.axhline(10.5367, linestyle="dashed", c="tab:brown")
+    # ax3.axhline(1.2001, linestyle="dotted", c="tab:grey")
+    # ax3.axhline(21.6776, linestyle="dashed", c="tab:brown")
+    # ax2.set_ylabel(r"$\langle \rho_A\rangle_{y,t}$", fontsize="large")
+    # ax3.set_ylabel(r"$\langle \rho_B\rangle_{y,t}$", fontsize="large")
+    # ax3.set_xlabel(r"$x$", fontsize="large")
+    # ax3.set_xlim(0, 480)
+
+    # ax1.set_title("(a)")
+    # ax2.set_title("(b)")
+    # ax3.set_title("(c)")
+
+    # title = r"$L_x=480,L_y=160,D_r=0.1,\eta=-2,\eta_{AB}=-\eta_{BA}=0.5,\rho_0=\bar{\rho}_{A,B}=10$"
+    # fig.suptitle(title)
+
+    plt.show()
+    plt.close()
+
+
 if __name__ == "__main__":
     # D1S2()
-    SP()
+    # SP()
     # plot_time_ave_density_profile_SP()
-    # level_rule()
-    # phase_transform()
+    # lever_rule()
+    phase_transform()
+    # D1S1_dense()
+
+    # D1S1()
+
+    # profiles_two_Lx()

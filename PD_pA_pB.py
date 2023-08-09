@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from plot_snap import plot_one_panel, add_xlabel, add_ylabel
 
 
-def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_drho=False, inc_self=True, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=None, ms=0.05):
+def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_drho=False, inc_self=True, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=None, ms=0.05, show_labels=True):
     if ncols is not None and nrows is not None:
         pA_arr = np.arange(1, ncols+1) * 10
         pB_arr = np.arange(1, nrows+1) * 10
@@ -58,8 +58,10 @@ def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_
     nrows = pB_arr.size
     ncols = pA_arr.size
     figsize = (ncols * 2 + 0.25, nrows * 2 + 0.25)
-    rect = [0.015, 0.015, 1.01, 1.01]
-
+    if show_labels:
+        rect = [0.015, 0.015, 1.01, 1.01]
+    else:
+        rect = [-0.01, -0.01, 1.01, 1.01]
     if bar_rhoA == 38 and bar_rhoB == 8:
         figsize = (ncols * 2 + 1, nrows * 2 + 1)
         rect = [0.005, 0.005, 1., 1.]
@@ -75,9 +77,10 @@ def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_
     
     fontsize = 30
     plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1, rect=rect)
-    add_xlabel(fig, axes, "bottom", r"\phi_A", pA_arr, fontsize)
-    add_ylabel(fig, axes, "left", r"\phi_B", pB_arr, fontsize,
-        vertical=True, reverse=True)
+    if show_labels:
+        add_xlabel(fig, axes, "bottom", r"\phi_A", pA_arr, fontsize)
+        add_ylabel(fig, axes, "left", r"\phi_B", pB_arr, fontsize,
+            vertical=True, reverse=True)
 
     plt.savefig(fout_name)
     plt.close()
@@ -218,9 +221,17 @@ if __name__ == "__main__":
     # for Dr in [0.1, 0.2, 0.3, 1, 3]:
     #     square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=Dr, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08)
  
-    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
-    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="full")
+    # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
+    # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="full")
+
+    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
+    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="reduced", show_labels=False)
+
+    # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
+    # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
+    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.25, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, show_labels=False)
     # sohrab003
 
     # # eta = -2, eta_AB = 2

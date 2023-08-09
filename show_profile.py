@@ -140,7 +140,8 @@ def profiles_varied_etaAB():
 
 
 if __name__ == "__main__":
-    fname = "data/snap/L120_40_Dr0.100_k0.70_p40_6_r40_38_8_e-2.000_J0.500_-0.500_1000.gsd"
+    # fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.200_-0.200_111200.gsd"
+    fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_21200.gsd"
     # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
     plot_instant_profile(fname, bins=120, i_frame=-1)
 

@@ -230,7 +230,8 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr, float* v) {
     float* pos = new float[n_par * 3];
     uint32_t *type_id = new uint32_t[n_par];
     get_data_from_par(p_arr, pos, type_id);
-    uint64_t step = get_time_step();
+    // uint64_t step = get_time_step();
+    uint64_t step = start_ + i_step;
   
     //std::cout << "dump frame " << step << std::endl;
     gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
