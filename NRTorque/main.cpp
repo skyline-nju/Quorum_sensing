@@ -7,19 +7,21 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx =100;
+  double Lx =20;
   double Ly = Lx;
 
-  double rho0 = 0.5;
-  double eta = 8;
-  double k = 10;
-  double Dt = 0.;
-  double Dr = 0.1;
+  double rho0 = 10;
+  double eta = 0.5;
+  double k = 0.1;
+  double k2 = 100;
+  double Dt = 0.1;
+  double Dr = 1;
   double v0 = 1;
+  double sigma = 0.2;
 
-  double h = 0.02;
+  double h = 0.01;
   int n_step = 3000000;
-  int snap_interval = 10000;
+  int snap_interval = 5000;
   int log_interval = 10000;
   int seed = 100;
 
@@ -40,7 +42,9 @@ int main(int argc, char* argv[]) {
   EM_NRTorque_Rep integrator(h, Dt, Dr, v0);
 
   // cal force
-  NRTorque_Rep_2 kernal(eta, k, r_cut);
+  //NRTorque_Rep_2 kernal(eta, k, r_cut);
+  NRTorque_Rep_hardcore_2 kernal(eta, k, r_cut, k2, sigma);
+
   auto f1 = [&kernal](node_t* p1, node_t* p2) {
     kernal(*p1, *p2);
   };
@@ -55,8 +59,8 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_v%g_k%.3f_r%.3f_Dr%.3f_Dt%.3f_e%.3f_h%.4f_%d", 
-           Lx, v0, k, rho0, Dr, Dt, eta, h, seed);
+  snprintf(basename, 255, "L%g_v%g_k%.3f_%.3f_r%.3f_Dr%.3f_Dt%.3f_e%.3f_h%.4f_%d", 
+           Lx, v0, k, k2, rho0, Dr, Dt, eta, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 

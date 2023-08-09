@@ -271,3 +271,49 @@ void NRTorque_Rep_2::operator()(TPar& p1, TPar& p2, const BdyCondi& bc) const {
   bc.untangle(r12);
   eval(r12, p1, p2);
 }
+
+class NRTorque_Rep_hardcore_2 : public NRTorque_Rep_2 {
+public:
+  NRTorque_Rep_hardcore_2() = default;
+  NRTorque_Rep_hardcore_2(double eta, double k, double r_cut, double k2, double sigma)
+    : NRTorque_Rep_2(eta, k, r_cut), k2_(k2), sigma_(sigma){}
+
+  template <typename TPar>
+  void eval(const Vec_2<double>& r12_vec, TPar& p1, TPar& p2)  const;
+
+  template<typename TPar>
+  void operator()(TPar& p1, TPar& p2) const {
+    Vec_2<double> r12 = p2.pos - p1.pos;
+    eval(r12, p1, p2);
+  }
+
+  template<typename TPar, typename BdyCondi>
+  void operator()(TPar& p1, TPar& p2, const BdyCondi& bc) const {
+    Vec_2<double> r12 = p2.pos - p1.pos;
+    bc.untangle(r12);
+    eval(r12, p1, p2);
+  }
+
+  double k2_;
+  double sigma_;
+};
+
+template<typename TPar>
+void NRTorque_Rep_hardcore_2::eval(const Vec_2<double>& r12_vec, TPar& p1, TPar& p2)  const {
+  const double r12_square = r12_vec.square();
+  if (r12_square < r_cut_square_) {
+    double r = sqrt(r12_square);
+    double dr = r_cut_ - r;
+    Vec_2<double> r12_hat = r12_vec / r;
+    p1.tau += Eta_ * dr * p1.u.cross(r12_hat);
+    p2.tau -= Eta_ * dr * p2.u.cross(r12_hat);
+    Vec_2<double> f_rep = k_ * dr * r12_vec;
+    if (r < sigma_) {
+      f_rep += k2_ * (sigma_ - r) * r12_vec;
+    }
+    p1.f -= f_rep;
+    p2.f += f_rep;
+    p1.n_neighbor += 1;
+    p2.n_neighbor += 1;
+  }
+}
