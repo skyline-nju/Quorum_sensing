@@ -162,3 +162,15 @@ QSP_2::QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
   u.y = sin(theta);
   type_id = 0;
 }
+
+class Rep_QSP_2 : public QSP_2 {
+public:
+  Rep_QSP_2() : QSP_2(), f() {}
+  Rep_QSP_2(const Vec_2<double>& pos0) : QSP_2(pos0), f() {}
+  Rep_QSP_2(const Vec_2<double>& pos0, const Vec_2<double>& u0): QSP_2(pos0, u0), f() {}
+  template <typename TRan>
+  Rep_QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o): QSP_2(myran, l, o), f() {}
+
+  Vec_2<double> f;
+};
+

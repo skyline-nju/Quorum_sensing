@@ -124,7 +124,7 @@ public:
   template <typename TPar>
   void reset_local_density(std::vector<TPar>& p_arr) const;
 
-private:
+protected:
   double r_cut_;
   double r_cut_square_;
 };
@@ -174,5 +174,94 @@ void LinearDensityKernal::reset_local_density(std::vector<TPar>& p_arr) const {
   for (auto& p : p_arr) {
     p.rho_local[0] = 0.;
     p.rho_local[1] = 0.;
+  }
+}
+
+class LinearDensityKernal_w_Rep {
+public:
+  LinearDensityKernal_w_Rep(double r_cut, double sigma, double k)
+    : r_cut_(r_cut), r_cut_square_(r_cut* r_cut), sigma_(sigma), k_(k) {}
+
+  template <typename TPar>
+  void accum_density(double r12, TPar& p1, TPar& p2) const;
+
+  template <typename TPar>
+  void operator ()(TPar& p1, TPar& p2) const;
+
+  template <typename TPar, typename BdyCondi>
+  void operator ()(TPar& p1, TPar& p2, const BdyCondi& bc) const;
+
+  template <typename TPar>
+  void normalize(std::vector<TPar>& p_arr) const;
+
+  template <typename TPar>
+  void reset_local_density_and_force(std::vector<TPar>& p_arr) const;
+
+private:
+  double r_cut_;
+  double r_cut_square_;
+  double sigma_;
+  double k_;
+};
+
+template<typename TPar>
+void LinearDensityKernal_w_Rep::accum_density(double r12, TPar& p1, TPar& p2) const {
+  double density_weighted = r_cut_ - r12;
+  p1.rho_local[p2.type_id] += density_weighted;
+  p2.rho_local[p1.type_id] += density_weighted;
+
+  //!TODO need divided by a nomalized factor
+}
+
+template <typename TPar>
+void LinearDensityKernal_w_Rep::operator ()(TPar& p1, TPar& p2) const {
+  Vec_2<double> r12 = p2.pos - p1.pos;
+  const double r12_square = r12.square();
+  if (r12_square < r_cut_square_) {
+    double r12_module = sqrt(r12_square);
+    accum_density(r12_module, p1, p2);
+    if (r12_module < sigma_) {
+      const double f = (sigma_ - r12_module) * k_;
+      Vec_2<double> f_vec = (f / r12_module) * r12;
+      p2.f += f_vec;
+      p1.f -= f_vec;
+    }
+  }
+}
+
+template <typename TPar, typename BdyCondi>
+void LinearDensityKernal_w_Rep::operator ()(TPar& p1, TPar& p2, const BdyCondi& bc) const {
+  Vec_2<double> r12 = p2.pos - p1.pos;
+  bc.untangle(r12);
+  const double r12_square = r12.square();
+  if (r12_square < r_cut_square_) {
+    double r12_module = sqrt(r12_square);
+    accum_density(r12_module, p1, p2);
+    if (r12_module < sigma_) {
+      const double f = (sigma_ - r12_module) * k_;
+      Vec_2<double> f_vec = (f / r12_module) * r12;
+      p2.f += f_vec;
+      p1.f -= f_vec;
+    }
+  }
+}
+
+template <typename TPar>
+void LinearDensityKernal_w_Rep::normalize(std::vector<TPar>& p_arr) const {
+  double norm = 3. / M_PI;
+  for (auto& p : p_arr) {
+    p.rho_local[p.type_id] += 1;
+    p.rho_local[0] *= norm;
+    p.rho_local[1] *= norm;
+  }
+}
+
+template <typename TPar>
+void LinearDensityKernal_w_Rep::reset_local_density_and_force(std::vector<TPar>& p_arr) const {
+  for (auto& p : p_arr) {
+    p.rho_local[0] = 0.;
+    p.rho_local[1] = 0.;
+    p.f.x = 0;
+    p.f.y = 0;
   }
 }

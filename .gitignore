@@ -17,7 +17,7 @@
 *.gsd
 *.npz
 fig/
-
+data/
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

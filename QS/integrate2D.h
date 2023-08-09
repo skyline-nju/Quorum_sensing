@@ -57,8 +57,8 @@ void BD_EM::update(BiNode<BP_u_tau_2>& p, double Pe, const TDomain& dm, TRan& my
 
 class EM_QS_iso {
 public:
-  EM_QS_iso(double h, double Dt, double Dr) 
-    : h_(h), Dt_(sqrt(24 * Dt * h)), Dr_(sqrt(24 * Dr * h)), trans_noise_on_(Dt > 0.) {}
+  EM_QS_iso(double h, double Dt, double Dr, bool force_on) 
+    : h_(h), Dt_(sqrt(24 * Dt * h)), Dr_(sqrt(24 * Dr * h)), trans_noise_on_(Dt > 0.), force_on_(force_on) {}
 
   template <typename TPar, class BdyCondi, class TRan>
   void update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const;
@@ -68,6 +68,7 @@ protected:
   double Dt_; // sqrt(24 * h) by default
   double Dr_; // sqrt(72 * h) by default
   bool trans_noise_on_;
+  bool force_on_;
 };
 
 template<typename TPar, class BdyCondi, class TRan>
@@ -81,6 +82,10 @@ void EM_QS_iso::update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const
   if (trans_noise_on_) {
     p.pos.x += (myran.doub() - 0.5) * Dt_;
     p.pos.y += (myran.doub() - 0.5) * Dt_;
+  }
+  if (force_on_) {
+    p.pos.x += h_ * p.f.x;
+    p.pos.y += h_ * p.f.y;
   }
   bc.tangle(p.pos);
 }
