@@ -775,7 +775,7 @@ def fig2():
 if __name__ == "__main__":
     update_density_Sqt()
     # cluster_phase_separation()
-    # h_one_third_varied_L()
+    h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
     # L1280_varied_composition()

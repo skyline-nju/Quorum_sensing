@@ -305,6 +305,45 @@ def hstack(s1: hoomd.Snapshot, s2: hoomd.Snapshot) -> hoomd.Snapshot:
     s2.configuration.step = 0
     return s2
 
+
+def vstack(s1: hoomd.Snapshot, s2: hoomd.Snapshot) -> hoomd.Snapshot:
+    lx1 = s1.configuration.box[0]
+    ly1 = s1.configuration.box[1]
+    lx2 = s2.configuration.box[0]
+    ly2 = s2.configuration.box[1]
+    if lx1 != lx2:
+        print("Error, Lx=%g,%g" % (lx1, lx2))
+        sys.exit(1)
+    n1 = s1.particles.N
+    N = n1 + s2.particles.N
+    Lx, Ly = lx1, ly1 + ly2
+    pos = np.zeros((N, 3), dtype=np.float32)
+    type_id = np.zeros(N, dtype=np.uint32)
+    charge = np.zeros(N, dtype=np.float32)
+
+    dy1 = -ly2/2
+    dy2 = ly1/2
+    pos[:n1, 0] = s1.particles.position[:, 0]
+    pos[n1:, 0] = s2.particles.position[:, 0]
+    pos[:n1, 1] = s1.particles.position[:, 1] + dy1
+    pos[n1:, 1] = s2.particles.position[:, 1] + dy2
+    pos[:n1, 2] = s1.particles.position[:, 2]
+    pos[n1:, 2] = s2.particles.position[:, 2]
+    type_id[:n1] = s1.particles.typeid
+    type_id[n1:] = s2.particles.typeid
+    charge[:n1] = s1.particles.charge
+    charge[n1:] = s2.particles.charge
+
+    s2 = hoomd.Snapshot()
+    s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
+    s2.particles.N = N
+    s2.particles.position = pos
+    s2.particles.typeid = type_id
+    s2.particles.charge = charge
+    s2.particles.types = s1.particles.types
+    s2.configuration.step = 0
+    return s2
+
 def rot90(s: hoomd.Snapshot) -> hoomd.Snapshot:
     # Ly = s.configuration.box[1]
     # Lx = s.configuration.box[0]
@@ -323,21 +362,26 @@ def rot90(s: hoomd.Snapshot) -> hoomd.Snapshot:
 
 
 if __name__ == "__main__":
-    # folder = "/scratch03.local/yduan/QS_MPI_noself/L160_80_v3_1"
-    # basename = "L160_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e1.000_-2.200_J-3.12500_0.32000_h0.100_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L80_40_v3_1"
+    basename = "L80_40_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_1000.gsd"
 
-    # fname = f"{folder}/{basename}"
+    fname = f"{folder}/{basename}"
     # snap = read_one_frame(fname, -1)
+    s1 = read_one_frame(fname, 0)
+    s2 = read_one_frame(fname, -1)
+    s2 = shift_pos(s2, 30, -20)
+
+    snap = vstack(s1, s2)
 
 
-    folder1 = "/scratch03.local/yduan/QS_MPI_noself/L480_80_r10_10_10_h0.333"
-    folder2 = "/scratch03.local/yduan/QS_MPI_noself/L640_80_r10_10_10_h0.333"
-    fname1 = f"{folder1}/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    s1 = read_one_frame(fname1, -1)
-    fname2 = f"{folder2}/L640_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    s2 = read_one_frame(fname2, -1)
-    s1 = shift_pos(s1, 320, 0)
-    snap = hstack(s1, s2)
+    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L480_80_r10_10_10_h0.333"
+    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L640_80_r10_10_10_h0.333"
+    # fname1 = f"{folder1}/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    # s1 = read_one_frame(fname1, -1)
+    # fname2 = f"{folder2}/L640_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    # s2 = read_one_frame(fname2, -1)
+    # s1 = shift_pos(s1, 280, 0)
+    # snap = hstack(s1, s2)
 
 
     # snap = shift_pos(snap, 40, -10)
@@ -354,7 +398,7 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder1}/L1120_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2001.gsd"
+    fout = f"{folder}/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_2001.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
