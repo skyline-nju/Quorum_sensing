@@ -10,12 +10,12 @@ int main(int argc, char* argv[]) {
   double Lx =20;
   double Ly = Lx;
 
-  double rho0 = 10;
-  double eta = 0.5;
-  double k = 0.1;
+  double rho0 = 8;
+  double eta = 1;
+  double k = 0.55;
   double k2 = 100;
   double Dt = 0.1;
-  double Dr = 1;
+  double Dr = 0.6;
   double v0 = 1;
   double sigma = 0.2;
 
