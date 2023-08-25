@@ -34,7 +34,7 @@ def duplicate(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
     return s2
 
 
-def scale(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
+def scale(s: hoomd.Snapshot, nx: int, ny: int, eps=0) -> hoomd.Snapshot:
     N = s.particles.N * nx * ny
     lx = s.configuration.box[0]
     ly = s.configuration.box[1]
@@ -50,6 +50,18 @@ def scale(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
         pos[beg:end, 2] = s.particles.position[:, 2]
         type_id[beg:end] = s.particles.typeid
         charge[beg:end] = s.particles.charge
+    if nx > 1:
+        pos[:, 0] += (np.random.rand(N) - 0.5) * eps * nx
+        mask = pos[:, 0] < Lx/2
+        pos[:, 0][mask] += Lx
+        mask = pos[:, 0] >= Lx/2
+        pos[:, 0][mask] -= Lx
+    # if ny > 1:
+        pos[:, 1] += (np.random.rand(N) - 0.5) * eps * ny
+        mask = pos[:, 1] < Ly/2
+        pos[:, 1][mask] += Ly
+        mask = pos[:, 1] >= Ly/2
+        pos[:, 1][mask] -= Ly
     s2 = hoomd.Snapshot()
     s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
     s2.particles.N = N
@@ -362,43 +374,43 @@ def rot90(s: hoomd.Snapshot) -> hoomd.Snapshot:
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L80_40_v3_1"
-    basename = "L80_40_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_1000.gsd"
+    # folder = "/scratch03.local/yduan/QS_MPI_noself/L320_160_r10_10_10_h0.333"
+    # basename = "L320_160_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
 
-    fname = f"{folder}/{basename}"
+    # fname = f"{folder}/{basename}"
     # snap = read_one_frame(fname, -1)
-    s1 = read_one_frame(fname, 0)
-    s2 = read_one_frame(fname, -1)
-    s2 = shift_pos(s2, 30, -20)
+    # s1 = read_one_frame(fname, 0)
+    # s2 = read_one_frame(fname, -1)
+    # s2 = shift_pos(s2, 30, -20)
 
+    # snap = vstack(s1, s2)
+
+
+    folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_160_r10_10_10_h0.333"
+    folder2 = "/scratch03.local/yduan/QS_MPI_noself/L320_160_r10_10_10_h0.333"
+    fname1 = f"{folder1}/L320_320_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    s1 = read_one_frame(fname1, -1)
+    fname2 = f"{folder2}/L320_160_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    s2 = read_one_frame(fname2, -1)
+    # s1 = shift_pos(s1, 280, 0)
     snap = vstack(s1, s2)
 
 
-    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L480_80_r10_10_10_h0.333"
-    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L640_80_r10_10_10_h0.333"
-    # fname1 = f"{folder1}/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    # s1 = read_one_frame(fname1, -1)
-    # fname2 = f"{folder2}/L640_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    # s2 = read_one_frame(fname2, -1)
-    # s1 = shift_pos(s1, 280, 0)
-    # snap = hstack(s1, s2)
-
-
-    # snap = shift_pos(snap, 40, -10)
+    # snap = shift_pos(snap, 0, 80)
     # snap = shift_v_slice(snap, -120, 0, 80)
 
     # snap = swap_h(snap, 20, 35, -40)
-    # snap = adjust_density(snap, 20, 20, mode="copy")
-    # snap = scale(snap, 2, 1)
+    # snap = adjust_density(snap, 4, 0, mode="copy")
+    # snap = scale(snap, 3, 1, eps=0.3)
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 1, 2)
+    # snap = duplicate(snap, 2, 1)
 
     # snap = rot90(snap)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_2001.gsd"
+    fout = f"{folder1}/L320_480_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

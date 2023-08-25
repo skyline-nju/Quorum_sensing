@@ -127,6 +127,7 @@ def get_h(fname):
 
 def update_density_Sqt(dx=1):
     prefix_list = [
+        f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L1280_r5_5_5_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333",
         # f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.100_Dt0.01",
@@ -250,7 +251,7 @@ def h_one_third_varied_L():
     para["pB"] = 3.85
 
     composition_pairs = [(3, 6), (5, 6), (5.5, 3.85), (6, 3)]
-    L_list = [[1280], [1280], [1280, 2560], [1280]]
+    L_list = [[1280], [1280], [640, 1280, 2560], [1280]]
     ms = 3.5
     titles = [r"(a) $\phi_A=%g,\phi_B=%g$",
               r"(b) $\phi_A=%g,\phi_B=%g$",
@@ -432,8 +433,8 @@ def L1280_varied_composition():
             q1_B[i] = get_q1(q, rho_Sqt[1][i])
         line, = ax2.plot(t, 2 * np.pi/q1_A, "o", fillstyle="none", ms=ms, label=r"$R_A:\rho_0=%g$" % (para["rho0"]))
         ax2.plot(t, 2 * np.pi/q1_B, "^", fillstyle="none", ms=ms, c=line.get_c(), label=r"$R_B:\rho_0=%g$" % (para["rho0"]))
-    para["pA"] = 5
-    para["pB"] = 8.7
+    para["pA"] = 3.75
+    para["pB"] = 5
     para["rho0"] = para["bar_rho_A"] = para["bar_rho_B"] = 5
     L_arr = [1280, 2560]
     for i, para["Lx"] in enumerate(L_arr):
@@ -459,7 +460,11 @@ def L1280_varied_composition():
     add_line(ax2, 0.1, 0.01, 0.95, 0.5, label="0.5", xl=0.80, yl=0.75, fontsize="large")
 
     add_line(ax3, 0.1, 0.01, 0.95, 0.33, label="0.33", xl=0.40, yl=0.4, fontsize="large")
-    add_line(ax3, 0.4, 0.1, 0.95, 0.5, label="0.5", xl=0.40, yl=0.05, fontsize="large")
+    add_line(ax3, 0.4, 0.1, 0.95, 0.13, label="0.13", xl=0.40, yl=0.05, fontsize="large")
+    add_line(ax3, 0.5, 0.4, 0.95, 0.2, label="0.2", xl=0.40, yl=0.3, fontsize="large")
+    # add_line(ax3, 0.6, 0.4, 0.95, 0.2, label="0.2", xl=0.40, yl=0.3, fontsize="large")
+
+
     # add_line(ax3, 0.1, 0.1, 0.95, 0.14, label="0.14", xl=0.80, yl=0.75, fontsize="large")
 
     # add_line(axes[1], 0.1, 0.4, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
@@ -778,7 +783,7 @@ if __name__ == "__main__":
     h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
-    # L1280_varied_composition()
+    L1280_varied_composition()
 
     # SP_S1D1_S2D1()
 

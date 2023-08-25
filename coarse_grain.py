@@ -152,6 +152,113 @@ def coarse_grain_all(prefix, dx, forced_updating=False, pat="*.gsd", vxvy=False,
         coarse_grain(fin, fout, dx, vxvy=vxvy, only_rho=only_rho)
             
 
+def coarse_grain_one_frame_1D(i_frame: int,
+                              fgsd: fl.GSDFile,
+                              fields: np.ndarray,
+                              dx: float,
+                              Lx: float,
+                              Ly: float):
+    ncols = int(Lx / dx)
+    bin_area = dx * Ly
+
+    par_num = np.zeros((2, ncols), int)
+    mx, my, v = np.zeros((3, 2, ncols))
+
+    pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
+    try:
+        id_type = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+    except KeyError:
+        id_type = np.zeros(pos.shape[0], np.int32)
+    try:
+        speed = fgsd.read_chunk(frame=i_frame, name="particles/charge")
+    except KeyError:
+        print("Warning, not found speed[%d]" % i_frame)
+        speed = np.zeros(id_type.size, np.single)
+
+    x = pos[:,0] + Lx / 2
+    # y = pos[:,1] + Ly / 2
+    ux = np.cos(pos[: ,2])
+    uy = np.sin(pos[:, 2])
+
+    col = (x/dx).astype(int)
+    col[col < 0] += ncols
+    col[col >= ncols] -= ncols
+    
+    for j in range(x.size):
+        my_id = id_type[j]
+        my_col = col[j]
+        par_num[my_id, my_col] += 1
+        mx[my_id, my_col] += ux[j]
+        my[my_id, my_col] += uy[j]
+        v[my_id, my_col] += speed[j]
+    
+    fields[i_frame][0:2] = par_num / bin_area
+    fields[i_frame][2:4] = mx / bin_area
+    fields[i_frame][4:6] = my / bin_area
+    mask = par_num > 0
+    fields[i_frame][6:8][mask] = v[mask] / par_num[mask]
+
+
+def coarse_grain_1D(fin: str, fout: str, dx: float):
+    if os.path.exists(fout):
+        with np.load(fout, "r") as data:
+            t0 = data["t"]
+            x0 = data["x"]
+            fields0 = data["fields"]
+            fields_name0 = data["fields_name"]
+            existed_frames = t0.size
+    else:
+        existed_frames = 0
+    with fl.open(name=fin, mode="rb") as fgsd:
+        if fgsd.nframes == 0:
+            print("Warning, zero frame found in", fin)
+        else:
+            nframes = fgsd.nframes
+            print(nframes, "frames found for", fin)
+            # print(fgsd.find_matching_chunk_names(""))
+            # for j in range(fgsd.nframes):
+            #     print(j, fgsd.chunk_exists(frame=j, name='particles/charge'))
+            Lx, Ly = fgsd.read_chunk(frame=0, name="configuration/box")[:2]
+            ncols = int(Lx / dx)
+            x = np.arange(ncols) * dx + dx / 2
+            t = np.zeros(nframes, int)
+
+            # one frame = [rho_A, rho_B, mx_A, mx_B, my_A, my_B, v_A, v_B]
+            fields = np.zeros((nframes, 8, ncols), np.single)
+
+            if existed_frames > 0:
+                t[:existed_frames] = t0
+                fields[:existed_frames] = fields0
+
+            for i_frame in range(existed_frames, nframes):
+                try:
+                    t[i_frame] = fgsd.read_chunk(frame=i_frame, name="configuration/step")[0]
+                except KeyError:
+                    t[i_frame] = 0
+                    print("Warning, not found t[%d]" % i_frame)
+                print("coarse-graining frame %d/%d, t=%g..." % (i_frame, nframes, t[i_frame]))
+                coarse_grain_one_frame_1D(i_frame, fgsd, fields, dx, Lx, Ly)
+            
+            fields_name = np.array(["rho_A", "rho_B", "mx_A", "mx_B", "my_A", "my_B", "v_A", "v_B"])
+            np.savez_compressed(fout, t=t, x=x, fields=fields, fields_name=fields_name)
+
+
+def coarse_grain_all_1D(prefix, dx, forced_updating=False, pat="*.gsd"):
+    out_folder = f"{prefix}/profile_1D_dx{dx:g}"
+    if not os.path.exists(out_folder):
+        os.mkdir(out_folder)
+    
+    fins = glob.glob(f"{prefix}/{pat}")
+    for fin in fins:
+        basename = os.path.basename(fin)
+        out_basename = basename.replace(".gsd", ".npz")
+        fout = f"{out_folder}/{out_basename}"
+        if os.path.exists(fout):
+            if not forced_updating and os.path.getmtime(fout) > os.path.getmtime(fin):
+                print("skipping", fin)
+                continue
+        coarse_grain_1D(fin, fout, dx)
+
 
 if __name__ == "__main__":
     from datetime import datetime
@@ -217,38 +324,38 @@ if __name__ == "__main__":
     # coarse_grain_all(prefix, dx=1, vxvy=True)
 
 
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1/coarse_grain_dx1"
-    prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25/coarse_grain_dx0.5"
-    J_AB = -1
-    Lx = 80
-    # basename = "L80_10_Dr0.100_r20_e-2.000_-2.000_J%.6f_%.6f_h0.100_1000.npz" % (J_AB, -0.25**2/J_AB)
-    basename = "L30_10_Dr6_12_v8_1_r60_e-0.9725_-1.5091_J%.6f_%.6f_h0.025_2000.npz" % ((J_AB, -0.25**2/J_AB))
-    fin = f"{prefix}/{basename}"
-    with np.load(fin, "r") as data:
-        t = data["t"]
-        x = data["x"]
+    # # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1/coarse_grain_dx1"
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25/coarse_grain_dx0.5"
+    # J_AB = -1
+    # Lx = 80
+    # # basename = "L80_10_Dr0.100_r20_e-2.000_-2.000_J%.6f_%.6f_h0.100_1000.npz" % (J_AB, -0.25**2/J_AB)
+    # basename = "L30_10_Dr6_12_v8_1_r60_e-0.9725_-1.5091_J%.6f_%.6f_h0.025_2000.npz" % ((J_AB, -0.25**2/J_AB))
+    # fin = f"{prefix}/{basename}"
+    # with np.load(fin, "r") as data:
+    #     t = data["t"]
+    #     x = data["x"]
 
-        rho_A = np.zeros((t.size, x.size))
-        rho_B = np.zeros((t.size, x.size))
+    #     rho_A = np.zeros((t.size, x.size))
+    #     rho_B = np.zeros((t.size, x.size))
 
-        fields = data["fields"]
-        for i in range(t.size):
-            rho_A[i] = np.mean(fields[i][0], axis=0)
-            rho_B[i] = np.mean(fields[i][1], axis=0)
+    #     fields = data["fields"]
+    #     for i in range(t.size):
+    #         rho_A[i] = np.mean(fields[i][0], axis=0)
+    #         rho_B[i] = np.mean(fields[i][1], axis=0)
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 6), sharex=True, sharey=True, constrained_layout=True)
-        ax1.imshow(rho_A, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
-        ax2.imshow(rho_B, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
-        # ax1.axis("a")
+    #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 6), sharex=True, sharey=True, constrained_layout=True)
+    #     ax1.imshow(rho_A, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
+    #     ax2.imshow(rho_B, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
+    #     # ax1.axis("a")
 
-        ax1.set_xlabel(r"$x$", fontsize="large")
-        ax2.set_xlabel(r"$x$", fontsize="large")
-        ax1.set_ylabel(r"$t$", fontsize="x-large")
-        ax1.set_title(r"(a) $\langle\rho_A(\mathbf{r}, t)\rangle_y$")
-        ax2.set_title(r"(b) $\langle\rho_B(\mathbf{r}, t)\rangle_y$")
+    #     ax1.set_xlabel(r"$x$", fontsize="large")
+    #     ax2.set_xlabel(r"$x$", fontsize="large")
+    #     ax1.set_ylabel(r"$t$", fontsize="x-large")
+    #     ax1.set_title(r"(a) $\langle\rho_A(\mathbf{r}, t)\rangle_y$")
+    #     ax2.set_title(r"(b) $\langle\rho_B(\mathbf{r}, t)\rangle_y$")
 
-        plt.show()
-        plt.close()
+    #     plt.show()
+    #     plt.close()
         
         # for i in range(500, 505):
         #     plt.plot(x, rho_A[i])
@@ -256,3 +363,37 @@ if __name__ == "__main__":
         #     plt.show()
         #     plt.close()
 
+
+    Lx=1280
+    seed=1000
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_80_r10_10_10_h0.333"
+    coarse_grain_all_1D(prefix, 1, False)
+
+
+    fnpz =  f"{prefix}/profile_1D_dx1/L{Lx:g}_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed:d}.npz"
+    # fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, constrained_layout=True)
+    
+    fig = plt.figure(layout='constrained', figsize=(8, 6))
+    subfig = fig.subfigures(1, 1)
+    axes = subfig.subplots(2, 1, sharex=True)
+    ax1, ax2 = axes
+    with np.load(fnpz, "r") as data:
+            t = data["t"]
+            x = data["x"]
+            fields = data["fields"]
+
+            rhoA = fields[:, 0]
+            rhoB = fields[:, 1]
+            im1 = ax1.imshow(rhoB[60:], origin="lower", aspect="auto", extent=[0, Lx, t[60]/3, t[-1]/3], vmax=30)
+            im2 = ax2.imshow(rhoB[:61], origin="lower", aspect="auto", extent=[0, Lx, np.log10(t[0]/3), np.log10(t[60]/3)], vmax=30)
+
+            ax1.set_ylabel(r"$t$", fontsize="large")
+            ax2.set_ylabel(r"$\log t$", fontsize="large")
+            ax2.set_xlabel(r"$x$", fontsize="large")
+
+            subfig.colorbar(im1, shrink=0.6, ax=axes, extend="max")
+            subfig.text(0.91, 0.82, r"$\langle \rho_B\rangle_{y}$", fontsize="x-large")
+            # subfig.suptitle('Right plots', fontsize='x-large')
+            # plt.show()
+            plt.savefig("coarsening_1D_L1280.pdf")
+            plt.close()
