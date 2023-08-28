@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NRTorque", "NRTorque\NRTorq
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TravellingLightPat", "TravellingLightPat\TravellingLightPat.vcxproj", "{9FB00A70-B441-45C8-AD8A-14E102892BC2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Reduced_bubble", "Reduced_bubble\Reduced_bubble.vcxproj", "{757F457C-B11D-4020-968D-9FAA76E5CACF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{9FB00A70-B441-45C8-AD8A-14E102892BC2}.Release|x64.Build.0 = Release|x64
 		{9FB00A70-B441-45C8-AD8A-14E102892BC2}.Release|x86.ActiveCfg = Release|Win32
 		{9FB00A70-B441-45C8-AD8A-14E102892BC2}.Release|x86.Build.0 = Release|Win32
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Debug|x64.ActiveCfg = Debug|x64
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Debug|x64.Build.0 = Debug|x64
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Debug|x86.ActiveCfg = Debug|Win32
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Debug|x86.Build.0 = Debug|Win32
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x64.ActiveCfg = Release|x64
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x64.Build.0 = Release|x64
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x86.ActiveCfg = Release|Win32
+		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -16,6 +16,7 @@
 .vscode
 *.gsd
 *.npz
+*.dat
 fig/
 data/
 # User-specific files (MonoDevelop/Xamarin Studio)

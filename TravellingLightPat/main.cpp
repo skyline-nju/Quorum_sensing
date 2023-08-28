@@ -7,18 +7,18 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 200;
+  double Lx = 100;
   double Ly = 40;
 
-  double rho0 = 20;
+  double rho0 = 40;
 
 
-  double Dr = 0.1;
+  double Dr = 1;
   double Dt = 0;
   double v0 = 0.5;
   double v1 = 4;
   double c = 0.5;
-  double width = 40;
+  double width = 1;
   double h = 0.01;
   int seed = 123;
   int snap_interval = 1000;
