@@ -179,7 +179,6 @@ public:
   Vec_2<double> u;
   double tau;
   uint32_t type_id = 0;
-  uint32_t n_neighbor = 0;
 };
 
 template<typename TRan>
@@ -202,4 +201,20 @@ public:
     : Par_NRTorque_2(myran, l, o), f() {}
 
   Vec_2<double> f;
+  uint32_t n_neighbor = 0;
 };
+
+class Par_NRTorque_QS_2 : public Par_NRTorque_2 {
+public:
+  Par_NRTorque_QS_2() : Par_NRTorque_2() {}
+  Par_NRTorque_QS_2(const Vec_2<double>& pos0) : Par_NRTorque_2(pos0) {}
+  Par_NRTorque_QS_2(const Vec_2<double>& pos0, const Vec_2<double>& u0) : Par_NRTorque_2(pos0, u0) {}
+
+  template <typename TRan>
+  Par_NRTorque_QS_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o) : Par_NRTorque_2(myran, l, o) {}
+
+
+  float rho_local=0.;
+};
+
+

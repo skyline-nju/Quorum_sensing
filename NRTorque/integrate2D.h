@@ -123,7 +123,7 @@ void EM_QS_iso_harmonic::update(TPar& p, const BdyCondi& bc, TRan& myran, double
 }
 
 template<typename TPar>
-double cal_v(double v0, double kappa, double rho0, double eta, double JAB, double JBA, TPar& p) {
+double cal_v(double v0, double kappa, double rho0, double eta, double JAB, double JBA, const TPar& p) {
   double v;
   double d_rhoA = (p.rho_local[0] - rho0) / (rho0 * kappa);
   double d_rhoB = (p.rho_local[1] - rho0) / (rho0 * kappa);
@@ -133,6 +133,14 @@ double cal_v(double v0, double kappa, double rho0, double eta, double JAB, doubl
   } else {
     v = v0 * (1 + kappa * tanh(eta * d_rhoB)) * (1 + kappa * tanh(JBA * d_rhoA));
   }
+  return v;
+}
+
+
+template<typename TPar>
+double cal_v(double v0, double kappa, double rho0, double eta, const TPar& p) {
+  double d_rho = (p.rho_local - rho0) / (rho0 * kappa);
+  double v = v0 * (1 + kappa * tanh(eta * d_rho));
   return v;
 }
 
@@ -179,19 +187,12 @@ void EM_NRTorque::update(TPar& p, const BdyCondi& bc, TRan& myran) const {
   p.n_neighbor = 0;
 }
 
-class EM_NRTorque_Rep {
+class EM_NRTorque_Rep: public EM_NRTorque {
 public:
-  EM_NRTorque_Rep(double h, double Dt, double Dr, double v0)
-    : h_(h), Dt_(sqrt(24 * Dt * h)), Dr_(sqrt(24 * Dr * h)), v0_(v0), trans_noise_on_(Dt > 0.) {}
+  EM_NRTorque_Rep(double h, double Dt, double Dr, double v0) : EM_NRTorque(h, Dt, Dr, v0) {}
 
   template <typename TPar, class BdyCondi, class TRan>
   void update(TPar& p, const BdyCondi& bc, TRan& myran) const;
-protected:
-  double h_;
-  double Dt_; // sqrt(24 * h) by default
-  double Dr_; // sqrt(24 * h) by default
-  double v0_;
-  bool trans_noise_on_;
 };
 
 template<typename TPar, class BdyCondi, class TRan>
@@ -210,4 +211,28 @@ void EM_NRTorque_Rep::update(TPar& p, const BdyCondi& bc, TRan& myran) const {
   p.n_neighbor = 0;
   p.f.x = 0;
   p.f.y = 0;
+}
+
+class EM_NRTorque_QS: public EM_NRTorque {
+public:
+  EM_NRTorque_QS(double h, double Dt, double Dr, double v0) : EM_NRTorque(h, Dt, Dr, v0) {}
+
+  template <typename TPar, class BdyCondi, class TRan>
+  void update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const;
+};
+
+template<typename TPar, class BdyCondi, class TRan>
+void EM_NRTorque_QS::update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const {
+  const double d_theta = (myran.doub() - 0.5) * Dr_ + p.tau * h_;
+  Vec_2<double> u = p.update_ori(d_theta);
+  double displace = h_ * v;
+  p.pos.x += u.x * displace;
+  p.pos.y += u.y * displace;
+  if (trans_noise_on_) {
+    p.pos.x += (myran.doub() - 0.5) * Dt_;
+    p.pos.y += (myran.doub() - 0.5) * Dt_;
+  }
+  bc.tangle(p.pos);
+  p.tau = 0.;
+  p.rho_local = 0.;
 }

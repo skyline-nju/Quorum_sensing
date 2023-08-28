@@ -10,26 +10,26 @@ int main(int argc, char* argv[]) {
   double Lx =20;
   double Ly = Lx;
 
-  double rho0 = 8;
-  double eta = 1;
-  double k = 0.55;
-  double k2 = 100;
-  double Dt = 0.1;
-  double Dr = 0.6;
+  double rho0 = 40;
+  double rhoA = rho0;
+  double eta = -4;
+  double q = -4;
+  double Dt = 0;
+  double Dr = 1;
   double v0 = 1;
-  double sigma = 0.2;
+  double kappa = 0.7;
 
-  double h = 0.01;
-  int n_step = 3000000;
-  int snap_interval = 5000;
+  double h = 0.1;
+  int n_step = 10000;
+  int snap_interval = 1000;
   int log_interval = 10000;
-  int seed = 100;
+  int seed = 1000;
 
   std::string ini_mode = "new";  // should be "new" or "restart"
 
-  int n_par = int(rho0 * Lx * Ly);
+  int n_par = int(rhoA * Lx * Ly);
 
-  typedef BiNode<Par_NRTorque_Rep_2> node_t;
+  typedef BiNode<Par_NRTorque_QS_2> node_t;
   Ranq2 myran(seed);
   Vec_2<double> gl_l(Lx, Ly);
   double r_cut = 1;
@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
   std::vector<node_t> p_arr;
   
   // ini integrator
-  EM_NRTorque_Rep integrator(h, Dt, Dr, v0);
+  EM_NRTorque_QS integrator(h, Dt, Dr, v0);
 
   // cal force
   //NRTorque_Rep_2 kernal(eta, k, r_cut);
-  NRTorque_Rep_hardcore_2 kernal(eta, k, r_cut, k2, sigma);
+  NRTorque_QS_2 kernal(r_cut, q, rho0);
 
   auto f1 = [&kernal](node_t* p1, node_t* p2) {
     kernal(*p1, *p2);
@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_v%g_k%.3f_%.3f_r%.3f_Dr%.3f_Dt%.3f_e%.3f_h%.4f_%d", 
-           Lx, v0, k, k2, rho0, Dr, Dt, eta, h, seed);
+  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_e%.3f_q%.3f_h%.3f_%d", 
+           Lx, Ly, Dr, Dt, rho0, eta, q, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
@@ -82,9 +82,11 @@ int main(int argc, char* argv[]) {
   float* rho_local = new float[n_par];
   for (int t = 1; t <= n_step; t++) {
     cl.for_each_pair(f1, f2);
+    kernal.normalize(p_arr);
     for (int i = 0; i < n_par; i++) {
-      rho_local[i] = (p_arr[i].n_neighbor + 1) / M_PI;
-      integrator.update(p_arr[i], pdm, myran);
+      double v = cal_v(v0, kappa, rho0, eta, p_arr[i]);
+      rho_local[i] = p_arr[i].rho_local;
+      integrator.update(p_arr[i], pdm, myran, v);
     }
     cl.recreate(p_arr);
     gsd.dump(t, p_arr, rho_local);

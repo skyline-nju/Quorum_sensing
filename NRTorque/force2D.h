@@ -317,3 +317,63 @@ void NRTorque_Rep_hardcore_2::eval(const Vec_2<double>& r12_vec, TPar& p1, TPar&
     p2.n_neighbor += 1;
   }
 }
+
+class NRTorque_QS_2 {
+public:
+  NRTorque_QS_2(double r_cut, double torque_strength, double rho0)
+    : r_cut_(r_cut), r_cut_square_(r_cut* r_cut), torque_strength_(torque_strength/rho0) {}
+
+  template <typename TPar>
+  void eval(const Vec_2<double>& r12_vec, TPar& p1, TPar& p2)  const;
+
+  template<typename TPar>
+  void operator()(TPar& p1, TPar& p2) const {
+    Vec_2<double> r12 = p2.pos - p1.pos;
+    eval(r12, p1, p2);
+  }
+
+  template<typename TPar, typename BdyCondi>
+  void operator()(TPar& p1, TPar& p2, const BdyCondi& bc) const {
+    Vec_2<double> r12 = p2.pos - p1.pos;
+    bc.untangle(r12);
+    eval(r12, p1, p2);
+  }
+
+  template <typename TPar>
+  void normalize(std::vector<TPar>& p_arr) const;
+
+  template <typename TPar>
+  void reset_local_density(std::vector<TPar>& p_arr) const {
+    for (auto& p : p_arr) {
+      p.rho_local = 0.;
+    }
+  }
+private:
+  double r_cut_;
+  double r_cut_square_;
+  double torque_strength_;
+};
+
+template <typename TPar>
+void NRTorque_QS_2::eval(const Vec_2<double>& r12_vec, TPar& p1, TPar& p2) const {
+  const double r12_square = r12_vec.square();
+  if (r12_square < r_cut_square_) {
+    double r = sqrt(r12_square);
+    Vec_2<double> r12_hat = r12_vec / r;
+    double dr = r_cut_ - r;
+    p1.tau += dr * p1.u.cross(r12_hat);
+    p2.tau -= dr * p2.u.cross(r12_hat);
+    p1.rho_local += dr;
+    p2.rho_local += dr;
+  }
+}
+
+template<typename TPar>
+void NRTorque_QS_2::normalize(std::vector<TPar>& p_arr) const {
+  double norm = 3. / M_PI;
+  for (auto& p : p_arr) {
+    p.rho_local += 1;
+    p.rho_local *= norm;
+    p.tau *= torque_strength_;
+  }
+}
