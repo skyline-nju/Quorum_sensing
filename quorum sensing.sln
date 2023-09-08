@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TravellingLightPat", "Trave
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Reduced_bubble", "Reduced_bubble\Reduced_bubble.vcxproj", "{757F457C-B11D-4020-968D-9FAA76E5CACF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IQS", "IQS\IQS.vcxproj", "{0B523486-7A82-470E-A596-46F6195DDDAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,6 +73,14 @@ Global
 		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x64.Build.0 = Release|x64
 		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x86.ActiveCfg = Release|Win32
 		{757F457C-B11D-4020-968D-9FAA76E5CACF}.Release|x86.Build.0 = Release|Win32
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Debug|x64.ActiveCfg = Debug|x64
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Debug|x64.Build.0 = Debug|x64
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Debug|x86.ActiveCfg = Debug|Win32
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Debug|x86.Build.0 = Debug|Win32
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Release|x64.ActiveCfg = Release|x64
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Release|x64.Build.0 = Release|x64
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Release|x86.ActiveCfg = Release|Win32
+		{0B523486-7A82-470E-A596-46F6195DDDAC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

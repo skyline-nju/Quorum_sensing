@@ -13,14 +13,14 @@ int main(int argc, char* argv[]) {
   double rho0 = 40;
   double rhoA = rho0;
   double eta = -4;
-  double q = -4;
+  double q = -5;
   double Dt = 0;
   double Dr = 1;
   double v0 = 1;
   double kappa = 0.7;
 
-  double h = 0.1;
-  int n_step = 10000;
+  double h = 0.02;
+  int n_step = 20000;
   int snap_interval = 1000;
   int log_interval = 10000;
   int seed = 1000;

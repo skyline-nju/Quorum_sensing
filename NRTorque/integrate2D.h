@@ -224,6 +224,9 @@ public:
 template<typename TPar, class BdyCondi, class TRan>
 void EM_NRTorque_QS::update(TPar& p, const BdyCondi& bc, TRan& myran, double v) const {
   const double d_theta = (myran.doub() - 0.5) * Dr_ + p.tau * h_;
+  // if (d_theta > 3.14159 || d_theta < -3.14159) {
+  //   std::cout << "d_theta=" << d_theta << std::endl;
+  // }
   Vec_2<double> u = p.update_ori(d_theta);
   double displace = h_ * v;
   p.pos.x += u.x * displace;
