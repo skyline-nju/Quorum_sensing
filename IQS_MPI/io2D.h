@@ -121,14 +121,10 @@ public:
   void dump_1S(int i_step, const std::vector<TPar>& p_arr);
 
   template <typename TFloat, typename TInt>
-  void read(int i_frame, TFloat* x, TFloat* y, TFloat* theta, TInt* type_id);
-
+  void read(int i_frame, TFloat* x, TFloat* y, TFloat* theta, TInt* type_id, TFloat* v);
 
   template <typename TFloat, typename TInt>
-  void read_last_frame(TFloat* x, TFloat* y, TFloat* theta, TInt* type_id);
-
-  //template <typename TFloat, typename TInt>
-  //void read(int i_frame, TFloat* x, TFloat* y, TFloat* theta, TInt* type_id, TFloat* v);
+  void read_last_frame(TFloat* x, TFloat* y, TFloat* theta, TInt* type_id, TFloat* v=nullptr);
 
   void ini(const std::string& filename, const std::string& open_flag, const Vec_2<double>& gl_l);
 
@@ -329,7 +325,7 @@ void Snap_GSD_2::dump_1S(int i_step, const std::vector<TPar>& p_arr) {
 template<typename TFloat, typename TInt>
 void io::Snap_GSD_2::read(int i_frame,
                           TFloat* x, TFloat* y, TFloat* theta,
-                          TInt* type_id) {
+                          TInt* type_id, TFloat* v) {
   if (my_rank_ == 0) {
     uint32_t n_par;
     const gsd_index_entry* chunk = gsd_find_chunk(handle_, i_frame, "particles/N");
@@ -347,6 +343,17 @@ void io::Snap_GSD_2::read(int i_frame,
     chunk = gsd_find_chunk(handle_, i_frame, "particles/typeid");
     gsd_read_chunk(handle_, type_id0, chunk);
 
+    float* v0 = nullptr;
+    if (v != nullptr) {
+      v0 = new float[size_t(n_par)];
+      chunk = gsd_find_chunk(handle_, i_frame, "particles/charge");
+      gsd_read_chunk(handle_, v0, chunk);
+      for (int i = 0; i < n_par; i++) {
+        v[i] = v0[i];
+      }
+      delete[] v0;
+    }
+
     double half_Lx = gl_l_.x * 0.5;
     double half_Ly = gl_l_.y * 0.5;
     for (int i = 0; i < n_par; i++) {
@@ -357,22 +364,21 @@ void io::Snap_GSD_2::read(int i_frame,
       tangle_1D(x[i], gl_l_.x);
       tangle_1D(y[i], gl_l_.y);
     }
-
     delete[] pos;
     delete[] type_id0;
   }
 }
 
+
 template<typename TFloat, typename TInt>
-void io::Snap_GSD_2::read_last_frame(TFloat* x, TFloat* y,
-                                     TFloat* theta, TInt* type_id) {
+void io::Snap_GSD_2::read_last_frame(TFloat* x, TFloat* y, TFloat* theta, TInt* type_id, TFloat* v) {
   if (my_rank_ == 0) {
     int nframes = gsd_get_nframes(handle_);
     if (nframes < 1) {
       std::cout << "Error, nframes=" << nframes << std::endl;
       exit(1);
     } else {
-      read(nframes - 1, x, y, theta, type_id);
+      read(nframes - 1, x, y, theta, type_id, v);
     }
   }
 }

@@ -10,23 +10,34 @@ int main(int argc, char* argv[]) {
   double Lx =40;
   double Ly = 40;
 
-  double rho0 = 20;
-  double rhoA = 30;
-  double eta = -2;
+  int log_interval = 10000;
   double Dt = 0;
   double v0 = 1;
   double kappa = 0.9;
-  double Dr = 0.1;
 
-  double gamma = 0.01;
+#ifdef _MSC_VER
+  double rho0 = 20;
+  double rhoA = 20;
+  double eta = 6;
+  double Dr = 0.08;
+  double gamma = 2;
   double h = 0.1;
-  int n_step = 20000;
+  int n_step = 10000;
   int snap_interval = 1000;
-  int log_interval = 10000;
   int seed = 1000;
-
-  std::string ini_mode = "new";  // should be "new" or "restart"
-
+  std::string ini_mode = "restart";  // should be "new" or "restart"
+#else
+  double rho0 = atof(argv[1]);
+  double rhoA = atof(argv[2]);
+  double eta = atof(argv[3]);
+  double Dr = atof(argv[4]);
+  double gamma = atof(argv[5]);
+  double h = atof(argv[6]);
+  int n_step = atoi(argv[7]);
+  int snap_interval = atoi(argv[8]);
+  int seed = atoi(argv[9]);
+  std::string ini_mode = argv[10]; // should be "new" or "restart"
+#endif
   int n_par = int(rhoA * Lx * Ly);
 
   typedef BiNode<IQSP_2> node_t;
@@ -60,7 +71,7 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_g%.3f_h%.3f_%d", 
+  snprintf(basename, 255, "L%g_%g_Dr%.3f_Dt%g_r%g_p%g_e%.3f_g%.3f_h%.3f_%d", 
            Lx, Ly, Dr, Dt, rho0, rhoA, eta, gamma, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
@@ -77,7 +88,6 @@ int main(int argc, char* argv[]) {
   } else {
     gsd.read_last_frame(p_arr);
   }
-  
   cl.create(p_arr);
   
   float* v = new float[n_par];

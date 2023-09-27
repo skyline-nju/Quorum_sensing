@@ -42,9 +42,6 @@
     <ClInclude Include="node.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="NRQS.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="particle2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -52,6 +49,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="vect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IQS.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,10 +65,10 @@
     <ClCompile Include="io2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="NRQS.cpp">
+    <ClCompile Include="particle2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="particle2D.cpp">
+    <ClCompile Include="IQS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

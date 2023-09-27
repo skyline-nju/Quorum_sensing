@@ -1,0 +1,145 @@
+#include "IQS.h"
+
+void run(const Vec_2<double>& gl_l,
+         double phi, double rho0,
+         double eta, double kappa,
+         double gamma, double Dt, double Dr,
+         double h, double v0,
+         int n_step, int snap_dt, double snap_log_sep,
+         const std::string& ini_mode,
+         unsigned long long seed,
+         MPI_Comm group_comm) {
+  typedef BiNode<IQSP_2> node_t;
+  int my_rank, tot_proc;
+  MPI_Comm_rank(group_comm, &my_rank);
+  MPI_Comm_size(group_comm, &tot_proc);
+  Ranq1 myran(seed + my_rank);
+  std::vector<node_t> p_arr;
+  const double r_cut = 1.0;
+
+  Vec_2<int> proc_size = Vec_2<int>(2, 2);
+  Grid_2 grid(gl_l, r_cut, proc_size, group_comm);
+  PeriodicDomain_2 dm(gl_l, grid, proc_size, group_comm);
+  CellListNode_2<node_t> cl(dm, grid);
+  Communicator_2 comm(dm, grid, phi, 60.);
+
+  // cal force
+  LinearDensityKernal_1S kernal(r_cut);
+  auto f1 = [&kernal](node_t* p1, node_t* p2) {
+    kernal(*p1, *p2);
+  };
+  auto f2 = [&kernal, &dm](node_t* p1, node_t* p2) {
+    kernal(*p1, *p2, dm);
+  };
+
+  auto f3 = [&kernal](node_t* p1, node_t* p2, const Vec_2<double>& offset) {
+    kernal(*p1, *p2, p2->pos - p1->pos + offset);
+  };
+  auto for_all_pair_force = [&cl, &f1, &f3]() {
+    //cl.for_each_pair(f1, f2);
+    cl.for_each_pair_fast(f1, f3);
+  };
+
+  // ini integrator
+  ABP_EM integrator(h, Dt, Dr);
+  node_t::set_QS_params(v0, kappa, rho0, eta, gamma);
+  auto one_par_move = [&integrator, &dm, &myran, h](node_t& p) {
+    p.cal_v(h);
+    integrator.update(p, dm, myran, p.v);
+  };
+
+  // set output
+  char basename[255];
+  char log_file[255];
+  char gsd_file[255];
+
+#ifdef  _MSC_VER
+  char prefix[] = "D:/code/Quorum_sensing/data";
+#else
+  char folder[] = "/scratch03.local/yduan/IQS_MPI";
+  char prefix[255];
+  if (gl_l.x == gl_l.y) {
+    snprintf(prefix, 255, "%s/L%g", folder, gl_l.x);
+  } else {
+    snprintf(prefix, 255, "%s/L%g_%g", folder, gl_l.x, gl_l.y);
+  }
+#endif
+  snprintf(basename, 255, "L%g_%g_Dr%.3f_Dt%g_r%g_p%g_e%.3f_g%.3f_h%.3f_%lld", gl_l.x, gl_l.y, Dr, Dt, rho0, phi, eta, gamma, h, seed);
+  snprintf(log_file, 255, "%s/log_%s.dat", prefix, basename);
+  snprintf(gsd_file, 255, "%s/%s.gsd", prefix, basename);
+  int log_dt = 10000;
+  int gl_np = round(phi * gl_l.x * gl_l.y);
+  int start = 0;
+  io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, start, h, snap_log_sep, gl_l, gl_np, ini_mode, group_comm);
+  io::LogExporter log(log_file, n_step, log_dt, start, gl_np, group_comm);
+  std::cout << "create out files" << std::endl;
+
+  // initialize particles and celllist
+  ini(p_arr, dm, cl, phi, ini_mode, myran, gsd, 40.);
+
+  // run
+  for (int t = 1; t <= n_step; t++) {
+    kernal.reset_local_density(p_arr);
+    cal_force(p_arr, cl, comm, for_all_pair_force);
+    kernal.normalize(p_arr);
+    integrate(p_arr, cl, one_par_move, comm);
+    gsd.dump_1S(t, p_arr);
+    log.record(t);
+  }
+
+  if (my_rank == 0) {
+    std::cout << "Finish simulation!" << std::endl;
+  }
+  MPI_Barrier(group_comm);
+}
+
+int main(int argc, char* argv[]) {
+  MPI_Init(&argc, &argv);
+
+  double Lx = 40;
+  double Ly = 40;
+
+  double kappa = 0.9;
+  double Dt = 0.;
+  double v0 = 1.;
+
+#ifdef _MSC_VER
+  double rho0 = 20;
+  double phi = 20;
+  int n_step = 10000;
+  double snap_log_sep = 1000;
+
+  double eta = 6;
+  double gamma = 2;
+  double Dr = 0.08;
+  double h = 0.1;
+  int seed = 1000;
+  std::string ini_mode = "rand";
+#else
+  double rho0 = atof(argv[1]);
+  double phi = atof(argv[2]);
+  double eta = atof(argv[3]);
+  double gamma = atof(argv[4]);
+  double Dr = atof(argv[5]);
+  double h = atof(argv[6]);
+  int seed = atoi(argv[7]);
+  int n_step = atof(argv[8]);
+  double snap_log_sep = atof(argv[9]);
+  std::string ini_mode = argv[10]; // should be 'rand' or 'resume'
+#endif
+  int snap_dt = 1;
+  if (snap_log_sep > 1) {
+    snap_dt = int(snap_log_sep);
+    snap_log_sep = -1;
+  }
+  Vec_2<double> gl_l(Lx, Ly);
+
+  run(gl_l, phi, rho0, eta, kappa,
+      gamma, Dt, Dr, h, v0, 
+      n_step, snap_dt, snap_log_sep,
+      ini_mode, seed,
+      MPI_COMM_WORLD);
+
+  MPI_Finalize();
+
+}

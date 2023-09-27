@@ -258,6 +258,9 @@ void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
   uint32_t* type_id = new uint32_t[n_par];
   chunk = gsd_find_chunk(handle_, i_frame, "particles/typeid");
   gsd_read_chunk(handle_, type_id, chunk);
+  float* v = new float[n_par];
+  chunk = gsd_find_chunk(handle_, i_frame, "particles/charge");
+  gsd_read_chunk(handle_, v, chunk);
 
   p_arr.reserve(n_par);
 
@@ -285,11 +288,13 @@ void Snap_GSD_2::read(int i_frame, std::vector<TPar>& p_arr) {
     p.pos = Vec_2<double>(x, y);
     p.u = Vec_2<double>(cos(theta), sin(theta));
     p.type_id = type_id[j];
+    p.v = v[j];
     p_arr.push_back(p);
   }
 
   delete[] pos;
   delete[] type_id;
+  delete[] v;
 }
 
 

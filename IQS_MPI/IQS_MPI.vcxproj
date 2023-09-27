@@ -150,8 +150,8 @@
     <ClInclude Include="gsd.h" />
     <ClInclude Include="integrate2D.h" />
     <ClInclude Include="io2D.h" />
+    <ClInclude Include="IQS.h" />
     <ClInclude Include="node.h" />
-    <ClInclude Include="NRQS.h" />
     <ClInclude Include="particle2D.h" />
     <ClInclude Include="rand.h" />
     <ClInclude Include="vect.h" />
@@ -160,7 +160,7 @@
     <ClCompile Include="domain2D.cpp" />
     <ClCompile Include="gsd.c" />
     <ClCompile Include="io2D.cpp" />
-    <ClCompile Include="NRQS.cpp" />
+    <ClCompile Include="IQS.cpp" />
     <ClCompile Include="particle2D.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
