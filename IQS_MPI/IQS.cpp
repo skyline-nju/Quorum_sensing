@@ -72,7 +72,6 @@ void run(const Vec_2<double>& gl_l,
   int start = 0;
   io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, start, h, snap_log_sep, gl_l, gl_np, ini_mode, group_comm);
   io::LogExporter log(log_file, n_step, log_dt, start, gl_np, group_comm);
-  std::cout << "create out files" << std::endl;
 
   // initialize particles and celllist
   ini(p_arr, dm, cl, phi, ini_mode, myran, gsd, 40.);
