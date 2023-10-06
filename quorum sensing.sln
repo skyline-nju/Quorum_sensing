@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VCQS", "VCQS\VCQS.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IQS_MPI", "IQS_MPI\IQS_MPI.vcxproj", "{904FDB0F-F235-4B1E-AF26-B1B37D10651C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IQS2", "IQS2\IQS2.vcxproj", "{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,14 @@ Global
 		{904FDB0F-F235-4B1E-AF26-B1B37D10651C}.Release|x64.Build.0 = Release|x64
 		{904FDB0F-F235-4B1E-AF26-B1B37D10651C}.Release|x86.ActiveCfg = Release|Win32
 		{904FDB0F-F235-4B1E-AF26-B1B37D10651C}.Release|x86.Build.0 = Release|Win32
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Debug|x64.ActiveCfg = Debug|x64
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Debug|x64.Build.0 = Debug|x64
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Debug|x86.ActiveCfg = Debug|Win32
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Debug|x86.Build.0 = Debug|Win32
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Release|x64.ActiveCfg = Release|x64
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Release|x64.Build.0 = Release|x64
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Release|x86.ActiveCfg = Release|Win32
+		{30AF9AF9-6BFA-4951-AF9F-CDF9688FEE02}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
