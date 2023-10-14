@@ -142,48 +142,97 @@ def cal_Sq_t_rho(density_file, dx, dt, L):
     return t, q_radial, rho_Sqt, rho_var    
 
 
-if __name__ == "__main__":
-    # prefix = "/scratch03.local/yduan/IQS_MPI/L320"
-    # coarse_grain_density_all(prefix, dx=1)
+def varied_L():
+    L = 320
+    prefix = f"{root_tahmineh}/IQS_MPI/L{L:d}"
+    coarse_grain_density_all(prefix, dx=1)
 
     Dt = 0
     h = 0.1
     dx = 1
-    L = 320
     prefix = f"{root_tahmineh}/IQS_MPI/L{L:d}/coarse_grain_dx1"
 
     Dr = 0.1
-    rho0 = 10
+    rho0 = 5
     phi = 10
-    eta = -4
-    gamma = 2
+    eta = -6
+    gamma = 1
     seed = 1000
 
     basename = f"L{L:d}_{L:d}_Dr{Dr:.3f}_Dt{Dt:g}_r{rho0:g}_p{phi:g}_e{eta:.3f}_g{gamma:.3f}_h{h:.3f}_{seed:d}.npz"
     fnpz = f"{prefix}/{basename}"
-    # with np.load(fnpz) as data:
-    #     t, x, y, rho = data["t"] * h, data["x"], data["y"], data["density"]
-
     t, q, rho_Sqt, rho_var = cal_Sq_t_rho(fnpz, dx, h, L)
-
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
-
     xi = np.zeros(t.size)
     for i in range(t.size):
         xi[i] = 2 * np.pi / get_q1(q, rho_Sqt[i])
-    
+    ax.plot(t, xi, "o", fillstyle="none")
+
+    L = 640
+    prefix = f"{root_tahmineh}/IQS_MPI/L{L:d}/coarse_grain_dx1"
+    coarse_grain_density_all(prefix, dx=1)
+    basename = f"L{L:d}_{L:d}_Dr{Dr:.3f}_Dt{Dt:g}_r{rho0:g}_p{phi:g}_e{eta:.3f}_g{gamma:.3f}_h{h:.3f}_{seed:d}.npz"
+    fnpz = f"{prefix}/{basename}"
+    t, q, rho_Sqt, rho_var = cal_Sq_t_rho(fnpz, dx, h, L)
+    xi = np.zeros(t.size)
+    for i in range(t.size):
+        xi[i] = 2 * np.pi / get_q1(q, rho_Sqt[i])
     ax.plot(t, xi, "o", fillstyle="none")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    add_line(ax, 0.1, 0.1, 0.95, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(ax, 0.2, 0., 1, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
     add_line(ax, 0.2, 0.1, 0.95, 0.25, label="0.25", xl=0.60, yl=0.75, fontsize="large")
+    add_line(ax, 0.2, 0.2, 0.95, 0.29, label="0.29", xl=0.60, yl=0.55, fontsize="large")
 
+    # add_line(ax, 0.2, 0.1, 0.5, 0.5, label="0.5", xl=0.60, yl=0.75, fontsize="large")
 
     plt.show()
     plt.close()
+
+
+def varied_gamma():
+    L = 320
+    prefix = f"{root_tahmineh}/IQS_MPI/L{L:d}"
+    coarse_grain_density_all(prefix, dx=1)
+
+    Dt = 0
+    h = 0.1
+    dx = 1
+    prefix = f"{root_tahmineh}/IQS_MPI/L{L:d}/coarse_grain_dx1"
+
+    Dr = 0.1
+    rho0 = 5
+    phi = 10
+    eta = -6
+    seed = 1000
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+
+    for gamma in [1, 4, 10, 20]:
+        basename = f"L{L:d}_{L:d}_Dr{Dr:.3f}_Dt{Dt:g}_r{rho0:g}_p{phi:g}_e{eta:.3f}_g{gamma:.3f}_h{h:.3f}_{seed:d}.npz"
+        fnpz = f"{prefix}/{basename}"
+        t, q, rho_Sqt, rho_var = cal_Sq_t_rho(fnpz, dx, h, L)
+        xi = np.zeros(t.size)
+        for i in range(t.size):
+            xi[i] = 2 * np.pi / get_q1(q, rho_Sqt[i])
+        ax.plot(t, xi, "o", fillstyle="none")
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    add_line(ax, 0.2, 0., 1, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+    add_line(ax, 0.2, 0.2, 1, 0.33, label="0.33", xl=0.40, yl=0.75, fontsize="large")
+
+    add_line(ax, 0.2, 0.1, 0.95, 0.25, label="0.25", xl=0.60, yl=0.75, fontsize="large")
     
+    add_line(ax, 0.2, 0., 0.95, 0.29, label="0.29", xl=0.60, yl=0.75, fontsize="large")
+    add_line(ax, 0.2, 0.2, 0.95, 0.29, label="0.29", xl=0.60, yl=0.55, fontsize="large")
+    plt.show()
+    plt.close()
+
+
+if __name__ == "__main__":
+    varied_L()
 
 
     

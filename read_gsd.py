@@ -47,7 +47,10 @@ def get_one_snap(f, i_frame):
             print("Error, cannot find step for frame =", i_frame)
             sys.exit()
     s.particles.N = f.read_chunk(frame=i_frame, name="particles/N")[0]
-    s.particles.typeid = f.read_chunk(frame=i_frame, name="particles/typeid")
+    if f.chunk_exists(frame=i_frame, name="particles/typeid"):
+        s.particles.typeid = f.read_chunk(frame=i_frame, name="particles/typeid")
+    else:
+        s.particles.typeid = np.zeros(s.particles.N, np.int32)
     """"
     position = [x, y, theta]
     x in [-Lx/2, Lx/2)
