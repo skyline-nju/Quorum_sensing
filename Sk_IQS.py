@@ -209,7 +209,7 @@ def varied_gamma():
     seed = 1000
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
 
-    for gamma in [1, 4, 10, 20]:
+    for gamma in [1, 10]:
         basename = f"L{L:d}_{L:d}_Dr{Dr:.3f}_Dt{Dt:g}_r{rho0:g}_p{phi:g}_e{eta:.3f}_g{gamma:.3f}_h{h:.3f}_{seed:d}.npz"
         fnpz = f"{prefix}/{basename}"
         t, q, rho_Sqt, rho_var = cal_Sq_t_rho(fnpz, dx, h, L)

@@ -170,10 +170,10 @@ if __name__ == "__main__":
     edge_DC = [p[1] for p in edge_LB_DC[::-1]] + [p[1] for p in edge_G_DC[::-1]] + [p[1] for p in edge_LA_DC]
     edge_DC.append(edge_LAB_LA[0][0])
     edge_DC += [
-        [23.5, 20],
-        [22, 22.5],
-        [21, 25],
-        [20.5, 30],
+        [22.5, 20],
+        [22.4, 22.5],
+        [22.3, 25],
+        [22.2, 30],
         edge_LB_LAB[-1][1]
     ]
     x = [i[0] for i in edge_DC]
@@ -227,6 +227,11 @@ if __name__ == "__main__":
     plt.plot(22.5, 30, "o", c="tab:grey", fillstyle="none")
     plt.plot(20, 30, "H", c="tab:green")
 
+    plt.plot(22.5, 34, "o", c="tab:grey", fillstyle="none")
+    plt.plot(20, 34, "H", c="tab:green")
+
+
+
     plt.plot(15, 34, "H", c="tab:green")
     plt.plot(12.5, 34, "p", c="tab:brown")
     plt.plot(11, 34, "o", c="tab:red")
@@ -237,27 +242,33 @@ if __name__ == "__main__":
     plt.plot(22.5, 60, "o", c="tab:grey", fillstyle="none")
     # plt.plot(22.5, 50, "o", c="tab:grey", fillstyle="none")
 
-    plt.plot(6, 30, "x")
-    plt.plot(5, 30, "x")
+    # plt.plot(6, 30, "x")
+    # plt.plot(5, 30, "x")
 
-    plt.plot(15, 50, "x")
-    plt.plot(15, 40, "x")
+    # plt.plot(15, 50, "x")
+    # plt.plot(15, 40, "x")
 
-    plt.plot(110/4, 50/4, "o")
-    plt.plot(115/4, 50/4, "*")
-    plt.plot(116/4, 50/4, "*")
+    # plt.plot(110/4, 50/4, "o")
+    # plt.plot(115/4, 50/4, "*")
+    # plt.plot(116/4, 50/4, "*")
 
     # plt.plot(130/4, 50/4, "p")
-    plt.plot(2.5, 80/4, "p")
+    # plt.plot(2.5, 80/4, "p")
 
     # ax.set_xlim(0, 110)
     # ax.set_ylim(0, 75)
 
     ax.set_xlim(0, 70)
     ax.set_ylim(0, 70)
-    ax.set_xlabel(r"$\phi_A$", fontsize="x-large")
-    ax.set_ylabel(r"$\phi_B$", fontsize='x-large')
-    ax.set_title(r"$D_r=0.1, \eta=-2,\eta_{AB}=-\eta_{BA}=0.5, \rho_0=\bar{\rho}_{A,B}=10$", fontsize="x-large")
+    ax.set_xlabel(r"$\bar{\rho}_A/\rho_0$", fontsize="x-large")
+    ax.set_ylabel(r"$\bar{\rho}_B/\rho_0$", fontsize='x-large')
+    ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70])
+    ax.set_xticklabels([0, 1, 2, 3, 4, 5, 6, 7])
+
+    ax.set_yticks([0, 10, 20, 30, 40, 50, 60, 70])
+    ax.set_yticklabels([0, 1, 2, 3, 4, 5, 6, 7])
+
+    ax.set_title(r"$D_r=0.1, \eta=-2,\eta_{AB}=-\eta_{BA}=0.5$", fontsize="x-large")
 
     ax.text(40, 40, "LAB", fontsize="x-large")
     ax.text(15, 30, "DC", fontsize="x-large")
