@@ -24,8 +24,9 @@ def get_last_frame(prefix, out_folder):
             print("skipping", fout)
         else:
             snap = read_one_frame(fin, -1)
-            with hoomd.open(name=fout, mode="wb") as f:
-                f.append(snap)
+            if snap is not None:
+                with hoomd.open(name=fout, mode="wb") as f:
+                    f.append(snap)
 
 
 def PD_comp(phiA_arr, phiB_arr, ms=0.05, L=40, Dr=1., rho0=20., eta=-2., eta_AB=0.5, eta_BA=None, h=0.1):
@@ -100,17 +101,21 @@ if __name__ == "__main__":
 
     # prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J0.1_-0.9_h0.1"
 
-    eta_AB = 0.1
-    eta_BA = -0.1
+    eta_AB = 0.5
+    eta_BA = -0.5
     Dr = 0.1
-    prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J{eta_AB:g}_{eta_BA:g}_h0.1"
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J{eta_AB:g}_h0.1"
+    rho0 = 60
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J{eta_AB:g}_{eta_BA:g}_h0.1"
+    prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r{rho0:g}_e-2_J{eta_AB:g}_h0.1"
 
 
     out_folder = "data/snap_L40_phiA_phiB"
     get_last_frame(prefix, out_folder)
 
-    phiA_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
-    phiB_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
+    # phiA_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
+    # phiB_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
+    phiA_arr = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) * 1.5
+    phiB_arr = np.array([80, 90, 100, 110, 120, 130, 140, 150, 160]) * 1.5
 
-    PD_comp(phiA_arr, phiB_arr, Dr=Dr, eta=-2, eta_AB=eta_AB, eta_BA=eta_BA)
+
+    PD_comp(phiA_arr, phiB_arr, Dr=Dr, eta=-2, eta_AB=eta_AB, eta_BA=eta_BA, rho0=rho0)

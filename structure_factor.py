@@ -127,6 +127,7 @@ def get_h(fname):
 
 def update_density_Sqt(dx=1):
     prefix_list = [
+        f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L1280_r5_5_5_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333",
@@ -780,10 +781,10 @@ def fig2():
 if __name__ == "__main__":
     update_density_Sqt()
     # cluster_phase_separation()
-    h_one_third_varied_L()
+    # h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
-    L1280_varied_composition()
+    # L1280_varied_composition()1
 
     # SP_S1D1_S2D1()
 
@@ -812,34 +813,45 @@ if __name__ == "__main__":
     #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p80_80_r80_80_80_e-0.210_-2.250_J-4.000_0.250_h0.100_1000.npz"
     # ]
 
+    phi_A = 22
+    phi_B = 6
     fins = [
-        "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p3.75_5_r5_5_5_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-        "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p4.8_8.075_r5_5_5_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-        "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p5_8.7_r5_5_5_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-        "data/Sqt_rho/L2560_2560_Dr0.100_k0.70_p5_8.7_r5_5_5_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-        "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p10_17.4_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
+        # "data/Sqt_rho/L320_320_Dr0.100_k0.70_p7.5_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+        # "data/Sqt_rho/L640_640_Dr0.100_k0.70_p7.5_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+        f"data/Sqt_rho/L320_320_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+        f"data/Sqt_rho/L640_640_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
         ]
     
+    Lx = [320, 640]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
-    for fin in fins:
+    for j, fin in enumerate(fins):
         h = get_h(fin)
         t, q, rho_Sqt, rho_var = get_Sq_t_rho(f_Sqt=fin, dt=h)
         q1_A, q1_B = np.zeros((2, t.size))
         for i in range(t.size):
             q1_A[i] = get_q1(q, rho_Sqt[0][i])
             q1_B[i] = get_q1(q, rho_Sqt[1][i])
-        
-        ax1.plot(t, 2 * np.pi /q1_A, "o", fillstyle="none")
-        ax2.plot(t, 2 * np.pi /q1_B, "o", fillstyle="none")
+    
+        ax1.plot(t, 2 * np.pi /q1_A, "o", fillstyle="none", label=r"$L=%g$" % Lx[j])
+        ax2.plot(t, 2 * np.pi /q1_B, "o", fillstyle="none", label=r"$L=%g$" % Lx[j])
 
     ax1.set_xscale("log")
     ax1.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_yscale("log")
-    add_line(ax1, 0.1, 0.2, 0.95, 0.33, label="0.33", xl=0.40, yl=0.5, fontsize="large")
-    add_line(ax2, 0.1, 0.1, 0.95, 0.33, label="0.33", xl=0.40, yl=0.5, fontsize="large")
-    add_line(ax1, 0.1, 0.4, 0.95, 0.13, label="0.13", xl=0.40, yl=0.75, fontsize="large")
-    add_line(ax2, 0.1, 0.4, 0.95, 0.13, label="0.13", xl=0.40, yl=0.75, fontsize="large")
+
+    ax1.set_xlabel(r"$t$", fontsize="large")
+    ax1.set_ylabel(r"$\zeta_A$", fontsize="large")
+    ax2.set_xlabel(r"$t$", fontsize="large")
+    ax2.set_ylabel(r"$\zeta_B$", fontsize="large")
+    ax1.legend(fontsize="large")
+    ax2.legend(fontsize="large")
+    plt.suptitle(r"$\bar{\rho}_A/\rho_0=%g, \bar{\rho}_B/\rho_0=%g$" % (phi_A/10, phi_B/10), fontsize="x-large")
+
+    add_line(ax1, 0.1, 0.2, 0.95, 0.33, label="0.33", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax2, 0.1, 0.1, 0.95, 0.33, label="0.33", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.4, 0.95, 0.13, label="0.13", xl=0.15, yl=0.5, fontsize="large")
+    add_line(ax2, 0.1, 0.4, 0.95, 0.13, label="0.13", xl=0.15, yl=0.5, fontsize="large")
 
     plt.show()
     plt.close()

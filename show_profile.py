@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from read_gsd import get_para, read_one_frame
 from gsd import hoomd
 
+root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
+
 
 def get_profile(snap: hoomd.Snapshot, bins: int, dt=0.01):
     Lx = snap.configuration.box[0]
@@ -40,9 +42,9 @@ def get_profile(snap: hoomd.Snapshot, bins: int, dt=0.01):
     return t, x, rho_x, p_x, speed, m_x
 
 
-def plot_instant_profile(fname, i_frame=-1, bins=40):
+def plot_instant_profile(fname, i_frame=-1, bins=40, dt=0.1):
     snap = read_one_frame(fname, i_frame)
-    t, x, rho_x, p_x, speed, m_x = get_profile(snap, bins=bins)
+    t, x, rho_x, p_x, speed, m_x = get_profile(snap, bins=bins, dt=dt)
 
     para = get_para(fname)
 
@@ -64,10 +66,10 @@ def plot_instant_profile(fname, i_frame=-1, bins=40):
     ax2.plot(x, speed[1], label=r"$B$", c="tab:red")
     ax2.axhline(1, linestyle="dashed", c="k")
 
-    # ax3.plot(x, p_x[0], label=r"$A$", c="tab:blue")
-    # ax3.plot(x, p_x[1], label=r"$B$", c="tab:red")
-    ax3.plot(x, rho_x[0] * speed[0], label=r"$A$", c="tab:blue")
-    ax3.plot(x, rho_x[1] * speed[1], label=r"$B$", c="tab:red")
+    ax3.plot(x, p_x[0], label=r"$A$", c="tab:blue")
+    ax3.plot(x, p_x[1], label=r"$B$", c="tab:red")
+    # ax3.plot(x, rho_x[0] * speed[0], label=r"$A$", c="tab:blue")
+    # ax3.plot(x, rho_x[1] * speed[1], label=r"$B$", c="tab:red")
     ax3.axhline(0, linestyle="dashed", c="k")
     # ax3.set_ylim(-0.75, 0.75)
 
@@ -79,6 +81,55 @@ def plot_instant_profile(fname, i_frame=-1, bins=40):
     ax2.set_ylabel(r"$\langle v_m \rangle_y$", fontsize="x-large")
     ax3.set_ylabel(r"$\langle {\bf p}_x\rangle_y$", fontsize="x-large")
     ax4.set_ylabel(r"$\langle {\bf m}_x\rangle_y$", fontsize="x-large")
+
+    ax2.legend()
+
+    # plt.savefig("fig/snap/%s_%g.png" % (os.path.basename(fname).rstrip(".gsd"), t))
+    plt.show()
+    plt.close()
+
+def plot_instant_profile3(fname, i_frame=-1, bins=40, dt=0.1):
+    snap = read_one_frame(fname, i_frame)
+    t, x, rho_x, p_x, speed, m_x = get_profile(snap, bins=bins, dt=dt)
+
+    para = get_para(fname)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3,
+                                        1,
+                                        sharex=True,
+                                        constrained_layout=True,
+                                        figsize=(8, 4))
+    ax1.plot(x, rho_x[0], label=r"$A$", c="tab:blue")
+    ax1.plot(x, rho_x[1], label=r"$B$", c="tab:red")
+
+    print(np.mean(rho_x[0, 20: 80])/20, np.mean(rho_x[1, 20: 80])/20)
+    print(np.mean(rho_x[0, 100: 120])/20, np.mean(rho_x[1, 100: 120])/20)
+
+    ax1.axhline(para["rho0"], linestyle="dashed", c="k")
+    ax1.set_xlim(0, x[-1] + x[0])
+    ax1.set_ylim(0)
+    ax1.legend()
+    ax1.set_title(r"$t=%g$" % t)
+
+
+    ax2.plot(x, speed[0], label=r"$A$", c="tab:blue")
+    ax2.plot(x, speed[1], label=r"$B$", c="tab:red")
+    ax2.axhline(1, linestyle="dashed", c="k")
+
+    ax3.plot(x, p_x[0], label=r"$A$", c="tab:blue")
+    ax3.plot(x, p_x[1], label=r"$B$", c="tab:red")
+    # ax3.plot(x, rho_x[0] * speed[0], label=r"$A$", c="tab:blue")
+    # ax3.plot(x, rho_x[1] * speed[1], label=r"$B$", c="tab:red")
+    ax3.axhline(0, linestyle="dashed", c="k")
+    ax3.set_ylim(-0.1, 0.1)
+
+    # ax4.plot(x, m_x[0], label=r"$A$", c="tab:blue")
+    # ax4.plot(x, m_x[1], label=r"$B$", c="tab:red")
+
+    ax3.set_xlabel(r"$x$", fontsize="x-large")
+    ax1.set_ylabel(r"$\langle\rho\rangle_y$", fontsize="x-large")
+    ax2.set_ylabel(r"$\langle v_m \rangle_y$", fontsize="x-large")
+    ax3.set_ylabel(r"$\langle {\bf p}_x\rangle_y$", fontsize="x-large")
 
     ax2.legend()
 
@@ -141,8 +192,11 @@ def profiles_varied_etaAB():
 
 if __name__ == "__main__":
     # fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.200_-0.200_111200.gsd"
-    fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_21200.gsd"
+    # fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_21200.gsd"
+    basename = "L120_40_Dr0.100_k0.70_p20_68_r20_20_20_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    # basename = "L120_40_Dr0.100_k0.70_p20_50_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    fname = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20_varied_h/{basename}"
     # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    plot_instant_profile(fname, bins=120, i_frame=-1)
+    plot_instant_profile3(fname, bins=120, i_frame=351, dt=0.1)
 
     # profiles_varied_etaAB()

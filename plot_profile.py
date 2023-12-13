@@ -664,9 +664,9 @@ if __name__ == "__main__":
     # SP()
     # plot_time_ave_density_profile_SP()
     # lever_rule()
-    phase_transform()
+    # phase_transform()
     # D1S1_dense()
 
     # D1S1()
 
-    # profiles_two_Lx()
+    profiles_two_Lx()

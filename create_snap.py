@@ -73,7 +73,7 @@ def scale(s: hoomd.Snapshot, nx: int, ny: int, eps=0) -> hoomd.Snapshot:
     return s2
 
 
-def adjust_density(s: hoomd.Snapshot, phi_A: float, phi_B: float, mode="copy") -> hoomd.Snapshot:
+def adjust_density(s: hoomd.Snapshot, phi_A: float, phi_B: float, mode="copy", R=5) -> hoomd.Snapshot:
     def add_new_particles(n):
         pos_new = np.zeros((n, 3), dtype=np.float32)
         pos_new[:, 0] = (np.random.rand(n) - 0.5) * Lx
@@ -81,6 +81,29 @@ def adjust_density(s: hoomd.Snapshot, phi_A: float, phi_B: float, mode="copy") -
         pos_new[:, 2] = (np.random.rand(n) - 0.5) * np.pi * 2
         return pos_new
 
+
+    def add_new_particles_locally(n, R, shape="circle", Ly=None):
+        pos_new = np.zeros((n, 3), dtype=np.float32)
+        # r = np.random.rand(n) * R
+        # theta = np.random.rand(n) * np.pi * 2
+        # pos_new[:, 0] = r * np.cos(theta)
+        # pos_new[:, 1] = r * np.sin(theta)
+        if shape == "circle":
+            i = 0
+            while i < n:
+                x, y = np.random.rand(2) * 2 * R - R
+                if x**2 + y**2 < R**2:
+                    pos_new[i, 0] = x
+                    pos_new[i, 1] = y
+                    i += 1
+        elif shape == "rect":
+            if Ly is None:
+                print("Error, Ly is needed when using rect shape")
+                sys.exit()
+            pos_new[:, 0] = np.random.rand(n) * 2 * R - R
+            pos_new[:, 1] = np.random.rand(n) * Ly - Ly / 2
+        pos_new[:, 2] = (np.random.rand(n) - 0.5) * np.pi * 2
+        return pos_new
 
     def extend_pos(pos_new, pos_old, mode):
         n_new = pos_new.shape[0]
@@ -100,15 +123,20 @@ def adjust_density(s: hoomd.Snapshot, phi_A: float, phi_B: float, mode="copy") -
             elif mode == "copy":
                 np.random.shuffle(pos_old)
                 pos_new[end:] = pos_old[:n_res]
+            elif mode == "local":
+                pos_new[end:] = add_new_particles_locally(n_res, R)
+            elif mode == "local_rect":
+                pos_new[end:] = add_new_particles_locally(n_res, R, shape="rect", Ly=Ly)
             else:
                 print("Error, mode should be copy or rand")
         
 
-    Lx = s.configuration.box[0]
-    Ly = s.configuration.box[1]
+    Lx = int(s.configuration.box[0])
+    Ly = int(s.configuration.box[1])
 
-    n_A = int(Lx * Ly * phi_A)
-    n_B = int(Lx * Ly * phi_B)
+    n_A = int(round(Lx * Ly * phi_A))
+    n_B = int(round(Lx * Ly * phi_B))
+    print("new:", n_A+n_B, n_A, n_B)
 
     pos_A = np.zeros((n_A, 3), dtype=np.float32)
     pos_B = np.zeros((n_B, 3), dtype=np.float32)
@@ -117,7 +145,7 @@ def adjust_density(s: hoomd.Snapshot, phi_A: float, phi_B: float, mode="copy") -
     n_A0 = np.sum(mask_A)
     mask_B = s.particles.typeid == 1
     n_B0 = np.sum(mask_B)
-    print(s.particles.N, n_A0, n_B0)
+    print("old:", s.particles.N, n_A0, n_B0)
 
     pos_A0 = s.particles.position[mask_A]
     if n_A0 < n_A:
@@ -386,12 +414,22 @@ def rot90(s: hoomd.Snapshot) -> hoomd.Snapshot:
     return s
 
 
+# def add_par_loc(s: hoomd.Snapshot, d_rhoA: float, d_rhoB: float, R: float) -> hoomd.Snapshot:
+#     Ly = s.configuration.box[1]
+#     Lx = s.configuration.box[0]
+#     Na_new = int(d_rhoA * Lx * Ly)
+#     Nb_new = int(d_rhoA * Lx * Ly)
+
+
+
+
+
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L240_40_r10_10_10_varied_h"
-    basename = "L240_40_Dr0.100_k0.70_p10_34_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L320_r10_10_10_h0.333"
+    basename = "L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
 
     fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, -1)
+    snap = read_one_frame(fname, 90)
     # s1 = read_one_frame(fname, 0)
     # s2 = read_one_frame(fname, -1)
     # s2 = shift_pos(s2, 30, -20)
@@ -412,24 +450,28 @@ if __name__ == "__main__":
     # # s2 = shift_pos(s2, -190, 0)
 
     # snap = vstack(s1, s2)
-    # snap = shift_pos(snap, 30, -15)
+    # snap = shift_pos(snap, -47, 0)
 
 
-    # snap = shift_pos(snap, 0, 80)
+    snap = shift_pos(snap, 160, 0)
     # snap = shift_v_slice(snap, 80, 160, 160)
 
     # snap = swap_h(snap, 20, 35, -40)
-    # snap = scale(snap, 4, 4, eps=0)
-    snap = adjust_density(snap, 10, 28, mode="copy")
+    # snap = scale(snap, 2, 2, eps=0)
+    # snap = adjust_density(snap, 4.5, 1.53, mode="copy")
+    # snap = adjust_density(snap, 20.75, 80, mode="local_rect", R=1)
+    # snap = adjust_density(snap, 20.75, 80, mode="local", R=5)
+
+
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 2, 2)
+    # snap = duplicate(snap, 1, 3)
 
     # snap = rot90(snap)
     snap.configuration.step = 0
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L240_40_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2034.gsd"
+    fout = f"{folder}/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2001.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
