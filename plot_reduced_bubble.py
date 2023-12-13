@@ -20,22 +20,52 @@ def read_data(fin, h=0.1):
 
 
 if __name__ == "__main__":
+    # fig, ax = plt.subplots(1, 1, figsize=(5, 5), constrained_layout=True)
+
+    # fin = "Reduced_bubble/output1.dat"
+    # t, n_par, r = read_data(fin)
+    # ax.plot(t, r, label="without equalising")
+
+    # fin = "Reduced_bubble/output2.dat"
+    # t, n_par, r = read_data(fin)
+    # ax.plot(t, r, label="with equalising")
+
+    # ax.set_xscale("log")
+    # ax.set_yscale("log")
+
+    # add_line(ax, 0.4, 0.4, 0.98, 1/3, label="1/3", xl=0.7, yl=0.6)
+    # ax.legend(fontsize="large")
+    # ax.set_xlabel(r"$t$", fontsize="large")
+    # ax.set_ylabel("mean domain size", fontsize="large")
+    # plt.show()
+    # plt.close()
+
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), constrained_layout=True)
 
-    fin = "Reduced_bubble/output1.dat"
-    t, n_par, r = read_data(fin)
-    ax.plot(t, r, label="without equalising")
+
 
     fin = "Reduced_bubble/output2.dat"
     t, n_par, r = read_data(fin)
-    ax.plot(t, r, label="with equalising")
+    ax.plot(t, r, label=r"$D(R)\propto R^{-1}$")
+
+    fin = "Reduced_bubble/output3.dat"
+    t, n_par, r = read_data(fin)
+    ax.plot(t, r, label=r"$D(R)\propto R^{-3}$")
+
+    fin = "Reduced_bubble/output4.dat"
+    t, n_par, r = read_data(fin)
+    ax.plot(t, r, label=r"$D(R)\propto R^{-5.7}$")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
 
+    ax.legend(fontsize="x-large")
+    ax.set_xlabel(r"$t$", fontsize="x-large")
+    ax.set_ylabel("mean domain size", fontsize="x-large")
+
     add_line(ax, 0.4, 0.4, 0.98, 1/3, label="1/3", xl=0.7, yl=0.6)
-    ax.legend(fontsize="large")
-    ax.set_xlabel(r"$t$", fontsize="large")
-    ax.set_ylabel("mean domain size", fontsize="large")
+    add_line(ax, 0.4, 0.25, 0.98, 0.2, label="1/5", xl=0.7, yl=0.35)
+    add_line(ax, 0.4, 0.15, 0.98, 0.13, label="0.13", xl=0.7, yl=0.2)
+
     plt.show()
     plt.close()

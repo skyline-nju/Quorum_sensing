@@ -63,7 +63,15 @@ int Bubble::coalescence(Bubble& b2, const Vec_2<double>& L) {
 
 template <typename TRan>
 void Bubble::diffuse(TRan& myran, const Vec_2<double>& L, double h) {
-  double D = sqrt(0.1/ radius * 24 * h);
+  // D ~ 1/R
+  // double D = sqrt(0.1/ radius * 24 * h);
+
+  // D ~ 1/R^3
+  //double D = sqrt(0.001 / (radius * radius * radius) * 24 * h);
+
+  // D ~ 1/R^5.7
+  double D = sqrt(pow(0.1/radius, 5.7) * 24 * h);
+
   pos.x += (myran.doub() - 0.5) * D;
   pos.y += (myran.doub() - 0.5) * D;
   if (pos.x < 0) {
@@ -111,7 +119,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  exporter::OrderParaExporter_2 out("output2.dat", 0, n_step, 100);
+  exporter::OrderParaExporter_2 out("output4.dat", 0, n_step, 100);
 
   p_arr.reserve(N0);
   for (int i = 0; i < N0; i++) {
