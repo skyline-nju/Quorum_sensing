@@ -89,6 +89,62 @@ private:
 };
 
 
+class MassCenterExporter : public ExporterBase {
+public:
+  MassCenterExporter(const std::string& outfile,
+    int n_step, int sep, int start,
+    const Vec_2<double> &gl_l,
+    int flush_sep, MPI_Comm group_comm);
+
+  ~MassCenterExporter();
+
+  template <typename TPar>
+  void record(int i_step, const std::vector<TPar>& p_arr);
+private:
+  std::ofstream fout_;
+  double Lx_;
+  double Ly_;
+  int flush_sep_;
+
+};
+
+template <typename TPar>
+void MassCenterExporter::record(int i_step, const std::vector<TPar>& p_arr) {
+  int cur_step = i_step + start_;
+  if (need_export(cur_step)) {
+    double sum_pos_vec[8]{}; // sum_A_sin_x, sum_A_cos_x, sum_A_sin_y, sum_A_cos_y,
+                             // sum_B_sin_x, sum_B_cos_x, sum_B_sin_y, sum_B_cos_y
+    for (const auto& p : p_arr) {
+      double x = p.pos.x / Lx_ * M_PI * 2;
+      double y = p.pos.y / Ly_ * M_PI * 2;
+      if (p.type_id == 0) { // A particles
+        sum_pos_vec[0] += sin(x);
+        sum_pos_vec[1] += cos(x);
+        sum_pos_vec[2] += sin(y);
+        sum_pos_vec[3] += cos(y);
+      } else { // B particles
+        sum_pos_vec[4] += sin(x);
+        sum_pos_vec[5] += cos(x);
+        sum_pos_vec[6] += sin(y);
+        sum_pos_vec[7] += cos(y);
+      }
+    }
+
+    double gl_sum_pos_vec[8]{};
+    MPI_Reduce(sum_pos_vec, gl_sum_pos_vec, 8, MPI_DOUBLE, MPI_SUM, 0, comm_);
+    if (my_rank_ == 0) {
+      double xm_A = atan2(gl_sum_pos_vec[0], gl_sum_pos_vec[1]) / (2 * M_PI) * Lx_;
+      double ym_A = atan2(gl_sum_pos_vec[2], gl_sum_pos_vec[3]) / (2 * M_PI) * Ly_;
+      double xm_B = atan2(gl_sum_pos_vec[4], gl_sum_pos_vec[5]) / (2 * M_PI) * Lx_;
+      double ym_B = atan2(gl_sum_pos_vec[6], gl_sum_pos_vec[7]) / (2 * M_PI) * Ly_;
+      fout_ << cur_step << "\t" << xm_A << "\t" << ym_A << "\t" << xm_B << "\t" << ym_B << "\n";
+      if (cur_step % flush_sep_ == 0) {
+        fout_ << std::flush;
+      }
+    }
+  }
+}
+
 class Snap_GSD_2 : public ExporterBase {
 public:
   Snap_GSD_2(const std::string& filename,

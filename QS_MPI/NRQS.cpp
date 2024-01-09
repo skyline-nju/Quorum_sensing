@@ -17,7 +17,7 @@ void run(const Vec_2<double>& gl_l,
   std::vector<node_t> p_arr;
   const double r_cut = 1.0;
 
-  Vec_2<int> proc_size = Vec_2<int>(8, 4);
+  Vec_2<int> proc_size = Vec_2<int>(2, 2);
   Grid_2 grid(gl_l, r_cut, proc_size, group_comm);
   PeriodicDomain_2 dm(gl_l, grid, proc_size, group_comm);
   CellListNode_2<node_t> cl(dm, grid);
@@ -52,24 +52,33 @@ void run(const Vec_2<double>& gl_l,
   char basename[255];
   char log_file[255];
   char gsd_file[255];
-
-  char prefix[] = "/scratch03.local/yduan/QS_MPI_noself";
+  char mc_file[255];
+  snprintf(basename, 255, "L%g_%g_Dr%.3f_k%.2f_p%g_%g_r%g_%g_%g_e%.3f_J%.3f_%.3f_h%.3f_%lld",
+    gl_l.x, gl_l.y, Dr, kappa, phiA, phiB, rho0, bar_rho_A, bar_rho_B, eta, J_AB, J_BA, h, seed);
+#ifndef _MSC_VER
   char folder[255];
+  char prefix[] = "/scratch03.local/yduan/QS_MPI_noself";
   if (gl_l.x == gl_l.y) {
     snprintf(folder, 255, "%s/L%g_r%g_%g_%g_h%.3f/", prefix, gl_l.x, rho0, bar_rho_A, bar_rho_B, h);
   } else {
     snprintf(folder, 255, "%s/L%g_%g_r%g_%g_%g_h%.3f/", prefix, gl_l.x, gl_l.y, rho0, bar_rho_A, bar_rho_B, h);
   }
-  snprintf(basename, 255, "L%g_%g_Dr%.3f_k%.2f_p%g_%g_r%g_%g_%g_e%.3f_J%.3f_%.3f_h%.3f_%lld",
-    gl_l.x, gl_l.y, Dr, kappa, phiA, phiB, rho0, bar_rho_A, bar_rho_B, eta, J_AB, J_BA, h, seed);
+
+#else
+  char folder[] = "D:/code/Quorum_sensing/data/";
+#endif
+
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
+  snprintf(mc_file, 255, "%smc_%s.dat", folder, basename);
+
 
   int log_dt = 10000;
   int gl_np = round(phiA * gl_l.x * gl_l.y) + round(phiB * gl_l.x * gl_l.y);
   int start = 0;
   io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, start, h, snap_log_sep, gl_l, gl_np, ini_mode, group_comm);
   io::LogExporter log(log_file, n_step, log_dt, start, gl_np, group_comm);
+  io::MassCenterExporter mc(mc_file, n_step, 100, start, gl_l, snap_log_sep, group_comm);
 
   // initialize particles and celllist
   ini(p_arr, dm, cl, phiA, phiB, ini_mode, myran, gsd, 40.);
@@ -82,6 +91,7 @@ void run(const Vec_2<double>& gl_l,
     integrate(p_arr, cl, one_par_move, comm);
     gsd.dump(t, p_arr);
     log.record(t);
+    mc.record(t, p_arr);
   }
 
   if (my_rank == 0) {
@@ -95,14 +105,15 @@ void run(const Vec_2<double>& gl_l,
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 
-  double Lx = 160;
-  double Ly = 160;
+  double Lx = 20;
+  double Ly = 20;
   double phiA = atof(argv[1]);
   double phiB = atof(argv[2]);
   double rho0 = 20;
   double bar_rho_A = 20;
   double bar_rho_B = 20;
   double h = 1/3.;
+
   int n_step = atoi(argv[3]);
   double snap_log_sep = atof(argv[4]);
   int snap_dt = 1;
@@ -119,9 +130,7 @@ int main(int argc, char* argv[]) {
   double Dt = 0.;
   double v0 = 1.;
   int seed = atoi(argv[9]);
-
   std::string ini_mode = argv[10]; // should be 'rand' or 'resume'
-
   Vec_2<double> gl_l(Lx, Ly);
 
   run(gl_l, phiA, phiB,

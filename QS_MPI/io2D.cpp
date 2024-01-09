@@ -90,6 +90,22 @@ void io::LogExporter::record(int i_step) {
   step_count_++;
 }
 
+io::MassCenterExporter::MassCenterExporter(const std::string& outfile,
+  int n_step, int sep, int start, const Vec_2<double>& gl_l, int flush_sep, MPI_Comm group_comm)
+  : ExporterBase(n_step, sep, start, group_comm), Lx_(gl_l.x), Ly_(gl_l.y), flush_sep_(flush_sep) {
+  if (my_rank_ == 0) {
+    fout_.open(outfile, std::ios::app);
+  }
+  MPI_Barrier(group_comm);
+}
+
+io::MassCenterExporter::~MassCenterExporter() {
+  if (my_rank_ == 0) {
+    fout_.close();
+  }
+}
+
+
 io::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
                            int n_step, int sep, int &start,
                            double h, double log_sep,
