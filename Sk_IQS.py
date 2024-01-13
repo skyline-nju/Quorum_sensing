@@ -326,9 +326,9 @@ def varied_phi():
 
 
 if __name__ == "__main__":
-    # varied_phi()
+    varied_phi()
     # varied_L_overdamped()
     # varied_L()
-    varied_gamma()
+    # varied_gamma()
     # prefix = ""
     # coarse_grain_density_all()

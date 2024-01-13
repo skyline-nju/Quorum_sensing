@@ -188,7 +188,11 @@ def show_MSD():
              f"{root_tahmineh}/QS_MPI_noself/L{L_arr[1]}_r10_10_10_h0.333/CM/L{L_arr[1]}_{L_arr[1]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
              f"{root_tahmineh}/QS_MPI_noself/L{L_arr[2]}_r10_10_10_h0.333/CM/L{L_arr[2]}_{L_arr[2]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
              ]
-    
+    labels = [
+        r"$L=160$",
+        r"$L=320$",
+        r"$L=640$",
+    ]
     for i, L in enumerate(L_arr):
         with np.load(f_arr[i], "r") as data:
             t, x, y = data["t"] / 3, data["x"], data["y"]
@@ -199,7 +203,7 @@ def show_MSD():
     ax.set_yscale("log")
     ax.set_xlabel(r"$t$", fontsize="x-large")
     ax.set_ylabel(r"$|\mathbf{r}(t)-\mathbf{r}(0)|^2$", fontsize="x-large")
-    ax.legend()
+    ax.legend(title=r"$\bar{\rho}_A=5,\bar{\rho}_B=2.96$")
 
     add_line(ax, 0.1, 0.6, 0.95, 1, label="slope=1", xl=0.60, yl=0.9, fontsize="large")
     add_line(ax, 0.1, 0.05, 0.95, 2, label="slope=2", xl=0.10, yl=0.1, fontsize="large")
@@ -326,9 +330,217 @@ def show_MSD_averaged():
     plt.close()
 
 
+def read_traj(f_traj, Lx, Ly, n_cut=100):
+    with open(f_traj, "r") as f:
+        lines = f.readlines()[n_cut:]
+        t, x, y = np.zeros((3, len(lines)))
+        for i, line in enumerate(lines):
+            s = line.rstrip("\n").split("\t")
+            t[i] = float(s[0]) / 3
+            x[i] = float(s[3])
+            y[i] = float(s[4])
+        x += Lx/2
+        y += Ly/2
+        x[x>=Lx/2] -= Lx
+        y[y>=Ly/2] -= Ly
+        x = untangle(x, Lx)
+        y = untangle(y, Ly)
+    return t, x, y
+
 if __name__ == "__main__":
     # update_center_traj()
-    show_traj()
-    show_MSD()
-
+    # show_traj()
+    # show_MSD()
+    # show_MSD_averaged()
     
+    Lx = 240
+    Ly = 240
+    f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/mc_L240_240_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+    t, x, y = read_traj(f_traj, Lx, Ly)
+    plt.plot(x, y)
+    plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots(1, 1, tight_layout=True)
+
+
+    for n in [1000, 100]:
+        t_new = np.arange(1, n+1) * 100
+        rr_new = np.zeros(n)
+
+        count = 0
+        for j in range(t.size - n):
+            x0, y0 = x[j], y[j]
+            rr_new += (x[j+1:j+n+1] - x0)**2 + (y[j+1: j+n+1] - y0)**2
+            count += 1
+        rr_new /= count
+        ax.plot(t_new, rr_new, lw=2, label=r"$\Delta t=%g$" % (n * 1e2))
+
+    rr = (x-x[0])**2 + (y-y[0])**2 
+    ax.plot(t-t[0], rr, label="raw")
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+
+    ax.set_xlabel(r"$t$", fontsize="x-large")
+    ax.set_ylabel(r"$|\mathbf{r}(t)-\mathbf{r}(0)|^2$", fontsize="x-large")
+    ax.legend()
+
+    plt.show()
+    plt.close()
+
+
+    L_arr = [160, 240, 320, 640]
+    f_arr = [f"{root_tahmineh}/QS_MPI_noself/L{L_arr[0]}_r10_10_10_h0.333/CM/L{L_arr[0]}_{L_arr[0]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+             f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/mc_L240_240_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
+             f"{root_tahmineh}/QS_MPI_noself/L{L_arr[2]}_r10_10_10_h0.333/CM/L{L_arr[2]}_{L_arr[2]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
+             f"{root_tahmineh}/QS_MPI_noself/L{L_arr[3]}_r10_10_10_h0.333/CM/L{L_arr[3]}_{L_arr[3]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
+            ]
+
+    labels = [
+        r"$L=160$",
+        r"$L=240$",
+        r"$L=320$",
+        r"$L=640$",
+    ]
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    for i_fin in range(4):
+        if f_arr[i_fin].endswith(".npz"):
+            n = 10
+            with np.load(f_arr[i_fin], "r") as data:
+                t, x, y = data["t"] / 3, data["x"], data["y"]
+                x, y = untangle(x[:], L_arr[i_fin]), untangle(y[:], L_arr[i_fin])
+            t_new = np.arange(1, n+1) * 10000
+            
+        else:
+            n = 1000
+            t, x, y = read_traj(f_traj, Lx, Ly)
+            t_new = np.arange(1, n+1) * 100
+        rr_new = np.zeros(n)
+
+        count = 0
+        for j in range(t.size - n):
+            x0, y0 = x[j], y[j]
+            rr_new += (x[j+1:j+n+1] - x0)**2 + (y[j+1: j+n+1] - y0)**2
+            count += 1
+        rr_new /= count
+        ax.plot(t_new, rr_new, lw=2, label=labels[i_fin])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+
+    ax.axvline(4e4, linestyle="dotted", c="k")
+    ax.set_xlabel(r"$t$", fontsize="x-large")
+    ax.set_ylabel(r"$|\mathbf{r}(t)-\mathbf{r}(0)|^2$", fontsize="x-large")
+    ax.legend(fontsize="large", title=r"$\bar{\rho}_A=5,\bar{\rho}_B=2.96$")
+
+    add_line(ax, 0.05, 0.1, 0.95, 1, label="slope=1", xl=0.60, yl=0.6, fontsize="large")
+    add_line(ax, 0.05, 0.3, 0.95, 1, label="slope=1", xl=0.60, yl=0.6, fontsize="large")
+    add_line(ax, 0.05, 0.5, 0.95, 1, label="slope=1", xl=0.60, yl=0.6, fontsize="large")
+
+
+    plt.show()
+    plt.close()
+
+
+    MSD_arr = np.array([505, 99, 66, 11]) / 4e4
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    ax.plot(L_arr, MSD_arr, "-o", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
+
+    MSD_arr = np.array([230, 113]) / 4e4
+    L_arr = [240, 320]
+    ax.plot(L_arr, MSD_arr, "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel(r"$L$", fontsize="x-large")
+    ax.set_ylabel(r"$D$", fontsize="x-large")
+    ax.legend()
+    add_line(ax, 0.05, 1, 0.95, -3, label="slope=-3", xl=0.60, yl=0.2, fontsize="large")
+    add_line(ax, 0.05, 1, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
+    add_line(ax, 0.05, 0.8, 0.95, -4, label="slope=-4", xl=0.40, yl=0.2, fontsize="large")
+
+
+
+    plt.show()
+    plt.close()
+
+
+    Lx = 240
+    Ly = 240
+    f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/mc_L240_240_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+    t, x, y = read_traj(f_traj, Lx, Ly)
+    plt.plot(x, y)
+    plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots(1, 1, tight_layout=True)
+
+
+    for n in [1000, 100]:
+        t_new = np.arange(1, n+1) * 100
+        rr_new = np.zeros(n)
+
+        count = 0
+        for j in range(t.size - n):
+            x0, y0 = x[j], y[j]
+            rr_new += (x[j+1:j+n+1] - x0)**2 + (y[j+1: j+n+1] - y0)**2
+            count += 1
+        rr_new /= count
+        ax.plot(t_new, rr_new, lw=2, label=r"$\Delta t=%g$" % (n * 1e2))
+
+    rr = (x-x[0])**2 + (y-y[0])**2 
+    ax.plot(t-t[0], rr, label="raw")
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+
+    ax.set_xlabel(r"$t$", fontsize="x-large")
+    ax.set_ylabel(r"$|\mathbf{r}(t)-\mathbf{r}(0)|^2$", fontsize="x-large")
+    ax.legend()
+
+    plt.show()
+    plt.close()
+
+    L_arr = [240, 320]
+    f_arr = [f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/mc_L240_240_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
+             f"{root_tahmineh}/QS_MPI_noself/L{L_arr[1]}_r10_10_10_h0.333/CM/L{L_arr[1]}_{L_arr[1]}_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+            ]
+
+    labels = [
+        r"$L=240$",
+        r"$L=320$",
+    ]
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    for i_fin in range(2):
+        if f_arr[i_fin].endswith(".npz"):
+            n = 10
+            with np.load(f_arr[i_fin], "r") as data:
+                t, x, y = data["t"] / 3, data["x"], data["y"]
+                x, y = untangle(x[:], L_arr[i_fin]), untangle(y[:], L_arr[i_fin])
+            t_new = np.arange(1, n+1) * 10000
+            
+        else:
+            n = 1000
+            t, x, y = read_traj(f_traj, Lx, Ly)
+            t_new = np.arange(1, n+1) * 100
+        rr_new = np.zeros(n)
+
+        count = 0
+        for j in range(t.size - n):
+            x0, y0 = x[j], y[j]
+            rr_new += (x[j+1:j+n+1] - x0)**2 + (y[j+1: j+n+1] - y0)**2
+            count += 1
+        rr_new /= count
+        ax.plot(t_new, rr_new, lw=2, label=labels[i_fin])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+
+    ax.set_xlabel(r"$t$", fontsize="x-large")
+    ax.set_ylabel(r"$|\mathbf{r}(t)-\mathbf{r}(0)|^2$", fontsize="x-large")
+    ax.legend(fontsize="large", title=r"$\bar{\rho}_A=4.5,\bar{\rho}_B=1.53$")
+
+    ax.axvline(4e4, linestyle="dotted", c="k")
+
+    add_line(ax, 0.05, 0.1, 0.95, 1, label="slope=1", xl=0.60, yl=0.6, fontsize="large")
+
+    plt.show()
+    plt.close()

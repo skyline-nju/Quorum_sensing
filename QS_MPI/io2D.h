@@ -247,6 +247,11 @@ void Snap_GSD_2::get_data_from_par(const std::vector<TPar>& p_arr,
   delete[] my_v;
 }
 
+/********************************************************************
+ * Caution: the particle speed output by this function is not correct,
+ * because the local densities are lost when one particle moves from
+ * one core to another core.
+*********************************************************************/
 template<typename TPar>
 void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
   if (need_export(i_step)) {

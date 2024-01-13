@@ -61,7 +61,6 @@ def coarse_grain_one_frame(i_frame: int,
         if vxvy:
             vx[my_id, my_row, my_col] += ux[j] * speed[j]
             vy[my_id, my_row, my_col] += uy[j] * speed[j]
-    
     fields[i_frame][0:2] = par_num / bin_area
     if not only_rho:
         fields[i_frame][2:4] = mx / bin_area
@@ -393,6 +392,11 @@ if __name__ == "__main__":
         ax1.axvline(450, linestyle="dotted", c="w")
         ax1.axvline(500, linestyle="dotted", c="w")
 
+        ax1.axvline(1150, linestyle="dotted", c="w")
+        ax1.axvline(1200, linestyle="dotted", c="w")
+        ax1.axvline(200, linestyle="dotted", c="w")
+        ax1.axvline(250, linestyle="dotted", c="w")
+
         ax1.set_ylabel(r"$t$", fontsize="x-large")
         ax2.set_ylabel(r"$\log t$", fontsize="x-large")
         ax2.set_xlabel(r"$x$", fontsize="x-large")
@@ -409,9 +413,14 @@ if __name__ == "__main__":
         ax1.plot(t[60:]/3, np.mean(rhoA[60:, 875:925]/10, axis=1), label="S=A")
         ax1.plot(t[60:]/3, np.mean(rhoB[60:, 875:925]/10, axis=1), label="S=B")
 
+        ax1.plot(t[60:]/3, np.mean(rhoA[60:, 200:250]/10, axis=1), label="S=A")
+        ax1.plot(t[60:]/3, np.mean(rhoB[60:, 200:250]/10, axis=1), label="S=B")
+
         ax2.plot(t[60:]/3, np.mean(rhoA[60:, 450:500]/10, axis=1), label="S=A")
         ax2.plot(t[60:]/3, np.mean(rhoB[60:, 450:500]/10, axis=1), label="S=B")
 
+        ax2.plot(t[60:]/3, np.mean(rhoA[60:, 1150:1200]/10, axis=1), label="S=A")
+        ax2.plot(t[60:]/3, np.mean(rhoB[60:, 1150:1200]/10, axis=1), label="S=B")
         ax1.set_xlim(1e6)
         ax1.legend()
         ax2.legend()

@@ -193,10 +193,13 @@ def profiles_varied_etaAB():
 if __name__ == "__main__":
     # fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.200_-0.200_111200.gsd"
     # fname = "data/snap/L40_5_Dr0.100_k0.70_p40_40_r40_e-2.000_J0.500_-0.500_21200.gsd"
-    basename = "L640_320_Dr0.100_k0.70_p5.225_2.8375_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     # basename = "L120_40_Dr0.100_k0.70_p20_50_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    # basename = "L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    # fname = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333/{basename}"
+
+    basename = "L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     fname = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333/{basename}"
     # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    plot_instant_profile3(fname, bins=640, i_frame=0, dt=1/3)
+    plot_instant_profile3(fname, bins=640, i_frame=25, dt=1/3)
 
     # profiles_varied_etaAB()

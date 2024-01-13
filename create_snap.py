@@ -35,41 +35,53 @@ def duplicate(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
 
 
 def scale(s: hoomd.Snapshot, nx: int, ny: int, eps=0) -> hoomd.Snapshot:
-    N = s.particles.N * nx * ny
     lx = s.configuration.box[0]
     ly = s.configuration.box[1]
     Lx, Ly = lx * nx, ly * ny
-    pos = np.zeros((N, 3), dtype=np.float32)
-    type_id = np.zeros(N, dtype=np.uint32)
-    charge = np.zeros(N, dtype=np.float32)
-    for i in range(nx * ny):
-        beg = i * s.particles.N
-        end = beg + s.particles.N
-        pos[beg:end, 0] = s.particles.position[:, 0] * nx
-        pos[beg:end, 1] = s.particles.position[:, 1] * ny
-        pos[beg:end, 2] = s.particles.position[:, 2]
-        type_id[beg:end] = s.particles.typeid
-        charge[beg:end] = s.particles.charge
-    if nx > 1:
-        pos[:, 0] += (np.random.rand(N) - 0.5) * eps * nx
-        mask = pos[:, 0] < Lx/2
-        pos[:, 0][mask] += Lx
-        mask = pos[:, 0] >= Lx/2
-        pos[:, 0][mask] -= Lx
-    # if ny > 1:
-        pos[:, 1] += (np.random.rand(N) - 0.5) * eps * ny
-        mask = pos[:, 1] < Ly/2
-        pos[:, 1][mask] += Ly
-        mask = pos[:, 1] >= Ly/2
-        pos[:, 1][mask] -= Ly
-    s2 = hoomd.Snapshot()
-    s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
-    s2.particles.N = N
-    s2.particles.position = pos
-    s2.particles.typeid = type_id
-    s2.particles.charge = charge
-    s2.particles.types = s.particles.types
-    s2.configuration.step = 0
+    if isinstance(nx, int) and isinstance(ny, int):
+        N = s.particles.N * nx * ny
+        pos = np.zeros((N, 3), dtype=np.float32)
+        type_id = np.zeros(N, dtype=np.uint32)
+        charge = np.zeros(N, dtype=np.float32)
+        for i in range(nx * ny):
+            beg = i * s.particles.N
+            end = beg + s.particles.N
+            pos[beg:end, 0] = s.particles.position[:, 0] * nx
+            pos[beg:end, 1] = s.particles.position[:, 1] * ny
+            pos[beg:end, 2] = s.particles.position[:, 2]
+            type_id[beg:end] = s.particles.typeid
+            charge[beg:end] = s.particles.charge
+        if nx > 1:
+            pos[:, 0] += (np.random.rand(N) - 0.5) * eps * nx
+            mask = pos[:, 0] < Lx/2
+            pos[:, 0][mask] += Lx
+            mask = pos[:, 0] >= Lx/2
+            pos[:, 0][mask] -= Lx
+        if ny > 1:
+            pos[:, 1] += (np.random.rand(N) - 0.5) * eps * ny
+            mask = pos[:, 1] < Ly/2
+            pos[:, 1][mask] += Ly
+            mask = pos[:, 1] >= Ly/2
+            pos[:, 1][mask] -= Ly
+        s2 = hoomd.Snapshot()
+        s2.configuration.box = [Lx, Ly, 1, 0, 0, 0]
+        s2.particles.N = N
+        s2.particles.position = pos
+        s2.particles.typeid = type_id
+        s2.particles.charge = charge
+        s2.particles.types = s.particles.types
+        s2.configuration.step = 0
+    else:
+        s.particles.position[:, 0] *= nx
+        s.particles.position[:, 1] *= ny
+        s.configuration.box = [Lx, Ly, 1, 0, 0, 0]
+
+        mask_A = s.particles.typeid == 0
+        mask_B = s.particles.typeid == 1
+        rho_A = np.sum(mask_A) / (lx * ly)
+        rho_B = np.sum(mask_B) / (lx * ly)
+        print("rho_A=", rho_A, "rho_B=", rho_B)
+        s2 = adjust_density(s, rho_A, rho_B, mode="copy")
     return s2
 
 
@@ -459,8 +471,8 @@ def split(s: hoomd.Snapshot, x_shift=0):
     nB_left = np.sum(s_left.particles.typeid == 1)
     print(nA_left + nB_left, n_left)
 
-    rhoA_left = np.round(nA_left / new_area * 4, 2) / 4
-    rhoB_left = np.round(nB_left / new_area * 4, 2) / 4
+    rhoA_left = np.round(nA_left / new_area * 8, 2) / 8
+    rhoB_left = np.round(nB_left / new_area * 8, 2) / 8
 
     nA_left_new = np.round(rhoA_left * new_area)
     nB_left_new = np.round(rhoB_left * new_area)
@@ -476,8 +488,8 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
     nA_right = np.sum(s_right.particles.typeid == 0)
     nB_right = np.sum(s_right.particles.typeid == 1)
-    rhoA_right = np.round(nA_right / new_area * 4, 2) / 4
-    rhoB_right = np.round(nB_right / new_area * 4, 2) / 4
+    rhoA_right = np.round(nA_right / new_area * 8, 2) / 8
+    rhoB_right = np.round(nB_right / new_area * 8, 2) / 8
 
     nA_right_new = rhoA_right * new_area
     nB_right_new = rhoB_right * new_area
@@ -508,8 +520,8 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L1280_320_r10_10_10_h0.333"
-    basename = "L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L320_r5_5_5_h0.333"
+    basename = "L320_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
 
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
@@ -536,12 +548,12 @@ if __name__ == "__main__":
     # snap = shift_pos(snap, -47, 0)
 
 
-    # snap = shift_pos(snap, 160, 0)
+    # snap = shift_pos(snap, 168, 0)
     # snap = shift_v_slice(snap, 80, 160, 160)
 
     # snap = swap_h(snap, 20, 35, -40)
-    # snap = scale(snap, 2, 2, eps=0)
-    # snap = adjust_density(snap, 4.5, 1.53, mode="copy")
+    snap = scale(snap, 3, 1)
+    # snap = adjust_density(snap, 2.5, 1.25, mode="copy")
     # snap = adjust_density(snap, 20.75, 80, mode="local_rect", R=1)
     # snap = adjust_density(snap, 20.75, 80, mode="local", R=5)
 
@@ -552,9 +564,9 @@ if __name__ == "__main__":
     # snap = rot90(snap)
     snap.configuration.step = 0
 
-    # s1, s2 = split(snap, 200)
-    # fout1 = f"{folder}/L640_320_Dr0.100_k0.70_p4.775_1.9825_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    # fout2 = f"{folder}/L640_320_Dr0.100_k0.70_p5.225_2.8375_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    # s1, s2 = split(snap)
+    # fout1 = f"{folder}/L640_320_Dr0.100_k0.70_p4.77375_1.98125_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    # fout2 = f"{folder}/L640_320_Dr0.100_k0.70_p5.22625_2.83875_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     # f1 = hoomd.open(name=fout1, mode="wb")
     # f1.append(s1)
     # f2 = hoomd.open(name=fout2, mode="wb")
@@ -562,7 +574,7 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2001.gsd"
+    fout = f"{folder}/L960_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
