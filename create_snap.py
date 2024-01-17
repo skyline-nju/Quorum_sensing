@@ -318,6 +318,18 @@ def shift_pos(s: hoomd.Snapshot, dx: float, dy: float) -> hoomd.Snapshot:
     return s
 
 
+def shift_to_center(s: hoomd.Snapshot) -> hoomd.Snapshot:
+    Ly = s.configuration.box[1]
+    Lx = s.configuration.box[0]
+
+    x = s.particles.position[:, 0] / Lx * np.pi * 2
+    y = s.particles.position[:, 1] / Ly * np.pi * 2
+
+    x_c = np.arctan2(np.mean(np.sin(x)), np.mean(np.cos(x))) / (2 * np.pi) * Lx
+    y_c = np.arctan2(np.mean(np.sin(y)), np.mean(np.cos(y))) / (2 * np.pi) * Ly
+
+    return shift_pos(s, -x_c, -y_c)
+
 def swap_h(s: hoomd.Snapshot, x1: float, x2: float, dx: float) -> hoomd.Snapshot:
     Lx = s.configuration.box[0]
     x = s.particles.position[:, 0]
@@ -520,11 +532,11 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L320_r5_5_5_h0.333"
-    basename = "L320_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
+    basename = "L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
 
-    fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, -1)
+    # fname = f"{folder}/{basename}"
+    # snap = read_one_frame(fname, -2)
     # s1 = read_one_frame(fname, 0)
     # s2 = read_one_frame(fname, -1)
     # s2 = shift_pos(s2, 30, -20)
@@ -535,28 +547,26 @@ if __name__ == "__main__":
     # snap = shift_pos(snap, 10, 0)
     # snap = shift_v_slice(snap, -80, 0, 10)
 
-    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_r10_10_10_h0.333"
-    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_320_r10_10_10_h0.333"
-    # fname1 = f"{folder}/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_2001.gsd"
-    # s1 = read_one_frame(fname1, -1)
-    # fname2 = f"{folder}/L80_40_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-0.900_-0.800_J-0.15000_0.06667_h0.100_2000.gsd"
-    # s2 = read_one_frame(fname2, -1)
-    # s1 = shift_pos(s1, 0, -15)
-    # # s2 = shift_pos(s2, -190, 0)
+    folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_80_r10_10_10_h0.333"
+    folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
+    fname1 = f"{folder1}/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129.gsd"
+    s1 = read_one_frame(fname1, -1)
+    fname2 = f"{folder2}/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2042.gsd"
+    s2 = read_one_frame(fname2, -1)
 
-    # snap = vstack(s1, s2)
-    # snap = shift_pos(snap, -47, 0)
+    snap = hstack(s1, s2)
+    snap = shift_pos(snap, 160, 0)
 
 
     # snap = shift_pos(snap, 168, 0)
     # snap = shift_v_slice(snap, 80, 160, 160)
 
     # snap = swap_h(snap, 20, 35, -40)
-    snap = scale(snap, 3, 1)
-    # snap = adjust_density(snap, 2.5, 1.25, mode="copy")
+    # snap = scale(snap, 1.5, 1.5)
+    # snap = adjust_density(snap, 7.9, 92, mode="copy")
     # snap = adjust_density(snap, 20.75, 80, mode="local_rect", R=1)
     # snap = adjust_density(snap, 20.75, 80, mode="local", R=5)
-
+    # snap = shift_to_center(snap)
 
     # # snap = create_nematic_patten(snap, nb=4)
     # snap = duplicate(snap, 1, 3)
@@ -574,7 +584,7 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L960_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    fout = f"{folder}/L1280_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129042.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

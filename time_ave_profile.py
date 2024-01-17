@@ -75,18 +75,34 @@ def get_L(fname):
     return Lx, Ly
 
 
-def time_ave():
-    basename = "L160_160_Dr0.100_k0.70_p4_4_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    fname = f"{root_tahmineh}/QS_MPI_noself/MC_L160_r10_10_10_h0.333/{basename}"
+def time_ave(fname, beg_frame=20, center_type="both", dx=1):
+    basename = os.path.basename(fname)
+    print("handling", basename)
+    fout = f"data/time_ave_fields/{basename.replace('.gsd', '.npz')}"
     Lx, Ly = get_L(basename)
-    dx = 1
-    rho, mx, my, v, vx, vy = np.zeros((6, 2, Ly, Lx))
-    beg_frame = 20
+    if os.path.exists(fout):
+        with np.load(fout, "r") as data:
+            rho, mx, my, v, vx, vy = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+            nframes = data["nframes"]
+            rho *= nframes
+            mx *= nframes
+            my *= nframes
+            v *= nframes
+            vx *= nframes
+            vy *= nframes
+    else:
+        nrows = int(round(Ly / dx))
+        ncols = int(round(Lx / dx))
+        rho, mx, my, v, vx, vy = np.zeros((6, 2, nrows, ncols))
+        nframes = 0
     with fl.open(name=fname, mode="rb") as fgsd:
         count = 0
-        for i in range(beg_frame, fgsd.nframes):
-            # x_c, y_c = find_center(i, fgsd, Lx, Ly)
-            center = None
+        for i in range(beg_frame + nframes, fgsd.nframes):
+            if center_type is None:
+                center = None
+            else:
+                x_c, y_c = find_center(i, fgsd, Lx, Ly, which=center_type)
+                center = [x_c, y_c]
             rho_cur, mx_cur, my_cur, v_cur, vx_cur, vy_cur = get_cg_fields(i, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center)
             rho += rho_cur
             mx += mx_cur
@@ -96,18 +112,18 @@ def time_ave():
             vy += vy_cur
             count +=1
             print("frame:%d/%d" % (i, fgsd.nframes))
-    rho /= count
-    mx /= count
-    my /= count
-    v /= count
-    vx /= count
-    vy /= count
+    nframes += count
+    rho /= nframes
+    mx /= nframes
+    my /= nframes
+    v /= nframes
+    vx /= nframes
+    vy /= nframes
 
-    fout = f"data/time_ave_fields/{basename.replace('.gsd', '.npz')}"
-    np.savez_compressed(fout, rho=rho, mx=mx, my=my, v=v, vx=vx, vy=vy)
+    np.savez_compressed(fout, rho=rho, mx=mx, my=my, v=v, vx=vx, vy=vy, nframes=nframes)
 
 
-def varied_system_size():
+def CCB_profiles_varied_L():
     f1 = "data/time_ave_fields/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
     f2 = "data/time_ave_fields/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
     f3 = "data/time_ave_fields/L640_640_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
@@ -122,51 +138,223 @@ def varied_system_size():
     with np.load(f3, "r") as data:
         rho3, mx3, my3, v3, vx3, vy3 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
 
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.3), constrained_layout=True, sharex=True, sharey=True)
+    ax1.imshow(rho3[0], origin="lower")
+    ax2.imshow(rho3[1], origin="lower")
+    ax1.set_title(r"$\rho_A$")
+    ax2.set_title(r"$\rho_B$")
+
+    ax1.set_xlabel(r"$x$")
+    ax2.set_xlabel(r"$x$")
+    ax1.set_ylabel(r"$y$")
+
+    plt.show()
+    plt.close()
+
+    dx = 1
+    x1 = np.arange(160) * dx + dx / 2
+    x2 = np.arange(320) * dx + dx / 2
+    x3 = np.arange(640) * dx + dx / 2
+    x1 /= 160
+    x2 /= 320
+    x3 /= 640
+
+    # mx1 /= rho1
+    # mx2 /= rho2
+    # mx3 /= rho3
+    # rho1_x = np.mean(mx1[:, 75:85], axis=1)
+    # rho2_x = np.mean(mx2[:, 150:170], axis=1)
+    # rho3_x = np.mean(mx3[:, 300:340], axis=1)
+
+    rho1_x = np.mean(rho1[:, 75:85], axis=1)
+    rho2_x = np.mean(rho2[:, 150:170], axis=1)
+    rho3_x = np.mean(rho3[:, 300:340], axis=1)
+    # rho1_x = np.mean(rho1[:, :], axis=1)
+    # rho2_x = np.mean(rho2[:, :], axis=1)
+    # rho3_x = np.mean(rho3[:, :], axis=1)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    line1, = ax1.plot(x1, rho1_x[0], label=r"$L=160$")
+    line2, = ax1.plot(x2, rho2_x[0], label=r"$L=320$")
+    line3, = ax1.plot(x3, rho3_x[0], label=r"$L=640$")
+    ax2.plot(x1, rho1_x[1])
+    ax2.plot(x2, rho2_x[1])
+    ax2.plot(x3, rho3_x[1])
+
+    # mask1 = np.logical_or(x1 < 0.2, x1 >=0.8)
+    # rm_1 = np.mean(rho1_x[:, mask1], axis=1)
+    # ax1.axhline(rm_1[0], linestyle="dotted", c=line1.get_c())
+    # ax2.axhline(rm_1[1], linestyle="dotted", c=line1.get_c())
+
+    # mask2 = np.logical_or(x2 < 0.2, x2 >=0.8)
+    # rm_2 = np.mean(rho2_x[:, mask2], axis=1)
+    # ax1.axhline(rm_2[0], linestyle="dotted", c=line2.get_c())
+    # ax2.axhline(rm_2[1], linestyle="dotted", c=line2.get_c())
+
+    # mask3 = np.logical_or(x3 < 0.2, x3 >=0.8)
+    # rm_3 = np.mean(rho3_x[:, mask3], axis=1)
+    # ax1.axhline(rm_3[0], linestyle="dotted", c=line3.get_c())
+    # ax2.axhline(rm_3[1], linestyle="dotted", c=line3.get_c())
+
+
+    ax1.axvline(0.335, linestyle="dashed", c="tab:grey")
+    ax1.axvline(0.665, linestyle="dashed", c="tab:grey")
+    ax2.axvline(0.335, linestyle="dashed", c="tab:grey")
+    ax2.axvline(0.665, linestyle="dashed", c="tab:grey")
+    ax2.set_xlim(0, 1)
+    ax2.set_xlabel(r"$x/L$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+    ax1.legend()
+    plt.show()
+    plt.close()
+
+
+
+def SP_profiles_varied_L():
+    f1 = "data/time_ave_fields/L160_160_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+    f2 = "data/time_ave_fields/L240_240_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+    f3 = "data/time_ave_fields/L320_320_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+
+
+    with np.load(f1, "r") as data:
+        rho1, mx1, my1, v1, vx1, vy1 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+
+    with np.load(f2, "r") as data:
+        rho2, mx2, my2, v2, vx2, vy2 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+
+    with np.load(f3, "r") as data:
+        rho3, mx3, my3, v3, vx3, vy3 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+
     plt.imshow(rho1[0], origin="lower")
     plt.show()
     plt.close()
-    # Lx = 
-    # Ly = 320
+
     dx = 1
-    # x = np.arange(Lx) * dx + dx / 2
+    x1 = np.arange(160) * dx + dx / 2
+    x2 = np.arange(240) * dx + dx / 2
+    x3 = np.arange(320) * dx + dx / 2
+
+    x1 /= 160
+    x2 /= 240
+    x3 /= 320
 
     rho1_x = np.mean(rho1[:, 75:85], axis=1)
-    x1 = np.arange(160) * dx + dx / 2
+    rho2_x = np.mean(rho2[:, 112:128], axis=1)
+    rho3_x = np.mean(rho3[:, 150:170], axis=1)
 
-    rho2_x = np.mean(rho2[:, 150:170], axis=1)
-    x2 = np.arange(320) * dx + dx / 2
+    # rho1_x = np.mean(rho1[:, :], axis=1)
+    # rho2_x = np.mean(rho2[:, :], axis=1)
+    # rho3_x = np.mean(rho3[:, :], axis=1)
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
 
-    rho3_x = np.mean(rho3[:, 300:340], axis=1)
-    x3 = np.arange(640) * dx + dx / 2
+    line1, = ax1.plot(x1, rho1_x[0], label=r"$L=160$")
+    line2, = ax1.plot(x2, rho2_x[0], label=r"$L=240$")
+    line3, = ax1.plot(x3, rho3_x[0], label=r"$L=320$")
+    ax2.plot(x1, rho1_x[1])
+    ax2.plot(x2, rho2_x[1])
+    ax2.plot(x3, rho3_x[1])
 
-    plt.plot(x1, rho1_x[0])
-    plt.plot(x2/2, rho2_x[0])
-    plt.plot(x3/4, rho3_x[0])
+    # mask1 = np.logical_or(x1 < 0.2, x1 >=0.8)
+    # rm_1 = np.mean(rho1_x[:, mask1], axis=1)
+    # ax1.axhline(rm_1[0], linestyle="dotted", c=line1.get_c())
+    # ax2.axhline(rm_1[1], linestyle="dotted", c=line1.get_c())
 
-    # plt.xlim(0, 160)
+    # mask2 = np.logical_or(x2 < 0.2, x2 >=0.8)
+    # rm_2 = np.mean(rho2_x[:, mask2], axis=1)
+    # ax1.axhline(rm_2[0], linestyle="dotted", c=line2.get_c())
+    # ax2.axhline(rm_2[1], linestyle="dotted", c=line2.get_c())
+
+    # mask3 = np.logical_or(x3 < 0.2, x3 >=0.8)
+    # rm_3 = np.mean(rho3_x[:, mask3], axis=1)
+    # ax1.axhline(rm_3[0], linestyle="dotted", c=line3.get_c())
+    # ax2.axhline(rm_3[1], linestyle="dotted", c=line3.get_c())
+
+    ax2.set_xlim(0, 1)
+    ax2.set_xlabel(r"$x/L$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+    ax1.legend()
     plt.show()
     plt.close()
 
 
+def CCB_profiles_varied_L_r5():
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    Lx_arr = [320, 640, 960]
+    Ly_arr = [320, 640, 320]
+    dx = 1
 
-def show_rect_snap():
-    folder = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333"
-    f3 = f"{folder}/L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    for i, Lx in enumerate(Lx_arr):
+        Ly = Ly_arr[i]
+        fname = f"data/time_ave_fields/L{Lx}_{Ly}_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+        with np.load(fname, "r") as data:
+            rho, mx, my, v, vx, vy = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
 
-    Lx, Ly = 1280, 320
+        x = np.arange(Lx) * dx + dx / 2
+        x /= Lx
+        row1 = int(75 * Ly / 160)
+        row2 = int(85 * Ly / 160)
+        rho_x = np.mean(rho[:, row1: row2], axis=1)
+
+        line, = ax1.plot(x, rho_x[0], label=r"$L_x=%d, L_y=%d$" % (Lx, Ly))
+        ax2.plot(x, rho_x[1])
+
+        mask = np.logical_or(x < 0.2, x >=0.8)
+        rm = np.mean(rho_x[:, mask], axis=1)
+        ax1.axhline(rm[0], linestyle="dotted", c=line.get_c())
+        ax2.axhline(rm[1], linestyle="dotted", c=line.get_c())
+
+    ax2.set_xlim(0, 1)
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+    ax1.legend()
+    plt.show()
+    plt.close()
+
+
+def show_instant_fields():
+    folder = f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333"
+    fname = f"{folder}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+
+    Lx, Ly = get_L(os.path.basename(fname))
     dx = 1
     x = np.arange(Lx) * dx + dx / 2
+    i_frame = 50
 
-    with fl.open(name=f3, mode="rb") as fgsd:
-        x_c, y_c = find_center(0, fgsd, Lx, Ly)
-        rho5, mx5, my5, v5, vx5, vy5 = get_cg_fields(26, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=[-168, 0])
+    with fl.open(name=fname, mode="rb") as fgsd:
+        rho5, mx5, my5, v5, vx5, vy5 = get_cg_fields(i_frame, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=None)
+    fig, ax = plt.subplots(1, 1, figsize=(7, 6), constrained_layout=True)
+
+    im = ax.imshow(rho5[1], origin="lower", vmax=24, vmin=2)
+    plt.colorbar(im, ax=ax)
+    plt.show()
+    plt.close()
+
+
+def show_instant_profile():
+    folder = f"{root_tahmineh}/QS_MPI_noself/L960_320_r10_10_10_h0.333"
+    fname = f"{folder}/L960_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+
+    Lx, Ly = get_L(os.path.basename(fname))
+    dx = 1
+    x = np.arange(Lx) * dx + dx / 2
+    i_frame = 37
+
+    with fl.open(name=fname, mode="rb") as fgsd:
+        x_c, y_c = find_center(i_frame, fgsd, Lx, Ly)
+        center = [x_c, y_c]
+        print(center)
+        rho5, mx5, my5, v5, vx5, vy5 = get_cg_fields(i_frame, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center)
     rho5_x = np.mean(rho5, axis=1)
 
-
-    rho5_gas_1 = np.mean(rho5_x[:, 90:190], axis=1)
-    rho5_gas_2 = np.mean(rho5_x[:, 450:550], axis=1)
-    rho5_gas_3 = np.mean(rho5_x[:, 720:820], axis=1)
-    rho5_gas_4 = np.mean(rho5_x[:, 1100:1200], axis=1)
+    if Lx == 320:
+        delta_x = 80
+    elif Lx == 960:
+        delta_x = 300
+    rho5_gas_1 = np.mean(rho5_x[:, 0:delta_x], axis=1)
+    rho5_gas_2 = np.mean(rho5_x[:, Lx-delta_x:], axis=1)
     plt.plot(x, rho5_x[0])
     plt.plot(x, rho5_x[1])
 
@@ -174,109 +362,87 @@ def show_rect_snap():
     # plt.axhline(rho5_gas_2[0], linestyle="dotted", c="tab:green")
     # plt.axhline(rho5_gas_3[0], linestyle="dotted", c="tab:orange")
 
-    plt.axhline(rho5_gas_1[1], linestyle="dotted")
+    plt.axhline(rho5_gas_1[1], linestyle="dotted", c="tab:pink")
     plt.axhline(rho5_gas_2[1], linestyle="dotted", c="tab:green")
-    plt.axhline(rho5_gas_3[1], linestyle="dotted", c="tab:orange")
-    plt.axhline(rho5_gas_4[1], linestyle="dotted", c="tab:red")
 
-    plt.axvline(90, c="tab:green", linestyle="dashed")
-    plt.axvline(190, c="tab:green", linestyle="dashed")
-    plt.axvline(450, c="tab:green", linestyle="dashed")
-    plt.axvline(550, c="tab:green", linestyle="dashed")
+    plt.axhline(rho5_gas_1[0], linestyle="dashed", c="tab:pink")
+    plt.axhline(rho5_gas_2[0], linestyle="dashed", c="tab:green")
 
-    plt.axvline(720, c="tab:green", linestyle="dashed")
-    plt.axvline(820, c="tab:green", linestyle="dashed")
-    plt.axvline(1100, c="tab:green", linestyle="dashed")
-    plt.axvline(1200, c="tab:green", linestyle="dashed")
+    plt.axvline(Lx/2, c="tab:green", linestyle="dashed")
+    plt.axvline(delta_x, c="tab:green", linestyle="dashed")
+    plt.axvline(Lx-delta_x, c="tab:green", linestyle="dashed")
 
-    drho = (rho5_gas_3[1] + rho5_gas_4[1] - rho5_gas_1[1] - rho5_gas_2[1]) / 2
-    print(drho * 280 * 320)
-
-
-    rho5_gas_1 = np.mean(rho5_x[:, 500:750], axis=1)
-    rho5_gas_2 = (np.sum(rho5_x[:, 1180:], axis=1) + np.sum(rho5_x[:, :150], axis=1))/250
-    # plt.axhline(rho5_gas_1[1], linestyle="dotted", c="tab:blue")
-    # plt.axhline(rho5_gas_2[1], linestyle="dotted", c="tab:red")
-    print((rho5_gas_2[1] - rho5_gas_1[1]) * 280 * 320) 
-
-
-    plt.axvline(320)
-    plt.axvline(960)
-    plt.axvline(640)
 
     plt.xlim(0, Lx)
     plt.show()
     plt.close()
-    
+
+    beg_frame = 0
+    with fl.open(name=fname, mode="rb") as fgsd:
+        x_c, y_c = find_center(i_frame, fgsd, Lx, Ly)
+        center = [x_c, y_c]
+
+        r1, r2 = np.zeros([2, fgsd.nframes-beg_frame, 2])
+        for i in range(beg_frame, fgsd.nframes):
+            rho5, mx5, my5, v5, vx5, vy5 = get_cg_fields(i, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center)
+            rho5_x = np.mean(rho5, axis=1)
+            print("frame", i)
+
+            r1[i-beg_frame] = np.mean(rho5_x[:, 0:delta_x], axis=1)
+            r2[i-beg_frame] = np.mean(rho5_x[:, Lx-delta_x:], axis=1)
+        t = np.arange(beg_frame, fgsd.nframes)
+    dr = r1 - r2
+    plt.plot(t, dr[:, 0], "o")
+    plt.plot(t, dr[:, 1], "s")
+    plt.show()
+    plt.close()
+
+
+def update_time_ave_fields():
+    fname = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    beg_frame = 200
+    time_ave(fname, beg_frame)
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 100
+    time_ave(fname, beg_frame)
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333/L640_640_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 50
+    time_ave(fname, beg_frame)
+
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/MC_L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 20
+    time_ave(fname, beg_frame, center_type="B")
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/L240_240_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 10
+    time_ave(fname, beg_frame, center_type="B")
+
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/MC_L320_r10_10_10_h0.333/L320_320_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 8
+    time_ave(fname, beg_frame, center_type="B")
+
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L640_r5_5_5_h0.333/L640_640_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 20
+    time_ave(fname, beg_frame, center_type="B")
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L320_r5_5_5_h0.333/L320_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 30
+    time_ave(fname, beg_frame, center_type="B")
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L160_r5_5_5_h0.333/L160_160_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 0
+    time_ave(fname, beg_frame, center_type="B")
+ 
+    fname = f"{root_tahmineh}/QS_MPI_noself/L960_320_r5_5_5_h0.333/L960_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 30
+    time_ave(fname, beg_frame, center_type="B")
 
 if __name__ == "__main__":
-    # f1 = "data/time_ave_fields/L640_320_Dr0.100_k0.70_p4.775_1.9825_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
-    # f2 = "data/time_ave_fields/L640_320_Dr0.100_k0.70_p5.225_2.8375_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
-
-    # with np.load(f1, "r") as data:
-    #     rho1, mx1, my1, v1, vx1, vy1 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
-
-    # with np.load(f2, "r") as data:
-    #     rho2, mx2, my2, v2, vx2, vy2 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
-
-    # Lx = 640
-    # Ly = 320
-    # dx = 1
-    # x = np.arange(Lx) * dx + dx / 2
-
-    # rho1_x = np.mean(rho1[:, :, :], axis=1)
-    # rho2_x = np.mean(rho2[:, :, :], axis=1)
-
-
-
-    # folder = f"{root_tahmineh}/QS_MPI_noself/L640_320_r10_10_10_h0.333"
-    # f3 = f"{folder}/L640_320_Dr0.100_k0.70_p4.775_1.9825_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    # f4 = f"{folder}/L640_320_Dr0.100_k0.70_p5.225_2.8375_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    # folder = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333"
-    # f3 = f"{folder}/L640_320_Dr0.100_k0.70_p4.77375_1.98125_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    # f4 = f"{folder}/L640_320_Dr0.100_k0.70_p5.22625_2.83875_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-
-    # with fl.open(name=f3, mode="rb") as fgsd:
-    #     x_c, y_c = find_center(0, fgsd, Lx, Ly)
-    #     rho3, mx3, my3, v3, vx3, vy3 = get_cg_fields(0, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=[x_c, y_c])
-    # with fl.open(name=f4, mode="rb") as fgsd:
-    #     x_c, y_c = find_center(0, fgsd, Lx, Ly)
-    #     rho4, mx4, my4, v4, vx4, vy4 = get_cg_fields(0, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=[x_c, y_c])
-    # rho3_x = np.mean(rho3, axis=1)
-    # rho4_x = np.mean(rho4, axis=1)
-
-    # plt.xlim(0, Lx*2)
-    # plt.plot(x, rho1_x[0])
-    # plt.plot(x, rho1_x[1])
-    # plt.plot(x + Lx, rho2_x[0])
-    # plt.plot(x + Lx, rho2_x[1])
-    # plt.plot(x, rho3_x[0])
-    # plt.plot(x, rho3_x[1])
-    # plt.plot(x, rho4_x[0])
-    # plt.plot(x, rho4_x[1])
-
-    # rho3_gas = (np.mean(rho3_x[:, 0:140], axis=1) + np.mean(rho3_x[:, 500:], axis=1))/2
-    # plt.axhline(rho3_gas[0], 0, 0.5, linestyle="dashed")
-    # plt.axhline(rho3_gas[1], 0, 0.5, linestyle="dashed")
-
-    # rho4_gas = (np.mean(rho4_x[:, 0:140], axis=1) + np.mean(rho4_x[:, 500:], axis=1))/2
-    # plt.axhline(rho4_gas[0], 0.5, 1, linestyle="dashed")
-    # plt.axhline(rho4_gas[1], 0.5, 1, linestyle="dashed")
-    # print((rho4_gas[1] - rho3_gas[1]) * 280 * 320)
-
-    # rho1_gas = (np.mean(rho1_x[:, 0:200], axis=1) + np.mean(rho1_x[:, 440:], axis=1))/2
-    # plt.axhline(rho1_gas[0], 0, 0.5, linestyle="dotted")
-    # plt.axhline(rho1_gas[1], 0, 0.5, linestyle="dotted")
-
-    # rho2_gas = (np.mean(rho2_x[:, 0:200], axis=1) + np.mean(rho2_x[:, 440:], axis=1))/2
-    # plt.axhline(rho2_gas[0], 0.5, 1, linestyle="dotted")
-    # plt.axhline(rho2_gas[1], 0.5, 1, linestyle="dotted")
-    # plt.show()
-    # plt.close()
-
-    
-    
-    
     ### get time series of gas density around the CCB domains
     """
     with fl.open(name=f3, mode="rb") as fgsd:
@@ -308,47 +474,18 @@ if __name__ == "__main__":
     # plt.show()
     # plt.close()
 
-    # time_ave()
 
+    # update_time_ave_fields()
+    # CCB_profiles_varied_L_r5()
 
-    f1 = "data/time_ave_fields/L160_160_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
-    with np.load(f1, "r") as data:
-        rho1, mx1, my1, v1, vx1, vy1 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+    # with np.load("data/time_ave_fields/L320_320_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz", "r") as data:
+    #     rho = data["rho"]
+    #     plt.imshow(rho[1], origin="lower")
+    #     plt.show()
+    #     plt.close()
 
-    Lx = 160
-    Ly = 160
-    dx = 1
-    x = np.arange(Lx) * dx + dx / 2
+    # CCB_profiles_varied_L()
+    # SP_profiles_varied_L()
 
-    plt.imshow(rho1[1], origin="lower")
-    # plt.axhline(180, c="w")
-    # plt.axhline(220, c="w")
-    plt.show()
-    plt.close()
-
-    # rho1_x = np.mean(rho1[:, 180:220], axis=1)
-    # plt.plot(x, rho1_x[0])
-    # plt.plot(x, rho1_x[1])
-    # plt.plot(x+Lx, rho1_x[0])
-    # plt.plot(x+Lx, rho1_x[1])
-
-    # rho_m1 = np.mean(rho1_x[:, 400:600], axis=1)
-    # rho_m2 = np.mean(rho1_x[:, 600:800], axis=1)
-
-    # rho_m3 = np.mean(rho1_x[:, 20:200], axis=1)
-    # rho_m4 = np.mean(rho1_x[:, 1100:1280], axis=1)
-
-    # plt.axhline(rho_m1[0], linestyle="dashed", c="tab:blue")
-    # plt.axhline(rho_m2[0], linestyle="dotted", c="tab:blue")
-
-    # plt.axhline(rho_m3[0], linestyle="dashed", c="tab:red")
-    # plt.axhline(rho_m4[0], linestyle="dotted", c="tab:red")
-
-    # plt.axhline(rho_m1[1], linestyle="dashed", c="tab:blue")
-    # plt.axhline(rho_m2[1], linestyle="dotted", c="tab:blue")
-
-    # plt.axhline(rho_m3[1], linestyle="dashed", c="tab:red")
-    # plt.axhline(rho_m4[1], linestyle="dotted", c="tab:red")
-
-    # plt.show()
-    # plt.close()
+    # show_instant_profile()
+    show_instant_fields()
