@@ -532,11 +532,13 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
-    basename = "L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L480_80_r10_10_10_h0.333"
+    basename = "L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
 
-    # fname = f"{folder}/{basename}"
-    # snap = read_one_frame(fname, -2)
+    fname = f"{folder}/{basename}"
+    s1 = read_one_frame(fname, 415)
+    s2 = read_one_frame(fname, 415)
+
     # s1 = read_one_frame(fname, 0)
     # s2 = read_one_frame(fname, -1)
     # s2 = shift_pos(s2, 30, -20)
@@ -547,15 +549,20 @@ if __name__ == "__main__":
     # snap = shift_pos(snap, 10, 0)
     # snap = shift_v_slice(snap, -80, 0, 10)
 
-    folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_80_r10_10_10_h0.333"
-    folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
-    fname1 = f"{folder1}/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129.gsd"
-    s1 = read_one_frame(fname1, -1)
-    fname2 = f"{folder2}/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2042.gsd"
-    s2 = read_one_frame(fname2, -1)
+    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_80_r10_10_10_h0.333"
+    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
+    # fname1 = f"{folder1}/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129.gsd"
+    # s1 = read_one_frame(fname1, -1)
+    # fname2 = f"{folder2}/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2042.gsd"
+    # s2 = read_one_frame(fname2, -1)
 
+
+
+    s1 = shift_to_center(s1)
+    s2 = shift_to_center(s2)
+    s2 = shift_pos(s2, 120, 0)
     snap = hstack(s1, s2)
-    snap = shift_pos(snap, 160, 0)
+    # snap = shift_pos(snap, 160, 0)
 
 
     # snap = shift_pos(snap, 168, 0)
@@ -584,7 +591,7 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L1280_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129042.gsd"
+    fout = f"{folder}/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2120.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

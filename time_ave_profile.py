@@ -69,7 +69,7 @@ def get_cg_fields(i_frame, fgsd, dx, Lx, Ly, center=None):
 
 
 def get_L(fname):
-    s = fname.lstrip("L").split("_")
+    s = os.path.basename(fname).lstrip("L").split("_")
     Lx = int(s[0])
     Ly = int(s[1])
     return Lx, Ly
