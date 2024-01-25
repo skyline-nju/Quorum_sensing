@@ -64,7 +64,7 @@ def get_L(fname):
     return Lx, Ly
 
 
-def time_ave(fname, beg_frame=20, center_type="both", dx=1):
+def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1):
     basename = os.path.basename(fname)
     print("handling", basename)
     fout = f"data/time_ave_profiles/{basename.replace('.gsd', '.npz')}"
@@ -85,7 +85,9 @@ def time_ave(fname, beg_frame=20, center_type="both", dx=1):
         nframes = 0
     with fl.open(name=fname, mode="rb") as fgsd:
         count = 0
-        for i in range(beg_frame + nframes, fgsd.nframes):
+        if end_frame is None:
+            end_frame = fgsd.nframes
+        for i in range(beg_frame + nframes, end_frame):
             if center_type is None:
                 center = None
             else:
@@ -132,6 +134,7 @@ def show_time_ave_profiles():
               "data/time_ave_profiles/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
               "data/time_ave_profiles/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
     ]
+
     fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
     for fname in fnames:
         with np.load(fname, "r") as data:
@@ -148,6 +151,62 @@ def show_time_ave_profiles():
 
     ax1.set_xlim(0, 1)
     ax1.legend()
+    plt.show()
+    plt.close()
+
+
+def estimate_binodals():
+    fname = "data/time_ave_profiles/L120_40_Dr1.000_k0.70_p8.4_25_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.npz"
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    with np.load(fname, "r") as data:
+        rho = data["rho"]
+        Lx, Ly = get_L(fname)
+        dx = 1
+        x = np.arange(Lx) * dx + dx / 2
+    ax1.plot(x / Lx, rho[0], label=r"$L_x=%d$" % Lx)
+    ax2.plot(x / Lx, rho[1])
+
+    xg = [0.15, 0.85]
+    xl = [0.35, 0.65]
+
+    mask_g = np.logical_or(x/Lx < xg[0], x/Lx > xg[1])
+    mask_l = np.logical_and(x/Lx > xl[0], x/Lx < xl[1])
+
+    rA_g = np.mean(rho[0][mask_g])
+    rA_l = np.mean(rho[0][mask_l])
+    rB_g = np.mean(rho[1][mask_g])
+    rB_l = np.mean(rho[1][mask_l])
+
+    ax1.axhline(rA_g, 0, xg[0], linestyle="dashed", c="tab:green")
+    ax1.axhline(rA_g, xg[1], 1, linestyle="dashed", c="tab:green")
+    ax1.axhline(rA_l, xl[0], xl[1], linestyle="dashed", c="tab:orange")
+
+    ax2.axhline(rB_g, 0, xg[0], linestyle="dashed", c="tab:green")
+    ax2.axhline(rB_g, xg[1], 1, linestyle="dashed", c="tab:green")
+    ax2.axhline(rB_l, xl[0], xl[1], linestyle="dashed", c="tab:orange")
+
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+
+    print(rA_g, rB_g, rA_l, rB_l)
+    ax1.set_xlim(0, 1)
+    ax1.legend()
+    plt.show()
+    plt.close()
+
+    plt.plot(8.4, 25, "o")
+    plt.plot(rA_g, rB_g, "<")
+    plt.plot(rA_l, rB_l, ">")
+    plt.plot([rA_g, rA_l], [rB_g, rB_l], "--", c="tab:grey")
+
+
+    rA_new = 10
+    rB_new = (rA_new - rA_g) * (rB_l - rB_g) / (rA_l - rA_g) + rB_g
+
+    plt.plot(rA_new, rB_new, "s", fillstyle="none")
+    print(rA_new, rB_new)
+
     plt.show()
     plt.close()
 
@@ -170,7 +229,11 @@ def locate_interfaces(x, y, y_threshold, Lx, acsending=True):
 def show_instant_profiles():
     # fname = f"{root_tahmineh}/QS_MPI_noself/L1280_80_r10_10_10_h0.333/L1280_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129042.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
-    fname = f"{root_tahmineh}/QS_MPI_noself/L1920_160_r5_5_5_varied_Dt_h/L1920_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    # fname = f"{root_tahmineh}/QS_MPI_noself/L1920_160_r5_5_5_varied_Dt_h/L1920_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    fname = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h/L480_160_Dr0.100_Dt0.01_k0.70_p16.6_13.6_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+
+
 
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_80_r10_10_10_h0.333/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2120.gsd"
 
@@ -179,7 +242,7 @@ def show_instant_profiles():
     dx = 2
     x = np.arange(Lx//dx) * dx + dx / 2
 
-    beg_frame = 309
+    beg_frame = 35
     end_frame = None
     with fl.open(name=fname, mode="rb") as fgsd:
         if end_frame is None:
@@ -189,7 +252,7 @@ def show_instant_profiles():
             fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
             rho, mx, my, v, vx, vy = get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None)
             ax1.plot(x, rho[0])
-            ax2.plot(x, rho[1])
+            ax1.plot(x, rho[1])
 
             # rho_thresh = 12.5
             # ax2.axhline(rho_thresh, linestyle="dashed")
@@ -201,16 +264,35 @@ def show_instant_profiles():
             # for xi in xs2:
             #     ax2.axvline(xi, linestyle="dotted", c="tab:red")
 
+            ax2.plot(x, v[0])
+            ax2.plot(x, v[1])
             ax2.set_xlabel(r"$x/L_x$")
-            ax1.set_ylabel(r"$\rho_A$")
-            ax2.set_ylabel(r"$\rho_B$")
+            ax1.set_ylabel(r"$\rho$")
+            ax2.set_ylabel(r"$v$")
             plt.show()
             plt.close()
 
 
 def update_space_time_profiles():
     from coarse_grain import coarse_grain_all_1D
+
+    Lx = 960
+    Ly = 40
+    dx = 2
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10"
+    coarse_grain_all_1D(prefix, dx, False)
+
     Lx = 240
+    Ly = 20
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h"
+    coarse_grain_all_1D(prefix, 1, False)
+
+    Lx = 240
+    Ly = 40
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h"
+    coarse_grain_all_1D(prefix, 1, False)
+
+    Lx = 480
     Ly = 40
     prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h"
     coarse_grain_all_1D(prefix, 1, False)
@@ -312,14 +394,14 @@ def space_time():
 def plot_space_time_varied_Ly(rA=9):
     Lx = 240
     if rA == 9:
-        ncut_dict = {40: 600, 80: 1, 160: 1}
-        seed_dict = {40: 1000, 80: 2000, 160: 2000}
+        ncut_dict = {20: 0, 40: 600, 80: 1, 160: 1}
+        seed_dict = {20: 1000, 40: 1000, 80: 2000, 160: 2000}
     elif rA == 8:
         ncut_dict = {40: 1, 80: 1, 160: 1}
         seed_dict = {40: 1000, 80: 2000, 160: 2000}
-    titles = [r"(a) $L_y=%d$", r"(b) $L_y=%d$", r"(c) $L_y=%d$"]
+    titles = [r"(a) $L_y=%d$", r"(b) $L_y=%d$", r"(c) $L_y=%d$", r"(d) $L_y=%d$"]
 
-    fig, axes = plt.subplots(1, 3, constrained_layout=True, sharey=False)
+    fig, axes = plt.subplots(1, len(ncut_dict), constrained_layout=True, sharey=False)
     for i, Ly in enumerate(ncut_dict.keys()):
         folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h/profile_1D_dx1"
         fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_k0.70_p{rA}_34_r10_10_10_e-2.000_J0.500_-0.500_h0.100_{seed_dict[Ly]}.npz"
@@ -329,23 +411,26 @@ def plot_space_time_varied_Ly(rA=9):
             t0, x0, fields0 = data["t"], data["x"], data["fields"]
 
             ncut = ncut_dict[Ly]
-            T = (t0[-1] - t0[ncut-1]) * 0.1
+            if ncut > 0:
+                T = (t0[-1] - t0[ncut-1]) * 0.1
+            else:
+                T = (t0[-1]) * 0.1
 
             rhoA = fields0[ncut:, 0]
             rhoB = fields0[ncut:, 1]
             axes[i].imshow(rhoB, origin="lower", extent=[0, Lx, 0, T], aspect="auto")
             axes[i].set_title(titles[i] % Ly)
             axes[i].set_xlabel(r"$x$")
-            axes[i].set_ylabel(r"$t$")
 
+    axes[0].set_ylabel(r"$t$")
     plt.show()
     plt.close()
 
 
 def plot_space_time_varied_Lx():
     Ly = 40
-    ncut_dict = {120: 200, 240: 100}
-    seed_dict = {120: 1000, 240: 1000}
+    ncut_dict = {120: 400, 240: 100, 480: 1}
+    seed_dict = {120: 1000, 240: 1000, 480: 2000}
     titles = [r"(a) $L_x=%d$", r"(b) $L_x=%d$", r"(c) $L_x=%d$"]
 
     fig, axes = plt.subplots(1, len(ncut_dict), constrained_layout=True, sharey=False)
@@ -407,16 +492,57 @@ def plot_space_time_varied_rhoA():
     plt.close()
 
 
-
-def plot_space_time_fields():
+def plot_space_time_varied_rhoB():
     Lx = 120
     Ly = 40
     rA = 9
-    rB = 36
+    ncut_dict = {30: 100, 32: 100, 34: 400, 36: 0}
+    seed_dict = {30: 1000, 32: 1000, 34: 1000, 36: 1000}
+    titles = [r"(a) $\rho_B=%g$", r"(b) $\rho_B=%g$", r"(c) $\rho_B=%g$", r"(d) $\rho_B=%g$"]
+
+    fig, axes = plt.subplots(1, len(ncut_dict), constrained_layout=True, sharey=False)
+    for i, rB in enumerate(ncut_dict.keys()):
+        folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h/profile_1D_dx1"
+        fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_k0.70_p{rA:g}_{rB:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.100_{seed_dict[rB]}.npz"
+
+
+        with np.load(fname, "r") as data:
+            t0, x0, fields0 = data["t"], data["x"], data["fields"]
+
+            ncut = ncut_dict[rB]
+            dt = (t0[-1] - t0[-2]) * 0.1
+            T = (t0[-1] - t0[ncut]) * 0.1 + dt
+ 
+            rhoA = fields0[ncut:, 0]
+            rhoB = fields0[ncut:, 1]
+            axes[i].imshow(rhoB, origin="lower", extent=[0, Lx, 0, T], aspect="auto")
+            axes[i].set_title(titles[i] % rB)
+            axes[i].set_xlabel(r"$x$")
+            axes[i].set_ylabel(r"$t$")
+
+    plt.show()
+    plt.close()
+
+
+def plot_space_time_fields():
+    Lx = 960
+    Ly = 40
+    rA = 10
+    rB = 34
+    r0 = 10
     seed_dict = {40: 1000}
-    ncut_dict = {40: 1}
-    folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h/profile_1D_dx1"
-    fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_k0.70_p{rA:g}_{rB:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.100_{seed_dict[Ly]}.npz"
+    ncut_dict = {40: 0}
+    dx = 2
+
+    if Lx == 1920 and Ly == 160:
+        folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r{r0:g}_{r0:g}_{r0:g}_varied_Dt_h/profile_1D_dx{dx:g}"
+        fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_Dt0_k0.70_p{rA:g}_{rB:g}_r{r0:g}_{r0:g}_{r0:g}_e-2.000_J0.500_-0.500_h0.100_{seed_dict[Ly]}.npz"
+    else:
+        if Lx == 960 and Ly == 40:
+            folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r{r0:g}_{r0:g}_{r0:g}/profile_1D_dx{dx:g}"
+        else:
+            folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r{r0:g}_{r0:g}_{r0:g}_varied_h/profile_1D_dx{dx:g}"
+        fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_k0.70_p{rA:g}_{rB:g}_r{r0:g}_{r0:g}_{r0:g}_e-2.000_J0.500_-0.500_h0.100_{seed_dict[Ly]}.npz"
 
     fig, ax = plt.subplots(1, 1, constrained_layout=True, sharey=False)
 
@@ -440,14 +566,14 @@ def plot_space_time_fields():
 
 def get_interface_locs(Lx, Ly=80, h=1/3.):
     if Lx == 1280:
-        seed_arr = [1000]
+        seed_arr = [1000, 2129042, 2030, 2240]
     elif Lx == 1120:
-        seed_arr = [2000]
+        seed_arr = [2003]
     elif Lx== 960:
         seed_arr = [2030, 2060, 2090, 2120]
     
     if Lx == 1120:
-        dx = 4
+        dx = 8
     else:
         dx = 6
     for seed in seed_arr:
@@ -459,8 +585,10 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
             beg_frame = 0
         elif Lx == 1120:
             beg_frame = 0
-        elif Lx == 1280:
+        elif Lx == 1280 and seed == 1000:
             beg_frame = 170
+        else:
+            beg_frame = 0
         end_frame = None
 
         with fl.open(name=fname, mode="rb") as fgsd:
@@ -468,7 +596,14 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
                 end_frame = fgsd.nframes
             xs = np.zeros((end_frame-beg_frame, 4))
             t_arr = np.zeros(end_frame-beg_frame)
-            for i_frame in range(beg_frame, end_frame):
+            if os.path.exists(fout):
+                with np.load(fout, "r") as data:
+                    existed_frames = data["t"].size
+                    t_arr[:existed_frames] = data["t"]
+                    xs[:existed_frames] = data["xs"]
+            else:
+                existed_frames = 0
+            for i_frame in range(beg_frame + existed_frames, end_frame):
                 print("frame: %d/%d" % (i_frame, end_frame))
                 rho_thresh = 12.5
                 rho, mx, my, v, vx, vy = get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None)
@@ -508,10 +643,12 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
         np.savez_compressed(fout, t=t_arr, xs=xs)
 
 
-def plot_spacing_vs_t():
-    Lx = 1280
+def plot_spacing_vs_t(Lx=960):
     get_interface_locs(Lx)
-    seed_arr = [1000]
+    if Lx == 960:
+        seed_arr = [2030, 2060, 2090, 2120]
+    elif Lx == 1280:
+        seed_arr = [1000, 2129042, 2030, 2240]
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     for seed in seed_arr:
@@ -529,10 +666,10 @@ def plot_spacing_vs_t():
                 w2[i] = xs[i][3] - xs[i][2]
         
     
-        line, = ax1.plot(t, d1, "o")
-        ax1.plot(t, d2, "s", c=line.get_c())
-        line, = ax2.plot(t, w1, "o")
-        ax2.plot(t, w2, "s", c=line.get_c())
+        line, = ax1.plot(t-t[0], d1, "o")
+        ax1.plot(t-t[0], d2, "s", c=line.get_c())
+        line, = ax2.plot(t-t[0], np.abs(d2-d1), "o")
+        # ax2.plot(t, w2, "s", c=line.get_c())
     plt.show()
     plt.close()
 
@@ -542,10 +679,15 @@ if __name__ == "__main__":
     # show_time_ave_profiles()
     # show_instant_profiles()
 
-    # plot_spacing_vs_t()
+    # plot_spacing_vs_t(Lx=960)
 
-    update_space_time_profiles()
-    # plot_space_time_varied_Ly(rA=8)
-    # plot_space_time_varied_rhoA()
+    # update_space_time_profiles()
+    # plot_space_time_varied_Ly(rA=9)
+    # plot_space_time_varied_rhoB()
+    # plot_space_time_varied_Lx()
     # plot_space_time_fields()
-   
+    
+    # fname = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20_varied_h/L120_40_Dr1.000_k0.70_p8.4_25_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    # time_ave(fname, 150, None, center_type="B")
+    estimate_binodals()
+    

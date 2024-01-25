@@ -532,14 +532,14 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L480_40_r10_10_10_varied_h"
-    basename = "L480_40_Dr0.100_k0.70_p9_36_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h"
+    basename = "L480_160_Dr0.100_Dt0_k0.70_p8_6_r10_10_10_e-2.000_J2.000_-2.000_h0.100_1000.gsd"
 
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
 
-    # s1 = read_one_frame(fname, 415)
-    # s2 = read_one_frame(fname, 415)
+    # s1 = read_one_frame(fname, 454)
+    # s2 = read_one_frame(fname, 454)
 
     # s1 = read_one_frame(fname, 0)
     # s2 = read_one_frame(fname, -1)
@@ -562,7 +562,8 @@ if __name__ == "__main__":
 
     # s1 = shift_to_center(s1)
     # s2 = shift_to_center(s2)
-    # s2 = shift_pos(s2, 120, 0)
+    # s1 = shift_pos(s1, 120, 0)
+    # s2 = shift_pos(s2, -120, 0)
     # snap = hstack(s1, s2)
     # snap = shift_pos(snap, 160, 0)
 
@@ -571,14 +572,14 @@ if __name__ == "__main__":
     # snap = shift_v_slice(snap, 80, 160, 160)
 
     # snap = swap_h(snap, 20, 35, -40)
-    # snap = scale(snap, 1, 2)
-    snap = adjust_density(snap, 9, 34, mode="copy")
+    # snap = scale(snap, 2, 1)
+    snap = adjust_density(snap, 8, 7, mode="copy")
     # snap = adjust_density(snap, 20.75, 80, mode="local_rect", R=1)
     # snap = adjust_density(snap, 20.75, 80, mode="local", R=5)
     # snap = shift_to_center(snap)
 
     # # snap = create_nematic_patten(snap, nb=4)
-    # snap = duplicate(snap, 1, 4)
+    # snap = duplicate(snap, 1, 2)
 
     # snap = rot90(snap)
     snap.configuration.step = 0
@@ -593,7 +594,7 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L480_40_Dr0.100_k0.70_p9_34_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    fout = f"{folder}/L480_160_Dr0.100_Dt0_k0.70_p8_7_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 
