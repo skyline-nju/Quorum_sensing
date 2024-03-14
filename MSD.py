@@ -482,15 +482,15 @@ def MSD_vs_t_CCB_varied_L():
     plt.close()
 
 
-def MSD_vs_L_varied_composition():
+def D_vs_L_varied_composition():
     L_arr = [160, 240, 320, 480, 640]
     # MSD_arr = np.array([516, 130, 67, 24.5, 11.5]) / 4e4
-    MSD_arr = np.array([516, 136.5, 65.36, 21.68, 11.5]) / 4e4
+    MSD_arr = np.array([516, 138, 65.36, 21.68, 11.5]) / 4e4
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     ax.plot(L_arr, MSD_arr, "-o", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
 
     L_arr = [240, 320, 480]
-    MSD_arr = np.array([233, 112.2, 66.48]) / 4e4
+    MSD_arr = np.array([233, 112.2, 54.2]) / 4e4
     ax.plot(L_arr[:3], MSD_arr[:3], "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
 
     L_arr = [160, 240, 320, 480]
@@ -519,9 +519,9 @@ if __name__ == "__main__":
     # show_MSD()
     # show_MSD_averaged()
     
-    # MSD_vs_t_CCB_varied_L()
-    # MSD_vs_t_SP_varied_L()
-    MSD_vs_L_varied_composition()
+    MSD_vs_t_CCB_varied_L()
+    MSD_vs_t_SP_varied_L()
+    D_vs_L_varied_composition()
 
     # f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L480_r10_10_10_h0.333/mc_L480_480_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
     # t, x, y = read_traj(f_traj, Lx=480, Ly=480, n_cut=1)

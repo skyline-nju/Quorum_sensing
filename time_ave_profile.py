@@ -314,6 +314,84 @@ def CCB_profiles_varied_L_r5():
     plt.close()
 
 
+def CCB_profiles_large_NR():
+    Lx_arr = [320]
+    Ly_arr = [320]
+    dx = 1
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+
+    for i, Lx in enumerate(Lx_arr):
+        Ly = Ly_arr[i]
+        fname = f"data/time_ave_fields/L{Lx}_{Ly}_Dr0.100_Dt0_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.npz"
+        with np.load(fname, "r") as data:
+            rho, mx, my, v, vx, vy = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+        
+        # plt.imshow(rho[0], origin="lower")
+        # plt.show()
+        # plt.close()
+
+        x = np.arange(Lx) * dx + dx / 2
+        x /= Lx
+        row1 = int(75 * Ly / 160)
+        row2 = int(85 * Ly / 160)
+        rho_x = np.mean(rho[:, row1: row2], axis=1)
+
+        line, = ax1.plot(x, rho_x[0], label=r"$L_x=%d, L_y=%d$" % (Lx, Ly))
+        ax2.plot(x, rho_x[1])
+
+        mask = np.logical_or(x < 0.2, x >=0.8)
+        rm = np.mean(rho_x[:, mask], axis=1)
+        ax1.axhline(rm[0], linestyle="dotted", c=line.get_c())
+        ax2.axhline(rm[1], linestyle="dotted", c=line.get_c())
+
+    ax2.set_xlim(0, 1)
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+    ax1.legend()
+    plt.show()
+    plt.close()
+
+
+def CCB_LA_profiles():
+    Lx_arr = [160]
+    Ly_arr = [160]
+    dx = 1
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+
+    for i, Lx in enumerate(Lx_arr):
+        Ly = Ly_arr[i]
+        fname = f"data/time_ave_fields/L{Lx}_{Ly}_Dr0.100_k0.70_p22_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
+        with np.load(fname, "r") as data:
+            rho, mx, my, v, vx, vy = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+        
+        # plt.imshow(rho[0], origin="lower")
+        # plt.show()
+        # plt.close()
+
+        x = np.arange(Lx) * dx + dx / 2
+        x /= Lx
+        row1 = int(75 * Ly / 160)
+        row2 = int(85 * Ly / 160)
+        rho_x = np.mean(rho[:, row1: row2], axis=1)
+
+        line, = ax1.plot(x, rho_x[0], label=r"$L_x=%d, L_y=%d$" % (Lx, Ly))
+        ax2.plot(x, rho_x[1])
+
+        mask = np.logical_or(x < 0.2, x >=0.8)
+        rm = np.mean(rho_x[:, mask], axis=1)
+        ax1.axhline(rm[0], linestyle="dotted", c=line.get_c())
+        ax2.axhline(rm[1], linestyle="dotted", c=line.get_c())
+
+    ax2.set_xlim(0, 1)
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$\rho_A$")
+    ax2.set_ylabel(r"$\rho_B$")
+    ax1.legend()
+    plt.show()
+    plt.close()
+
+
 def show_instant_fields():
     folder = f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333"
     fname = f"{folder}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
@@ -399,6 +477,16 @@ def show_instant_profile():
 
 
 def update_time_ave_fields():
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_varied_Dt_h/L320_320_Dr0.100_Dt0_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    beg_frame = 30
+    time_ave(fname, beg_frame, center_type="B")
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p22_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    beg_frame = 46
+    time_ave(fname, beg_frame, center_type="B")
+
+    '''
     fname = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
     beg_frame = 200
     time_ave(fname, beg_frame)
@@ -441,6 +529,8 @@ def update_time_ave_fields():
     fname = f"{root_tahmineh}/QS_MPI_noself/L960_320_r5_5_5_h0.333/L960_320_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     beg_frame = 30
     time_ave(fname, beg_frame, center_type="B")
+    '''
+
 
 if __name__ == "__main__":
     ### get time series of gas density around the CCB domains
@@ -475,7 +565,7 @@ if __name__ == "__main__":
     # plt.close()
 
 
-    # update_time_ave_fields()
+    update_time_ave_fields()
     # CCB_profiles_varied_L_r5()
 
     # with np.load("data/time_ave_fields/L320_320_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz", "r") as data:
@@ -488,4 +578,6 @@ if __name__ == "__main__":
     # SP_profiles_varied_L()
 
     # show_instant_profile()
-    show_instant_fields()
+    # show_instant_fields()
+    CCB_profiles_large_NR()
+    # CCB_LA_profiles()

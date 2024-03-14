@@ -6,14 +6,17 @@ from gsd import fl
 
 
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
+root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
 
 
-def get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None):
+def get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None, inc_v_mx=False):
     ncols = int(Lx / dx)
     bin_area = dx * Ly
 
     par_num = np.zeros((2, ncols), int)
     mx, my, v, vx, vy = np.zeros((5, 2, ncols))
+    if inc_v_mx:
+        v_mx = np.zeros_like(mx)
 
     pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
     try:
@@ -48,13 +51,21 @@ def get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None):
         v[my_id, my_col] += speed[j]
         vx[my_id, my_col] += ux[j] * speed[j]
         vy[my_id, my_col] += uy[j] * speed[j]
+    
     rho = par_num / bin_area
     mx /= bin_area
     my /= bin_area
     v /= bin_area
     vx /= bin_area
     vy /= bin_area
-    return rho, mx, my, v, vx, vy
+    if inc_v_mx:
+        v_ave = v * bin_area
+        mask = par_num > 0
+        v_ave[mask] /= par_num[mask]
+        v_mx = v_ave * mx
+        return rho, mx, my, v, vx, vy, v_mx, v_ave
+    else:
+        return rho, mx, my, v, vx, vy
 
 
 def get_L(fname):
@@ -64,10 +75,10 @@ def get_L(fname):
     return Lx, Ly
 
 
-def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1):
+def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1, inc_v_mx=False, folder="data/time_ave_profiles"):
     basename = os.path.basename(fname)
     print("handling", basename)
-    fout = f"data/time_ave_profiles/{basename.replace('.gsd', '.npz')}"
+    fout = f"{folder}/{basename.replace('.gsd', '.npz')}"
     Lx, Ly = get_L(basename)
     if os.path.exists(fout):
         with np.load(fout, "r") as data:
@@ -79,9 +90,15 @@ def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1):
             v *= nframes
             vx *= nframes
             vy *= nframes
+            if inc_v_mx:
+                v_mx = data["v_mx"]
+                v_ave = data["v_ave"]
     else:
         ncols = int(round(Lx / dx))
         rho, mx, my, v, vx, vy = np.zeros((6, 2, ncols))
+        if inc_v_mx:
+            v_mx = np.zeros((2, ncols))
+            v_ave = np.zeros((2, ncols))
         nframes = 0
     with fl.open(name=fname, mode="rb") as fgsd:
         count = 0
@@ -92,13 +109,19 @@ def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1):
                 center = None
             else:
                 center = find_xc(i, fgsd, Lx, which=center_type)
-            rho_cur, mx_cur, my_cur, v_cur, vx_cur, vy_cur = get_profiles(i, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center)
+            if not inc_v_mx:
+                rho_cur, mx_cur, my_cur, v_cur, vx_cur, vy_cur = get_profiles(i, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center)
+            else:
+                rho_cur, mx_cur, my_cur, v_cur, vx_cur, vy_cur, v_mx_cur, v_ave_cur = get_profiles(i, fgsd, dx=dx, Lx=Lx, Ly=Ly, center=center, inc_v_mx=inc_v_mx)
             rho += rho_cur
             mx += mx_cur
             my += my_cur
             v += v_cur
             vx += vx_cur
             vy += vy_cur
+            if inc_v_mx:
+                v_mx += v_mx_cur
+                v_ave += v_ave_cur
             count +=1
             print("frame:%d/%d" % (i, fgsd.nframes))
     nframes += count
@@ -109,7 +132,12 @@ def time_ave(fname, beg_frame=20, end_frame=None, center_type="both", dx=1):
     vx /= nframes
     vy /= nframes
 
-    np.savez_compressed(fout, rho=rho, mx=mx, my=my, v=v, vx=vx, vy=vy, nframes=nframes)
+    if not inc_v_mx:
+        np.savez_compressed(fout, rho=rho, mx=mx, my=my, v=v, vx=vx, vy=vy, nframes=nframes)
+    else:
+        v_mx /= nframes
+        v_ave /= nframes
+        np.savez_compressed(fout, rho=rho, mx=mx, my=my, v=v, vx=vx, vy=vy, v_mx=v_mx, v_ave=v_ave, nframes=nframes)
 
 
 def update_time_ave_profiles():
@@ -118,45 +146,175 @@ def update_time_ave_profiles():
     beg_frame = 40
     time_ave(fname, beg_frame)
 
-    root = f"{root_tahmineh}/QS_MPI_noself"
     fname = f"{root}/L960_80_r10_10_10_h0.333/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     beg_frame = 10
     time_ave(fname, beg_frame)
 
-    root = f"{root_tahmineh}/QS_MPI_noself"
     fname = f"{root}/L480_80_r10_10_10_h0.333/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
     beg_frame = 264
     time_ave(fname, beg_frame)
 
+    fname = f"{root}/L960_160_r10_10_10_varied_h/L960_160_Dr0.100_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 60, None, center_type="B")
+
+    fname = f"{root}/L960_160_r10_10_10_varied_h/L960_160_Dr0.100_k0.70_p6.25_7.15_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 30, None, center_type="B")
+
+    fname = f"{root}/L960_160_r10_10_10_varied_h/L960_160_Dr0.100_k0.70_p6.25_8.15_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 60, None, center_type="B")
+
+    fname = f"{root}/L960_160_r10_10_10_h0.333/L960_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.gsd"
+    time_ave(fname, 50, None, center_type="both", inc_v_mx=True, folder="data/time_ave_profiles/CCB_gas")
+
+    fname = f"{root}/L960_160_r10_10_10_h0.333/L960_160_Dr0.100_k0.70_p7.6525_10.5675_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.gsd"
+    time_ave(fname, 50, None, center_type="both", inc_v_mx=True, folder="data/time_ave_profiles/CCB_gas")
+
+    fname = f"{root}/L960_160_r10_10_10_h0.333/L960_160_Dr0.100_k0.70_p9.597_16.152_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.gsd"
+    time_ave(fname, 50, None, center_type="both", inc_v_mx=True, folder="data/time_ave_profiles/CCB_gas")
+
+    fname = f"{root}/L480_160_r10_10_10_h0.333/L480_160_Dr0.100_k0.70_p19_8.8_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    time_ave(fname, 20, None, center_type="B")
+
+    fname = f"{root}/L960_160_r10_10_10_h0.333/L960_160_Dr0.100_k0.70_p19_8.8_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    time_ave(fname, 20, None, center_type="B")
+
+    fname = f"{root}/LB_G_L240_40_r20/L240_40_Dr0.400_k0.70_p7_28_r20_20_20_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 3, None, center_type="B")
+
+    fname = f"{root}/LB_G_L120_40_r20/L120_40_Dr0.500_k0.70_p7.1_28_r20_20_20_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 10, None, center_type="B")
+
+    fname = f"{root}/LB_G_L120_40_r20/L120_40_Dr1.000_k0.70_p8.3_28_r20_20_20_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 30, None, center_type="B")
+
+    fname = f"{root}/LB_G_L120_40_r20/L120_40_Dr1.000_k0.70_p8_28_r20_20_20_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 20, None, center_type="B")
+
+    fname = f"{root}/LB_G_L120_40_r20/L120_40_Dr1.000_k0.70_p8_28_r20_20_20_e-2.000_J2.000_-2.000_h0.100_2001.gsd"
+    time_ave(fname, 20, None, center_type="B")
+
+    fname = f"{root}/LB_G_L120_40_r10/L120_40_Dr0.100_k0.70_p3.6_12.5_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
+    time_ave(fname, 20, None, center_type="B")
+
+    fname = f"{root}/L1920_160_r10_10_10_varied_h/L1920_160_Dr0.100_k0.70_p6.25_8.15_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 10, None, center_type="B")
+
+    fname = f"{root}/L1920_160_r10_10_10_varied_h/L1920_160_Dr0.100_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 10, None, center_type="B")
+
+    fname = f"{root}/L3840_160_r10_10_10_varied_h/L3840_160_Dr0.100_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    time_ave(fname, 10, None, center_type="B")
+
 
 def show_time_ave_profiles():
-    fnames = ["data/time_ave_profiles/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-              "data/time_ave_profiles/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-              "data/time_ave_profiles/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
-    ]
+    # fnames = ["data/time_ave_profiles/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+    #           "data/time_ave_profiles/L480_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+    #           "data/time_ave_profiles/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+    # ]
+
+    # fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    # for fname in fnames:
+    #     with np.load(fname, "r") as data:
+    #         rho = data["rho"]
+    #         Lx, Ly = get_L(fname)
+    #         dx = 1
+    #         x = np.arange(Lx) * dx + dx / 2
+    #     ax1.plot(x / Lx, rho[0], label=r"$L_x=%d$" % Lx)
+    #     ax2.plot(x / Lx, rho[1])
+
+    # ax2.set_xlabel(r"$x/L_x$")
+    # ax1.set_ylabel(r"$\rho_A$")
+    # ax2.set_ylabel(r"$\rho_B$")
+
+    # ax1.set_xlim(0, 1)
+    # ax1.legend()
+    # plt.show()
+    # plt.close()
+
+    # fname = "data/time_ave_profiles/L960_160_Dr0.100_k0.70_p8.625_13.36_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+    # fname = "data/time_ave_profiles/L960_160_Dr0.100_k0.70_p7.6525_10.5675_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+    fname = "data/time_ave_profiles/CCB_gas/L960_160_Dr0.100_k0.70_p9.597_16.152_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+
+    with np.load(fname, "r") as data:
+        print(data.files)
+        rho = data["rho"]
+        v_rho = data["v"]
+        mx = data["mx"]
+        vx = data["vx"]
+        v_mx = data["v_mx"]
+        v_ave = data["v_ave"]
+        Lx, Ly = get_L(fname)
+        dx = 1
+        x = np.arange(Lx) * dx + dx / 2
+
+    d_v_rho = np.zeros((2, x.size))
+    print(d_v_rho.shape)
+    for i in range(x.size):
+        d_v_rho[:, i] = -(v_rho[:, (i+1)%x.size] - v_rho[:, i-1]) / (4 * 0.1)
+    
 
     fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
-    for fname in fnames:
-        with np.load(fname, "r") as data:
-            rho = data["rho"]
-            Lx, Ly = get_L(fname)
-            dx = 1
-            x = np.arange(Lx) * dx + dx / 2
-        ax1.plot(x / Lx, rho[0], label=r"$L_x=%d$" % Lx)
-        ax2.plot(x / Lx, rho[1])
+    ax1.plot(x / Lx, rho[0], label=r"$\langle \rho_S\rangle_{y,t}$")
+    ax2.plot(x / Lx, rho[1], label=r"$\langle \rho_S\rangle_{y,t}$")
+
+    ax1.plot(x / Lx, v_rho[0], label=r"$\langle \rho_S v_S\rangle_{y,t}$")
+    ax2.plot(x / Lx, v_rho[1], label=r"$\langle \rho_S v_S\rangle_{y,t}$")
+
+    ax1.plot(x / Lx, v_ave[0] * rho[0], label=r"$\langle \rho_S\rangle_{y,t} \langle v_S\rangle_{y,t}$")
+    ax2.plot(x / Lx, v_ave[1] * rho[1], label=r"$\langle \rho_S\rangle_{y,t} \langle v_S\rangle_{y,t}$")
+
+    # ax1.plot(x / Lx, v_rho[0], label=r"$S=A$")
+    # ax2.plot(x / Lx, v_rho[1], label=r"$S=B$")
+    # ax1.plot(x / Lx, mx[0], label=r"$-\partial_x \langle v_S \phi_S\rangle_{y, t}/(2D_r)$")
+    # ax2.plot(x / Lx, mx[1], label=r"$-\langle\frac{\partial_x (v_S \phi_S)}{2D_r}\rangle_{y, t}$")
 
     ax2.set_xlabel(r"$x/L_x$")
-    ax1.set_ylabel(r"$\rho_A$")
-    ax2.set_ylabel(r"$\rho_B$")
+    ax1.set_ylabel(r"$S=A$")
+    ax2.set_ylabel(r"$S=B$")
 
     ax1.set_xlim(0, 1)
     ax1.legend()
     plt.show()
     plt.close()
 
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    ax1.plot(x / Lx, d_v_rho[0], label=r"$\langle\mathbf{p}_s \cdot \hat{\mathbf{e}}_x\rangle_{y,t}$")
+    ax2.plot(x / Lx, d_v_rho[1], label=r"$\langle\mathbf{p}_s \cdot \hat{\mathbf{e}}_x\rangle_{y,t}$")
+    ax1.plot(x / Lx, mx[0], label=r"$-\partial_x \langle v_S \phi_S\rangle_{y, t}/(2D_r)$")
+    ax2.plot(x / Lx, mx[1], label=r"$-\langle\frac{\partial_x (v_S \phi_S)}{2D_r}\rangle_{y, t}$")
+
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$S=A$")
+    ax2.set_ylabel(r"$S=B$")
+
+    ax1.set_xlim(0, 1)
+    ax1.legend(fontsize="large")
+    plt.show()
+    plt.close()
+
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+    ax1.plot(x / Lx, v_mx[0], label=r"$\langle v_S \mathbf{p}_S\rangle_{y,t}\cdot \hat{\mathbf{e}}_x$")
+    ax2.plot(x / Lx, v_mx[1], label=r"$\langle v_S \mathbf{p}_S\rangle_{y,t}\cdot \hat{\mathbf{e}}_x$")
+    ax1.plot(x / Lx, vx[0], label=r"$\langle \rho_{S}\mathbf{v}_S\rangle_{y, t}\cdot \hat{\mathbf{e}}_x$")
+    ax2.plot(x / Lx, vx[1], label=r"$\langle \rho_{S}\mathbf{v}_S\rangle_{y, t}\cdot \hat{\mathbf{e}}_x$")
+
+    ax1.plot(x / Lx, v_ave[0] * mx[0], label=r"$\langle v_S\rangle_{y,t} \langle \mathbf{p}_S\rangle_{y,t}\cdot \hat{\mathbf{e}}_x$")
+    ax2.plot(x / Lx, v_ave[1] * mx[1], label=r"$\langle v_S\rangle_{y, t} \langle \mathbf{p}_S\rangle_{y,t}\cdot \hat{\mathbf{e}}_x$")
+
+    ax2.set_xlabel(r"$x/L_x$")
+    ax1.set_ylabel(r"$S=A$")
+    ax2.set_ylabel(r"$S=B$")
+
+    ax1.set_xlim(0, 1)
+    ax1.legend(fontsize="large")
+    plt.show()
+    plt.close()
+
+
 
 def estimate_binodals():
-    fname = "data/time_ave_profiles/L120_40_Dr1.000_k0.70_p8.4_25_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.npz"
+    fname = "data/time_ave_profiles/CCB_gas/L960_160_Dr0.100_k0.70_p9.597_16.152_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
     fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
     with np.load(fname, "r") as data:
         rho = data["rho"]
@@ -167,8 +325,9 @@ def estimate_binodals():
     ax2.plot(x / Lx, rho[1])
 
     xg = [0.15, 0.85]
-    xl = [0.35, 0.65]
-
+    # xg = [0.1, 0.9]
+    xl = [0.3, 0.7]
+    # xl = [0.3, 0.7]
     mask_g = np.logical_or(x/Lx < xg[0], x/Lx > xg[1])
     mask_l = np.logical_and(x/Lx > xl[0], x/Lx < xl[1])
 
@@ -189,26 +348,32 @@ def estimate_binodals():
     ax1.set_ylabel(r"$\rho_A$")
     ax2.set_ylabel(r"$\rho_B$")
 
+    rA_0 = 8.625
+    rB_0 = 13.36
     print(rA_g, rB_g, rA_l, rB_l)
+    print((rA_0-rA_g)/(rA_l-rA_g), (rB_0-rB_g)/(rB_l-rB_g))
     ax1.set_xlim(0, 1)
     ax1.legend()
     plt.show()
     plt.close()
 
-    plt.plot(8.4, 25, "o")
-    plt.plot(rA_g, rB_g, "<")
-    plt.plot(rA_l, rB_l, ">")
-    plt.plot([rA_g, rA_l], [rB_g, rB_l], "--", c="tab:grey")
+    # phiA = 7
+    # phiB = 4
+    # plt.plot(phiA, phiB, "o")
+    # plt.plot(rA_g, rB_g, "<")
+    # plt.plot(rA_l, rB_l, ">")
+    # plt.plot([rA_g, rA_l], [rB_g, rB_l], "--", c="tab:grey")
 
 
-    rA_new = 10
-    rB_new = (rA_new - rA_g) * (rB_l - rB_g) / (rA_l - rA_g) + rB_g
+    # rA_new = 5.6
 
-    plt.plot(rA_new, rB_new, "s", fillstyle="none")
-    print(rA_new, rB_new)
+    # rB_new = (rA_new - phiA) * (rB_l - rB_g) / (rA_l - rA_g) + phiB
 
-    plt.show()
-    plt.close()
+    # plt.plot(rA_new, rB_new, "s", fillstyle="none")
+    # print(rA_new, rB_new)
+
+    # plt.show()
+    # plt.close()
 
 
 def locate_interfaces(x, y, y_threshold, Lx, acsending=True):
@@ -231,18 +396,22 @@ def show_instant_profiles():
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L1920_160_r5_5_5_varied_Dt_h/L1920_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
-    fname = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h/L480_160_Dr0.100_Dt0.01_k0.70_p16.6_13.6_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
-
-
+    # fname = f"{root_tahmineh}/QS_MPI_noself/L3840_160_r10_10_10_varied_h/L3840_160_Dr0.100_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
+    fname = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1/L10_4_Dr0.100_r200_e0.000_0.000_J1.800000_-1.800000_h0.100_1001.gsd"
 
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_80_r10_10_10_h0.333/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2120.gsd"
 
-
     Lx, Ly = get_L(fname)
-    dx = 2
-    x = np.arange(Lx//dx) * dx + dx / 2
+    rho0 = 200
+    dx = 0.2
+    if isinstance(dx, int):
+        nx = Lx // dx
+    else:
+        nx = int(round(Lx/dx))
+    x = np.arange(nx) * dx + dx / 2
+    print(Lx, Ly, x.size)
 
-    beg_frame = 35
+    beg_frame =0
     end_frame = None
     with fl.open(name=fname, mode="rb") as fgsd:
         if end_frame is None:
@@ -251,8 +420,8 @@ def show_instant_profiles():
             print("frame: %d/%d" % (i_frame, end_frame))
             fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
             rho, mx, my, v, vx, vy = get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None)
-            ax1.plot(x, rho[0])
-            ax1.plot(x, rho[1])
+            ax1.plot(x, rho[0]/rho0, label="A")
+            ax1.plot(x, rho[1]/rho0, label="B")
 
             # rho_thresh = 12.5
             # ax2.axhline(rho_thresh, linestyle="dashed")
@@ -264,13 +433,75 @@ def show_instant_profiles():
             # for xi in xs2:
             #     ax2.axvline(xi, linestyle="dotted", c="tab:red")
 
-            ax2.plot(x, v[0])
-            ax2.plot(x, v[1])
+            ax1.set_ylim(0, 5)
+            ax2.plot(x, mx[0]/rho0)
+            ax2.plot(x, mx[1]/rho0)
             ax2.set_xlabel(r"$x/L_x$")
-            ax1.set_ylabel(r"$\rho$")
-            ax2.set_ylabel(r"$v$")
+            ax1.set_ylabel(r"$\rho/\rho_0$")
+            ax2.set_ylabel(r"$m_x$")
+            ax1.legend()
+            ax1.set_xlim(0, Lx)
             plt.show()
             plt.close()
+        
+
+def show_profiles_varied_time():
+    import matplotlib as mpl
+
+    fname = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1/L10_4_Dr0.100_r200_e0.000_0.000_J1.800000_-1.800000_h0.100_1001.gsd"
+    Lx, Ly = get_L(fname)
+    rho0 = 200
+    dx = 0.2
+    if isinstance(dx, int):
+        nx = Lx // dx
+    else:
+        nx = int(round(Lx/dx))
+    x = np.arange(nx) * dx + dx / 2
+    print(Lx, Ly, x.size)
+    h = 0.1
+
+    beg_frame =82
+    end_frame =90
+    sep = 1
+    n_lines = (end_frame - beg_frame)//sep
+    cmap = mpl.colormaps['plasma']
+    colors = cmap(np.linspace(0, 1, n_lines))
+    fig, (ax1, ax2) = plt.subplots(2, 1, constrained_layout=True, sharex=True)
+
+    t_arr = np.zeros(n_lines)
+    rho_gas = np.zeros((n_lines, 2))
+    with fl.open(name=fname, mode="rb") as fgsd:
+        if end_frame is None:
+            end_frame = fgsd.nframes
+        for j, i_frame in enumerate(range(beg_frame, end_frame, sep)):
+            print("frame: %d/%d" % (i_frame, end_frame))
+            rho, mx, my, v, vx, vy = get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None)
+
+            t = i_frame * h
+            ax1.plot(x, rho[0]/rho0, label=r"$%g$" % t, c=colors[j], linestyle=":")
+            ax2.plot(x, rho[1]/rho0, label=r"$%g$" % t, c=colors[j], linestyle=':')
+
+            mask = np.logical_and(x >= 6, x <=7)
+            rho_gas[j][0] = np.mean(rho[0][mask])
+            rho_gas[j][1] = np.mean(rho[1][mask])
+            t_arr[j] = t
+
+    ax2.set_xlabel(r"$x$")
+    ax1.set_ylabel(r"$\rho_A/\rho_0$")
+    ax2.set_ylabel(r"$\rho_B/\rho_0$")
+    ax1.legend(title=r"$t=$")
+    ax1.set_xlim(0, Lx)
+    plt.show()
+    plt.close()
+
+    plt.plot(t_arr, rho_gas[:, 0], "-o", label=r"$S=A$")
+    plt.plot(t_arr, rho_gas[:, 1], "-s", label=r"$S=B$")
+    plt.xlabel(r"$t$", fontsize="x-large")
+    plt.ylabel(r"$\langle \rho_S\rangle_{x\in [6, 7]}$", fontsize='x-large')
+    plt.legend()
+    plt.show()
+    plt.close()
+
 
 
 def update_space_time_profiles():
@@ -525,16 +756,16 @@ def plot_space_time_varied_rhoB():
 
 
 def plot_space_time_fields():
-    Lx = 960
-    Ly = 40
-    rA = 10
-    rB = 34
-    r0 = 10
-    seed_dict = {40: 1000}
-    ncut_dict = {40: 0}
+    Lx = 1920
+    Ly = 160
+    rA = 2.25
+    rB = 7.35
+    r0 = 5
+    seed_dict = {160: 2000}
+    ncut_dict = {160: 0}
     dx = 2
 
-    if Lx == 1920 and Ly == 160:
+    if (Lx == 1920 or Lx == 960) and Ly == 160:
         folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r{r0:g}_{r0:g}_{r0:g}_varied_Dt_h/profile_1D_dx{dx:g}"
         fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_Dt0_k0.70_p{rA:g}_{rB:g}_r{r0:g}_{r0:g}_{r0:g}_e-2.000_J0.500_-0.500_h0.100_{seed_dict[Ly]}.npz"
     else:
@@ -555,7 +786,8 @@ def plot_space_time_fields():
 
         rhoA = fields0[ncut:, 0]
         rhoB = fields0[ncut:, 1]
-        ax.imshow(rhoB, origin="lower", extent=[0, Lx, 0, T], aspect="auto")
+        mask = t0 % 40000 == 0
+        ax.imshow(rhoB[mask], origin="lower", extent=[0, Lx, 0, T], aspect="auto")
         # ax.set_title(titles[i] % Ly)
         ax.set_xlabel(r"$x$")
         ax.set_ylabel(r"$t$")
@@ -668,7 +900,9 @@ def plot_spacing_vs_t(Lx=960):
     
         line, = ax1.plot(t-t[0], d1, "o")
         ax1.plot(t-t[0], d2, "s", c=line.get_c())
-        line, = ax2.plot(t-t[0], np.abs(d2-d1), "o")
+        # line, = ax2.plot(t-t[0], np.abs(d2-d1), "o")
+        line, = ax2.plot(t-t[0], d2-d1, "o")
+
         # ax2.plot(t, w2, "s", c=line.get_c())
     plt.show()
     plt.close()
@@ -678,8 +912,9 @@ if __name__ == "__main__":
     # update_time_ave_profiles()
     # show_time_ave_profiles()
     # show_instant_profiles()
+    # show_profiles_varied_time()
 
-    # plot_spacing_vs_t(Lx=960)
+    plot_spacing_vs_t(Lx=1280)
 
     # update_space_time_profiles()
     # plot_space_time_varied_Ly(rA=9)
@@ -687,7 +922,4 @@ if __name__ == "__main__":
     # plot_space_time_varied_Lx()
     # plot_space_time_fields()
     
-    # fname = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20_varied_h/L120_40_Dr1.000_k0.70_p8.4_25_r20_20_20_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
-    # time_ave(fname, 150, None, center_type="B")
-    estimate_binodals()
-    
+    # estimate_binodals()
