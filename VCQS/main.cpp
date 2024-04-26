@@ -7,20 +7,20 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx =40;
+  double Lx = 20;
   double Ly = 20;
 
-  double rho0 = 20;
-  double rhoA = 20;
+  double rho0 = 30;
+  double rhoA = 30;
   double eta = 6;
   double Dt = 0;
   double v0 = 1;
   double kappa = 0.9;
-  double Dr = 0.1;
+  double Dr = 0.01;
 
   double angle = 180;
   double h = 0.1;
-  int n_step = 20000;
+  int n_step = 50000;
   int snap_interval = 1000;
   int log_interval = 10000;
   int seed = 1000;
@@ -42,7 +42,9 @@ int main(int argc, char* argv[]) {
   EM_QS_iso integrator(h, Dt, Dr);
 
   // cal force
-  LinearDensityKernal kernal(r_cut, angle);
+  //VisionConeKernal kernal(r_cut, angle);
+  double eps = 0.05;
+  AsymKernal kernal(r_cut - eps, eps);
   //NRTorque_Rep_2 kernal(eta, k, r_cut);
   //NRTorque_QS_2 kernal(r_cut, q, rho0);
 
