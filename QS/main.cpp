@@ -7,13 +7,13 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 10;
-  double Ly = 10;
-  double phiA = 10;
-  double phiB = 10;
-  double rho0 = 10;
-  double h = 0.01;
-  int n_step = 30000;
+  double Lx = 20;
+  double Ly = 20;
+  double phiA = 30;
+  double phiB = 0;
+  double rho0 = 30;
+  double h = 0.1;
+  int n_step = 50000;
 
   double sigma = 0.1;
   double spring_coeff = 50;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   double Dr = 0.1;
   double Dt = 0;
   double v0 = 1;
-  int seed = 123;
+  int seed = 1000;
   std::string ini_mode = "new";  // should be "new" or "restart"
 
   int n_par_A = int(round(Lx * Ly * phiA));
@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
 
   // cal force
   LinearDensityKernal_w_Rep kernal(r_cut, sigma, spring_coeff);
+  LinearDensityKernal kernal(r_cut);
   auto f1 = [&kernal](node_t* p1, node_t* p2) {
     kernal(*p1, *p2);
   };

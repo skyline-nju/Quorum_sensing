@@ -60,6 +60,10 @@ public:
   BiNode(TRan &myran, const TVec &l, const TVec &origin)
     : TPar(myran, l, origin), prev(nullptr), next(nullptr) {}
 
+  template <typename TRan, typename TVec>
+  BiNode(TRan& myran, double theta0, const TVec& l, const TVec& origin)
+    : TPar(myran, theta0, l, origin), prev(nullptr), next(nullptr) {}
+
   void append_at_front(BiNode<TPar> ** head);
 
   void break_away() const;

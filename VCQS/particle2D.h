@@ -145,6 +145,9 @@ public:
   template <typename TRan>
   QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o);
 
+  template <typename TRan>
+  QSP_2(TRan& myran, double theta0, const Vec_2<double>& l, const Vec_2<double>& o);
+
   double get_theta() const { return atan2(u.y, u.x); }
   const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u; }
 
@@ -160,6 +163,14 @@ QSP_2::QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
   double theta = myran.doub() * M_PI * 2.;
   u.x = cos(theta);
   u.y = sin(theta);
+  type_id = 0;
+}
+
+template<typename TRan>
+QSP_2::QSP_2(TRan& myran, double theta0, const Vec_2<double>& l, const Vec_2<double>& o)
+  : pos(o.x + myran.doub() * l.x, o.y + myran.doub() * l.y) {
+  u.x = cos(theta0);
+  u.y = sin(theta0);
   type_id = 0;
 }
 

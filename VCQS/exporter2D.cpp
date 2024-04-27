@@ -114,7 +114,7 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
   : ExporterBase(start, n_step, sep) {
   unsigned int version = gsd_make_version(1, 4);
   handle_ = new gsd_handle;
-  if (open_flag == "new") {
+  if (open_flag != "resume") {
     int flag = gsd_create(filename.c_str(), "cpp", "hoomd", version);
     if (flag != 0) {
       std::cout << "Error when create " << filename << "; state=" << flag << std::endl;
@@ -131,7 +131,7 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
     
     char types[] = {'A', 'B'};
     gsd_write_chunk(handle_, "particles/types", GSD_TYPE_INT8, 2, 1, 0, types);
-  } else if (open_flag == "restart") {
+  } else {
     int flag = gsd_open(handle_, filename.c_str(), GSD_OPEN_READWRITE);
     if (flag != 0) {
       std::cout << "Error when open " << filename << "; state=" << flag << std::endl;
@@ -139,9 +139,6 @@ exporter::Snap_GSD_2::Snap_GSD_2(const std::string& filename,
     } else {
       std::cout << "open " << filename << std::endl;
     } 
-  } else {
-    std::cout << "Wrong open flag, which must be one of 'new' or 'append'!" << std::endl;
-    exit(1);
   }
   half_l_ = Vec_2<double>(gl_l.x / 2, gl_l.y / 2);
 }

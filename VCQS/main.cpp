@@ -7,25 +7,26 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 20;
-  double Ly = 20;
+  double Lx = 100;
+  double Ly = 10;
 
-  double rho0 = 30;
-  double rhoA = 30;
+  double rho0 = 20;
+  double rhoA = 20;
   double eta = 6;
-  double Dt = 0;
+  double Dt = 0.;
   double v0 = 1;
   double kappa = 0.9;
-  double Dr = 0.01;
+  double Dr = 0;
 
   double angle = 180;
-  double h = 0.1;
-  int n_step = 50000;
-  int snap_interval = 1000;
+  double h = 0.0001;
+  int n_step = 1000000;
+  //int snap_interval = int(round(200 / h * 0.1));
+  int snap_interval = 5000;
   int log_interval = 10000;
-  int seed = 1000;
+  int seed = 3002;
 
-  std::string ini_mode = "new";  // should be "new" or "restart"
+  std::string ini_mode = "resume";  // should be "rand", "ordered", "bi-ordered" or "resume"
 
   int n_par = int(rhoA * Lx * Ly);
 
@@ -43,8 +44,9 @@ int main(int argc, char* argv[]) {
 
   // cal force
   //VisionConeKernal kernal(r_cut, angle);
-  double eps = 0.05;
-  AsymKernal kernal(r_cut - eps, eps);
+  LinearDensityKernal kernal(r_cut);
+  //double eps = 0.;
+  //AsymKernal kernal(r_cut - eps, eps);
   //NRTorque_Rep_2 kernal(eta, k, r_cut);
   //NRTorque_QS_2 kernal(r_cut, q, rho0);
 
@@ -62,8 +64,10 @@ int main(int argc, char* argv[]) {
   char gsd_file[255];
   char folder[] = "D:/code/Quorum_sensing/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_a%g_h%.3f_%d", 
-           Lx, Ly, Dr, Dt, rho0, rhoA, eta, angle, h, seed);
+  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_h%.6f_%d", 
+           Lx, Ly, Dr, Dt, rho0, rhoA, eta, h, seed);
+  //snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_a%g_h%.6f_%d",
+  //  Lx, Ly, Dr, Dt, rho0, rhoA, eta, angle, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
@@ -72,10 +76,22 @@ int main(int argc, char* argv[]) {
 
   // ini particles
   p_arr.reserve(n_par);
-  if (ini_mode == "new") {
+  if (ini_mode == "rand") {
     for (int i = 0; i < n_par; i++) {
       p_arr.emplace_back(myran, gl_l, Vec_2<double>());
     }
+  } else if (ini_mode == "ordered") {
+    for (int i = 0; i < n_par; i++) {
+      p_arr.emplace_back(myran, 0., gl_l, Vec_2<double>());
+    }
+  } else if (ini_mode == "bi-ordered") {
+    for (int i = 0; i < n_par; i++) {
+      if (i < n_par / 2) {
+        p_arr.emplace_back(myran, 0., gl_l, Vec_2<double>());
+      } else {
+        p_arr.emplace_back(myran, M_PI, gl_l, Vec_2<double>());
+      }
+  }
   } else {
     gsd.read_last_frame(p_arr);
   }
