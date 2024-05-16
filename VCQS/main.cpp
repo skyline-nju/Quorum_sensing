@@ -7,24 +7,24 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 100;
-  double Ly = 10;
+  double Lx = 30;
+  double Ly = 5;
 
   double rho0 = 20;
-  double rhoA = 20;
-  double eta = 6;
+  double rhoA = 5;
+  double eta = 3;
   double Dt = 0.;
   double v0 = 1;
   double kappa = 0.9;
-  double Dr = 0;
+  double Dr = 10;
 
   double angle = 180;
-  double h = 0.0001;
-  int n_step = 1000000;
+  double h = 0.01;
+  int n_step = 100000000;
   //int snap_interval = int(round(200 / h * 0.1));
-  int snap_interval = 5000;
+  int snap_interval = 10000;
   int log_interval = 10000;
-  int seed = 3002;
+  int seed = 1000;
 
   std::string ini_mode = "resume";  // should be "rand", "ordered", "bi-ordered" or "resume"
 
@@ -44,9 +44,9 @@ int main(int argc, char* argv[]) {
 
   // cal force
   //VisionConeKernal kernal(r_cut, angle);
-  LinearDensityKernal kernal(r_cut);
-  //double eps = 0.;
-  //AsymKernal kernal(r_cut - eps, eps);
+  // LinearDensityKernal kernal(r_cut);
+  double eps = 0.1;
+  AsymKernal kernal(r_cut - abs(eps), eps);
   //NRTorque_Rep_2 kernal(eta, k, r_cut);
   //NRTorque_QS_2 kernal(r_cut, q, rho0);
 
@@ -62,10 +62,12 @@ int main(int argc, char* argv[]) {
   char basename[255];
   char log_file[255];
   char gsd_file[255];
-  char folder[] = "D:/code/Quorum_sensing/data/";
+  char folder[] = "D:/code/Quorum_sensing/VCQS/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_h%.6f_%d", 
-           Lx, Ly, Dr, Dt, rho0, rhoA, eta, h, seed);
+  // snprintf(basename, 255, "L%g_%g_Dr%.6f_Dt%.3f_r%g_p%g_e%.3f_h%.6f_%d", 
+  //          Lx, Ly, Dr, Dt, rho0, rhoA, eta, h, seed);
+    snprintf(basename, 255, "L%g_%g_Dr%.6f_Dt%.3f_r%g_p%g_e%.3f_E%.3f_h%.6f_%d", 
+           Lx, Ly, Dr, Dt, rho0, rhoA, eta, eps, h, seed);
   //snprintf(basename, 255, "L%g_%g_Dr%g_Dt%g_r%g_p%g_e%.3f_a%g_h%.6f_%d",
   //  Lx, Ly, Dr, Dt, rho0, rhoA, eta, angle, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);

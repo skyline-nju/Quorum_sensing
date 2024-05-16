@@ -148,13 +148,17 @@ template<typename TPar>
 void cal_v_underdamped(double v0, double kappa, double rho0, double eta, double gamma, double h, TPar& p) {
   double d_rho = (p.rho_local[0] - rho0) / (rho0 * kappa);
   double v_QS = v0 * (1 + kappa * tanh(eta * d_rho));
-  //p.v += h * gamma * (v_QS - p.v);
-  //p.v = v_QS;
+  if (gamma < 0) { // overdamped for negative gamma
+    p.v = v_QS;
+  } else {
+    //p.v += h * gamma * (v_QS - p.v);
+    //p.v = v_QS;
 
-  double yn = p.v;
-  double k1 = gamma * (v_QS - yn);
-  double k2 = gamma * (v_QS - (yn + 0.5 * h * k1));
-  p.v = yn + h * k2;
+    double yn = p.v;
+    double k1 = gamma * (v_QS - yn);
+    double k2 = gamma * (v_QS - (yn + 0.5 * h * k1));
+    p.v = yn + h * k2;
+  }
 }
 
 template<typename TPar>

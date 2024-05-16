@@ -8,24 +8,24 @@
 
 int main(int argc, char* argv[]) {
   double Lx =40;
-  double Ly = 40;
+  double Ly = 5;
 
   int log_interval = 10000;
-  double Dt = 0;
+  double Dt = 0.01;
   double v0 = 1;
   double kappa = 0.9;
 
 #ifdef _MSC_VER
-  double rho0 = 20;
-  double rhoA = 20;
+  double rho0 = 10;
+  double rhoA = 10;
   double eta = 6;
-  double Dr = 0.08;
-  double gamma = 2;
-  double h = 0.1;
-  int n_step = 10000;
-  int snap_interval = 1000;
-  int seed = 1000;
-  std::string ini_mode = "restart";  // should be "new" or "restart"
+  double Dr = 0.;
+  double gamma = 1;
+  double h = 0.01;
+  int n_step = 10000000;
+  int snap_interval = 10000;
+  int seed = 3002;
+  std::string ini_mode = "bi-ordered";  // should be "rand", "ordered", or "resume"
 #else
   double rho0 = atof(argv[1]);
   double rhoA = atof(argv[2]);
@@ -69,9 +69,9 @@ int main(int argc, char* argv[]) {
   char basename[255];
   char log_file[255];
   char gsd_file[255];
-  char folder[] = "D:/code/Quorum_sensing/data/";
+  char folder[] = "D:/code/Quorum_sensing/IQS/data/";
   // char folder[] = "./";
-  snprintf(basename, 255, "L%g_%g_Dr%.3f_Dt%g_r%g_p%g_e%.3f_g%.3f_h%.3f_%d", 
+  snprintf(basename, 255, "L%g_%g_Dr%.3f_Dt%.3f_r%g_p%g_e%.3f_g%.3f_h%.6f_%d", 
            Lx, Ly, Dr, Dt, rho0, rhoA, eta, gamma, h, seed);
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
@@ -81,9 +81,22 @@ int main(int argc, char* argv[]) {
 
   // ini particles
   p_arr.reserve(n_par);
-  if (ini_mode == "new") {
+  if (ini_mode != "resume") {
     for (int i = 0; i < n_par; i++) {
       p_arr.emplace_back(myran, gl_l, Vec_2<double>());
+    }
+    if (ini_mode == "ordered") {
+      for (auto& p : p_arr) {
+        p.u = Vec_2<double>(1, 0);
+      }
+    } else if (ini_mode == "bi-ordered") {
+      for (int i = 0; i < p_arr.size(); i++) {
+        if (i < p_arr.size() / 2) {
+          p_arr[i].u = Vec_2<double>(1, 0);
+        } else {
+          p_arr[i].u = Vec_2<double>(-1, 0);
+        }
+      }
     }
   } else {
     gsd.read_last_frame(p_arr);
