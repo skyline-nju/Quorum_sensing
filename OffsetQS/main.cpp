@@ -22,12 +22,16 @@ int main(int argc, char* argv[]) {
   double h = 0.01;
   int n_step = 100000000;
   //int snap_interval = int(round(200 / h * 0.1));
-  int snap_interval = 10000;
+  double snap_log_sep = 0.1;
   int log_interval = 10000;
   int seed = 1000;
-
   std::string ini_mode = "resume";  // should be "rand", "ordered", "bi-ordered" or "resume"
 
+  int snap_interval = 1;
+  if (snap_log_sep > 1) {
+    snap_interval = int(snap_log_sep);
+    snap_log_sep = -1;
+  }
   int n_par = int(rhoA * Lx * Ly);
 
   typedef BiNode<QSP_2> node_t;
@@ -66,8 +70,9 @@ int main(int argc, char* argv[]) {
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
 
+  int start = 0;
   exporter::LogExporter log(log_file, 0, n_step, log_interval, n_par);
-  exporter::Snap_GSD_2 gsd(gsd_file, 0, n_step, snap_interval, gl_l, ini_mode);
+  exporter::Snap_GSD_2 gsd(gsd_file, n_step, snap_interval, start, h, snap_log_sep, gl_l, ini_mode);
 
   // set QS parameters
   QSP_2::set_QS_params(v0, kappa, rho0, eta);

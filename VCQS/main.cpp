@@ -7,26 +7,26 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 30;
-  double Ly = 5;
+  double Lx = atof(argv[1]);
+  double Ly = atof(argv[2]);
 
   double rho0 = 20;
-  double rhoA = 5;
+  double rhoA = 20;
   double eta = 3;
-  double Dt = 0.;
+  double Dt = atof(argv[3]);
   double v0 = 1;
   double kappa = 0.9;
   double Dr = 10;
 
   double angle = 180;
-  double h = 0.01;
+  double h = atof(argv[4]);
   int n_step = 100000000;
   //int snap_interval = int(round(200 / h * 0.1));
   int snap_interval = 10000;
   int log_interval = 10000;
   int seed = 1000;
 
-  std::string ini_mode = "resume";  // should be "rand", "ordered", "bi-ordered" or "resume"
+  std::string ini_mode = "rand";  // should be "rand", "ordered", "bi-ordered" or "resume"
 
   int n_par = int(rhoA * Lx * Ly);
 
@@ -62,7 +62,11 @@ int main(int argc, char* argv[]) {
   char basename[255];
   char log_file[255];
   char gsd_file[255];
+#ifdef _MSC_VER
   char folder[] = "D:/code/Quorum_sensing/VCQS/data/";
+#else
+  char folder[] = "/mnt/d/code/Quorum_sensing/VCQS/data/";
+#endif
   // char folder[] = "./";
   // snprintf(basename, 255, "L%g_%g_Dr%.6f_Dt%.3f_r%g_p%g_e%.3f_h%.6f_%d", 
   //          Lx, Ly, Dr, Dt, rho0, rhoA, eta, h, seed);
@@ -113,14 +117,6 @@ int main(int argc, char* argv[]) {
     cl.recreate(p_arr);
     gsd.dump(t, p_arr, rho_local);
     log.record(t);
-
-    //if (t % 100 == 0) {
-    //  double rho_m = 0;
-    //  for (int j = 0; j < n_par; j++) {
-    //    rho_m += rho_local[j];
-    //  }
-    //  std::cout << "t=" << t << ", rho=" << rho_m / n_par << std::endl;
-    //}
   }
   delete[] rho_local;
 }

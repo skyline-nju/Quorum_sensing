@@ -29,23 +29,21 @@ const std::string delimiter("/");
  */
 class ExporterBase {
 public:
-  ExporterBase() : n_step_(0) {}
-
-  ExporterBase(int start, int n_step, int sep) : start_(start), n_step_(n_step), sep_(sep) {
-    set_lin_frame(start, n_step, sep);
-  }
-
-  void set_lin_frame(int start, int n_step, int sep);
+  ExporterBase(int n_step, int sep, int start) : n_step_(n_step), sep_(sep), start_(start) {}
 
   bool need_export(const int i_step);
+
+  void set_log_scale_frames(double h, double log_sep = 0.1);
 
 protected:
   int n_step_;    // total steps to run
   int sep_;
   int start_ = 0; // The first step 
-private:
-  std::vector<int> frames_arr_; // frames that need to export
-  std::vector<int>::iterator frame_iter_;
+  int my_rank_ = 0;
+  int tot_proc_ = 1;
+  std::vector<int> frames_;
+  int cur_frame_ = 0;
+  double log_sep_ = -1;
 };
 
 /**
@@ -57,13 +55,8 @@ private:
  */
 class LogExporter : public ExporterBase {
 public:
-#ifdef USE_MPI
-  LogExporter(const std::string& outfile, int start, int n_step, int sep,
-    int np, MPI_Comm group_comm);
-#else
   LogExporter(const std::string& outfile, int start, int n_step, int sep,
     int np);
-#endif
 
   ~LogExporter();
 
@@ -73,99 +66,16 @@ public:
 private:
   std::chrono::time_point<std::chrono::system_clock> t_start_;
   int n_par_;
-#ifdef USE_MPI
-  MPI_Comm comm_;
-#endif
   int step_count_ = 0;
 };
 
-
-class XyzExporter_2 : public ExporterBase {
-public:
-  explicit XyzExporter_2(const std::string outfile, int start, int n_step, int sep,
-    const Vec_2<double>& gl_l)
-    : ExporterBase(start, n_step, sep), fout_(outfile), gl_l_(gl_l), sep_(sep) {}
-
-  template <typename TPar>
-  void dump_pos(int i_step, const std::vector<TPar>& par_arr);
-
-  template <typename TPar>
-  void dump_doub_pos(int i_step, const std::vector<TPar>& par_arr);
-
-  template <typename TPar>
-  void dump_multispecies(int i_step, const std::vector<TPar>& par_arr);
-
-private:
-  std::ofstream fout_;
-  Vec_2<double> gl_l_;
-  int sep_;
-};
-
-template <typename TPar>
-void XyzExporter_2::dump_pos(int i_step, const std::vector<TPar>& par_arr) {
-  //if (need_export(i_step)) {
-  if (i_step % sep_ == 0) {
-    int n_par = par_arr.size();
-    fout_ << n_par << "\n";
-    // comment line
-    fout_ << "Lattice=\"" << gl_l_.x << " 0 0 0 " << gl_l_.y << " 0 0 0 1\" "
-      << "Properties=species:S:1:pos:R:2 "
-      << "Time=" << i_step;
-    for (int j = 0; j < n_par; j++) {
-      fout_ << "\n" << "N\t"
-        << par_arr[j].pos.x << "\t" << par_arr[j].pos.y;
-    }
-    fout_ << std::endl;
-  }
-}
-
-template<typename TPar>
-void XyzExporter_2::dump_doub_pos(int i_step, const std::vector<TPar>& par_arr) {
-  if (i_step % sep_ == 0) {
-    int n_par = par_arr.size();
-    fout_ << n_par * 2 << "\n";
-    // comment line
-    fout_ << "Lattice=\"" << gl_l_.x << " 0 0 0 " << gl_l_.y << " 0 0 0 1\" "
-      << "Properties=species:S:1:pos:R:2 "
-      << "Time=" << i_step;
-    for (int j = 0; j < n_par; j++) {
-      fout_ << "\n" << "N\t"
-        << par_arr[j].pos.x << "\t" << par_arr[j].pos.y;
-      double dx = 0.01 * par_arr[j].u.x;
-      double dy = 0.01 * par_arr[j].u.y;
-      fout_ << "\n" << "O\t"
-        << par_arr[j].pos.x + dx << "\t" << par_arr[j].pos.y + dy;
-    }
-    fout_ << std::endl;
-  }
-}
-
-template <typename TPar>
-void XyzExporter_2::dump_multispecies(int i_step, const std::vector<TPar>& par_arr) {
-  if (i_step % sep_ == 0) {
-    int n_par = par_arr.size();
-    fout_ << n_par << "\n";
-    // comment line
-    fout_ << "Lattice=\"" << gl_l_.x << " 0 0 0 " << gl_l_.y << " 0 0 0 1\" "
-      << "Properties=species:S:1:pos:R:2 "
-      << "Time=" << i_step;
-    for (int j = 0; j < n_par; j++) {
-      fout_ << "\n";
-      if (par_arr[j].type_id == 0) {
-        fout_ << "N\t";
-      } else {
-        fout_ << "O\t";
-      }
-      fout_ << par_arr[j].pos.x << "\t" << par_arr[j].pos.y;
-    }
-    fout_ << std::endl;
-  }
-}
-
 class Snap_GSD_2 : public ExporterBase {
 public:
-  Snap_GSD_2(const std::string& filename, int start, int n_step, int sep,
-             const Vec_2<double>& gl_l, const std::string& open_flag);
+  Snap_GSD_2(const std::string& filename,
+             int n_step, int sep, int & start,
+             double h, double log_sep,
+             const Vec_2<double>& gl_l,
+             const std::string& open_flag);
 
   ~Snap_GSD_2();
 
@@ -173,6 +83,8 @@ public:
   void get_data_from_par(const std::vector<TPar>& p_arr, float* pos);
 
   uint64_t get_time_step();
+
+  int reset_start_time_step();
 
   template <typename TPar>
   void dump(int i_step, const std::vector<TPar>& p_arr, float* v = nullptr);
@@ -206,8 +118,9 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr, float* v) {
     uint32_t n_par = p_arr.size();
     float* pos = new float[n_par * 3];
     get_data_from_par(p_arr, pos);
-    uint64_t step = get_time_step();
-  
+    //uint64_t step = get_time_step();
+    uint64_t step = start_ + i_step;
+
     std::cout << "dump frame " << step << std::endl;
     gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
     gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
