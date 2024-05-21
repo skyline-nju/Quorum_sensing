@@ -156,6 +156,7 @@
     <ClCompile Include="exporter2D.cpp" />
     <ClCompile Include="gsd.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="particle2D.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

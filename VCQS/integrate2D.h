@@ -122,52 +122,6 @@ void EM_QS_iso_harmonic::update(TPar& p, const BdyCondi& bc, TRan& myran, double
   bc.tangle(p.pos);
 }
 
-template<typename TPar>
-double cal_v(double v0, double kappa, double rho0, double eta, double JAB, double JBA, const TPar& p) {
-  double v;
-  double d_rhoA = (p.rho_local[0] - rho0) / (rho0 * kappa);
-  double d_rhoB = (p.rho_local[1] - rho0) / (rho0 * kappa);
-
-  if (p.type_id == 0) {
-    v = v0 * (1 + kappa * tanh(eta * d_rhoA)) * (1 + kappa * tanh(JAB * d_rhoB));
-  } else {
-    v = v0 * (1 + kappa * tanh(eta * d_rhoB)) * (1 + kappa * tanh(JBA * d_rhoA));
-  }
-  return v;
-}
-
-
-template<typename TPar>
-double cal_v(double v0, double kappa, double rho0, double eta, const TPar& p) {
-  double d_rho = (p.rho_local[0] - rho0) / (rho0 * kappa);
-  double v = v0 * (1 + kappa * tanh(eta * d_rho));
-  return v;
-}
-
-template<typename TPar>
-void cal_v_underdamped(double v0, double kappa, double rho0, double eta, double gamma, double h, TPar& p) {
-  double d_rho = (p.rho_local[0] - rho0) / (rho0 * kappa);
-  double v_QS = v0 * (1 + kappa * tanh(eta * d_rho));
-  //p.v += h * gamma * (v_QS - p.v);
-  //p.v = v_QS;
-
-  double yn = p.v;
-  double k1 = gamma * (v_QS - yn);
-  double k2 = gamma * (v_QS - (yn + 0.5 * h * k1));
-  p.v = yn + h * k2;
-}
-
-template<typename TPar>
-double cal_v(double v0, double rho_c, TPar& p) {
-  double v;
-  double rho_local = p.rho_local[0];
-  if (rho_local <= rho_c) {
-    v = v0;
-  } else {
-    v = v0 * rho_c / rho_local;
-  }
-  return v;
-}
 
 class EM_NRTorque {
 public:

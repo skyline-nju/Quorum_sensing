@@ -1,6 +1,8 @@
 #pragma once
 #include "vect.h"
+#ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
 
 template <typename TPar, typename TDomain>
 bool check_overlap_2(const TPar& p_new, const std::vector<TPar>& p_arr,
@@ -138,10 +140,10 @@ public:
 
 class QSP_2 {
 public:
-  QSP_2() : pos(), u(), type_id(0) {}
-  QSP_2(const Vec_2<double>& pos0) : pos(pos0), u(), type_id(0) {}
+  QSP_2() : pos(), u() {}
+  QSP_2(const Vec_2<double>& pos0) : pos(pos0), u() {}
   QSP_2(const Vec_2<double>& pos0, const Vec_2<double>& u0)
-    : pos(pos0), u(u0), type_id(0) {}
+    : pos(pos0), u(u0) {}
   template <typename TRan>
   QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o);
 
@@ -151,10 +153,21 @@ public:
   double get_theta() const { return atan2(u.y, u.x); }
   const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u; }
 
+  static void set_QS_params(double v0, double kappa, double rho0, double eta);
+
+  double cal_v() const {
+    return v0_ * (1 + kappa_ * tanh(eta_ * (rho_local - rho0_)));
+  }
+
   Vec_2<double> pos;
   Vec_2<double> u;
-  uint32_t type_id;
-  float rho_local[2]{};
+  double rho_local = 0;
+
+private:
+  static double v0_;
+  static double kappa_;
+  static double rho0_;
+  static double eta_; // eta / (rho0 * kappa)
 };
 
 template <typename TRan>
@@ -163,7 +176,6 @@ QSP_2::QSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
   double theta = myran.doub() * M_PI * 2.;
   u.x = cos(theta);
   u.y = sin(theta);
-  type_id = 0;
 }
 
 template<typename TRan>
@@ -171,73 +183,30 @@ QSP_2::QSP_2(TRan& myran, double theta0, const Vec_2<double>& l, const Vec_2<dou
   : pos(o.x + myran.doub() * l.x, o.y + myran.doub() * l.y) {
   u.x = cos(theta0);
   u.y = sin(theta0);
-  type_id = 0;
 }
 
-class IQSP_2 : public QSP_2 {
-public:
-  IQSP_2(): QSP_2(), v(0) {}
-  IQSP_2(const Vec_2<double>& pos0) : QSP_2(pos0), v(0) {}
-  IQSP_2(const Vec_2<double>& pos0, const Vec_2<double>& u0) : QSP_2(pos0, u0), v(0) {}
 
-  template<typename TRan>
-  IQSP_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o) : QSP_2(myran, l, o), v(0) {}
-
-  double v;
-};
-
-class Par_NRTorque_2 {
-public:
-  Par_NRTorque_2() : pos(), u(), tau(0) {}
-  Par_NRTorque_2(const Vec_2<double>& pos0) : pos(pos0), u(), tau(0) {}
-  Par_NRTorque_2(const Vec_2<double>& pos0, const Vec_2<double>& u0)
-    : pos(pos0), u(u0), tau(0) {}
-  template <typename TRan>
-  Par_NRTorque_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o);
-
-  double get_theta() const { return atan2(u.y, u.x); }
-  const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u; }
-
-  Vec_2<double> pos;
-  Vec_2<double> u;
-  double tau;
-  uint32_t type_id = 0;
-};
-
-template<typename TRan>
-Par_NRTorque_2::Par_NRTorque_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
-  : pos(o.x + myran.doub() * l.x, o.y + myran.doub() * l.y) {
-  double theta = myran.doub() * M_PI * 2.;
-  u.x = cos(theta);
-  u.y = sin(theta);
-  tau = 0.;
+template<typename TRan, typename TGSD, typename TPar>
+void ini_particles(std::vector<TPar>& p_arr, TRan& myran, const std::string& ini_mode,
+  int n_par, const Vec_2<double>& gl_l, TGSD& gsd) {
+  p_arr.reserve(n_par);
+  if (ini_mode == "rand") {
+    for (int i = 0; i < n_par; i++) {
+      p_arr.emplace_back(myran, gl_l, Vec_2<double>());
+    }
+  } else if (ini_mode == "ordered") {
+    for (int i = 0; i < n_par; i++) {
+      p_arr.emplace_back(myran, 0., gl_l, Vec_2<double>());
+    }
+  } else if (ini_mode == "bi-ordered") {
+    for (int i = 0; i < n_par; i++) {
+      if (i < n_par / 2) {
+        p_arr.emplace_back(myran, 0., gl_l, Vec_2<double>());
+      } else {
+        p_arr.emplace_back(myran, M_PI, gl_l, Vec_2<double>());
+      }
+    }
+  } else {
+    gsd.read_last_frame(p_arr);
+  }
 }
-
-class Par_NRTorque_Rep_2 : public Par_NRTorque_2 {
-public:
-  Par_NRTorque_Rep_2(): Par_NRTorque_2(), f() {}
-  Par_NRTorque_Rep_2(const Vec_2<double>& pos0) : Par_NRTorque_2(pos0), f() {}
-  Par_NRTorque_Rep_2(const Vec_2<double>& pos0, const Vec_2<double>& u0) : Par_NRTorque_2(pos0, u0), f() {}
-
-  template <typename TRan>
-  Par_NRTorque_Rep_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o)
-    : Par_NRTorque_2(myran, l, o), f() {}
-
-  Vec_2<double> f;
-  uint32_t n_neighbor = 0;
-};
-
-class Par_NRTorque_QS_2 : public Par_NRTorque_2 {
-public:
-  Par_NRTorque_QS_2() : Par_NRTorque_2() {}
-  Par_NRTorque_QS_2(const Vec_2<double>& pos0) : Par_NRTorque_2(pos0) {}
-  Par_NRTorque_QS_2(const Vec_2<double>& pos0, const Vec_2<double>& u0) : Par_NRTorque_2(pos0, u0) {}
-
-  template <typename TRan>
-  Par_NRTorque_QS_2(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o) : Par_NRTorque_2(myran, l, o) {}
-
-
-  float rho_local=0.;
-};
-
-

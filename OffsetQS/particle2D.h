@@ -1,6 +1,8 @@
 #pragma once
 #include "vect.h"
+#ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
 
 template <typename TPar, typename TDomain>
 bool check_overlap_2(const TPar& p_new, const std::vector<TPar>& p_arr,
