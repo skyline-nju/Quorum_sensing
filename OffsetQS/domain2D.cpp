@@ -10,14 +10,15 @@ Vec_2<int> get_proc_rank(const Vec_2<int>& proc_size, MPI_Comm group_comm) {
 
 #ifndef USE_MPI
 Grid_2::Grid_2(const Vec_2<double>& gl_l, double r_cut) {
-  gl_n_.x = int(gl_l.x / r_cut);
-  gl_n_.y = int(gl_l.y / r_cut);
+  gl_n_.x = int(round(gl_l.x / r_cut));
+  gl_n_.y = int(round(gl_l.y / r_cut));
   lc_.x = gl_l.x / gl_n_.x;
   lc_.y = gl_l.y / gl_n_.y;
   n_ = gl_n_;
   origin_.x = origin_.y = 0;
   inverse_lc_.x = 1. / lc_.x;
   inverse_lc_.y = 1. / lc_.y;
+  std::cout << "decompose the domain into " << gl_n_ << " grids with linear sizes " << lc_ << std::endl;
 }
 #else
 Grid_2::Grid_2(const Vec_2<double>& gl_l, double r_cut,

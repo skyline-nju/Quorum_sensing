@@ -7,22 +7,22 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 40;
-  double Ly = 40;
+  double Lx = 20;
+  double Ly = 20;
 
-  double rho0 = 5;
+  double rho0 = 20;
   double rhoA = 5;
-  double eta = -3;
-  double Dt = 0.001;
+  double eta = 2;
+  double Dt = 0.01;
   double v0 = 1;
-  double kappa = 1;
-  double Dr = 0.1;
+  double kappa = 0.9;
+  double Dr = 5;
 
-  double angle = 360;
-  double h = 0.1;
-  int n_step = 400000;
+  double angle = 180;
+  double h = 0.01;
+  int n_step = 4000000;
   //int snap_interval = int(round(200 / h * 0.1));
-  double snap_log_sep = 2000;
+  double snap_log_sep = 5000;
   int log_interval = 10000;
   int seed = 1000;
   std::string ini_mode = "rand";  // should be "rand", "ordered", "bi-ordered" or "resume"

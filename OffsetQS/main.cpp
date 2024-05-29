@@ -7,21 +7,22 @@
 #include "exporter2D.h"
 
 int main(int argc, char* argv[]) {
-  double Lx = 40;
-  double Ly = 40;
+  double Lx = 48;
+  double Ly = 48;
 
   double rho0 = 20;
-  double rhoA = 20;
+  double rhoA = 5;
   double eta = 3;
   double Dt = 0.;
   double v0 = 1;
   double kappa = 0.9;
-  double Dr = 10;
+  double Dr = 5;
+  double eps = 0.2;
 
-  double h = 0.01;
-  int n_step = 100000;
+  double h = 0.02;
+  int n_step = 10000000;
   //int snap_interval = int(round(200 / h * 0.1));
-  double snap_log_sep = 10000;
+  double snap_log_sep = 0.1;
   int log_interval = 10000;
   int seed = 1000;
   std::string ini_mode = "rand";  // should be "rand", "ordered", "bi-ordered" or "resume"
@@ -36,7 +37,8 @@ int main(int argc, char* argv[]) {
   typedef BiNode<QSP_2> node_t;
   Ranq2 myran(seed);
   Vec_2<double> gl_l(Lx, Ly);
-  double r_cut = 1;
+  double r_QS = 1;
+  double r_cut = r_QS + eps;
   Grid_2 grid(gl_l, r_cut);
   PeriodicDomain_2 pdm(gl_l);
   CellListNode_2<node_t> cl(pdm, grid);
@@ -46,8 +48,7 @@ int main(int argc, char* argv[]) {
   EM_QS_iso integrator(h, Dt, Dr);
 
   // cal force
-  double eps = 0.1;
-  AsymKernal kernal(r_cut - abs(eps), eps);
+  AsymKernal kernal(r_QS, eps);
   auto f1 = [&kernal](node_t* p1, node_t* p2) {
     kernal(*p1, *p2);
     };
