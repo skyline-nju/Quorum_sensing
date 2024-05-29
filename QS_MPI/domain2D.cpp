@@ -8,8 +8,8 @@ Vec_2<int> get_proc_rank(const Vec_2<int>& proc_size, MPI_Comm group_comm) {
 
 Grid_2::Grid_2(const Vec_2<double>& gl_l, double r_cut,
                const Vec_2<int>& proc_size, MPI_Comm group_comm) {
-  gl_n_.x = int(gl_l.x / r_cut);
-  gl_n_.y = int(gl_l.y / r_cut);
+  gl_n_.x = int(round(gl_l.x / r_cut));
+  gl_n_.y = int(round(gl_l.y / r_cut));
   lc_.x = gl_l.x / gl_n_.x;
   lc_.y = gl_l.y / gl_n_.y;
   inverse_lc_.x = 1. / lc_.x;

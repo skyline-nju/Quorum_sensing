@@ -45,6 +45,9 @@
     <ClInclude Include="QS.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="offset_QS.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gsd.c">
@@ -63,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="QS.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="offset_QS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

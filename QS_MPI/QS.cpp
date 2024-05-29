@@ -72,7 +72,6 @@ void run(const Vec_2<double>& gl_l,
   ini(p_arr, dm, cl, phi, ini_mode, myran, gsd, 40.);
 
   // run
-  std::vector<double> v_arr();
   for (int t = 1; t <= n_step; t++) {
     kernal.reset_local_density(p_arr);
     cal_force(p_arr, cl, comm, for_all_pair_force);

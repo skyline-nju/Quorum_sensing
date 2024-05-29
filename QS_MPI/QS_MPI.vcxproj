@@ -27,6 +27,7 @@
     <ClInclude Include="force2D.h" />
     <ClInclude Include="integrate2D.h" />
     <ClInclude Include="NRQS.h" />
+    <ClInclude Include="offset_QS.h" />
     <ClInclude Include="particle2D.h" />
     <ClInclude Include="QS.h" />
   </ItemGroup>
@@ -35,6 +36,7 @@
     <ClCompile Include="io2D.cpp" />
     <ClCompile Include="gsd.c" />
     <ClCompile Include="NRQS.cpp" />
+    <ClCompile Include="offset_QS.cpp" />
     <ClCompile Include="particle2D.cpp" />
     <ClCompile Include="QS.cpp" />
   </ItemGroup>
