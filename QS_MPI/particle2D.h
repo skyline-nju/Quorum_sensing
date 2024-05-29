@@ -2,7 +2,7 @@
 #include "vect.h"
 #include <iostream>
 #include <cstring>
-#define M_PI 3.14159265358979323846
+#include "config.h"
 
 template <typename T>
 void tangle_1D(T& x, T L) {
@@ -147,10 +147,103 @@ public:
   double tau;
 };
 
+class QSP_1 {
+public:
+  QSP_1() : u(), pos() {}
+  QSP_1(const Vec_2<double>& pos0) : u(), pos(pos0) {}
+  QSP_1(const Vec_2<double>& pos0, const Vec_2<double>& u0) : u(u0), pos(pos0) {}
+  template <typename TRan>
+  QSP_1(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o);
+
+  double get_theta() const { return atan2(u.y, u.x); }
+  const Vec_2<double>& update_ori(double d_theta) { u.rotate(d_theta); return u; }
+
+  template <typename TInt>
+  void copy_pos_to(char* dest, TInt& idx) const;
+
+  template <typename TInt>
+  void copy_pos_from(const char* src, TInt& idx);
+
+  template <typename TInt>
+  void copy_to(char* dest, TInt& idx) const;
+
+  template <typename TInt>
+  void copy_from(const char* dest, TInt& idx);
+
+  void set_local_density(double new_rho) { rho_local = new_rho; }
+
+  void norm_local_density(double norm);
+
+  template <typename TPar>
+  void update_local_density(TPar& p, double drho);
+
+  double cal_v() const {
+    return v0_ * (1 + kappa_ * tanh(eta_ * (rho_local - rho0_)));
+  };
+
+  static void set_QS_params(double v0, double kappa, double rho0, double eta);
+
+  Vec_2<double> u;
+  Vec_2<double> pos;
+  double rho_local = 0;
+private:
+  static double v0_;
+  static double kappa_;
+  static double rho0_;
+  static double eta_;   // eta / (rho0 * kappa)
+};
+
+
+template <typename TRan>
+QSP_1::QSP_1(TRan& myran, const Vec_2<double>& l, const Vec_2<double>& o) {
+  double theta = myran.doub() * M_PI * 2.;
+  u.x = cos(theta);
+  u.y = sin(theta);
+  pos.x = o.x + myran.doub() * l.x;
+  pos.y = o.y + myran.doub() * l.y;
+}
+
+template <typename TInt>
+void QSP_1::copy_pos_to(char* dest, TInt& idx) const {
+  std::memcpy(dest + idx, &pos.x, 16);
+  idx += 16;
+}
+
+template <typename TInt>
+void QSP_1::copy_pos_from(const char* src, TInt& idx) {
+  std::memcpy(&pos.x, src + idx, 16);
+  idx += 16;
+}
+
+template <typename TInt>
+void QSP_1::copy_to(char* dest, TInt& idx) const {
+  std::memcpy(dest + idx, &u.x, 32);
+  idx += 32;
+}
+
+template <typename TInt>
+void QSP_1::copy_from(const char* src, TInt& idx) {
+  std::memcpy(&u.x, src + idx, 32);
+  idx += 32;
+}
+
+template<typename TPar>
+inline void QSP_1::update_local_density(TPar& p, double drho) {
+  rho_local += drho;
+  p.rho_local += drho;
+}
+
+inline void QSP_1::norm_local_density(double norm) {
+#ifdef WITH_SELF
+  rho_local += 1;
+#endif
+  rho_local *= norm;
+}
+
 class QSP_2 {
 public:
   QSP_2() : u(), pos(), type_id(0) {}
-  QSP_2(const Vec_2<double>& pos0) : u(), pos(), type_id(0) {}
+  QSP_2(const Vec_2<double>& pos0) : u(), pos(pos0), type_id(0) {}
   QSP_2(const Vec_2<double>& pos0, const Vec_2<double>& u0)
     :u(u0), pos(pos0), type_id(0) {}
   template <typename TRan>
@@ -172,11 +265,14 @@ public:
   template <typename TInt>
   void copy_from(const char* dest, TInt& idx);
 
-  double cal_v() const {
-    return v0_
-      * (1 + kappa_ * tanh(eta_[type_id][0] * (rho_local[0] - rhoA_)))
-      * (1 + kappa_ * tanh(eta_[type_id][1] * (rho_local[1] - rhoB_)));
-  };
+  void set_local_density(double new_rho) { rho_local[0] = new_rho; rho_local[1] = new_rho;}
+
+  void norm_local_density(double norm);
+
+  template <typename TPar>
+  void update_local_density(TPar& p, double drho);
+
+  double cal_v() const;
 
   static void set_QS_params(double v0, double kappa,
                             double rho0, double bar_rho_A, double bar_rho_B,
@@ -231,3 +327,24 @@ void QSP_2::copy_from(const char* src, TInt& idx) {
   std::memcpy(&u.x, src + idx, 33);
   idx += 33;
 }
+
+template<typename TPar>
+inline void QSP_2::update_local_density(TPar& p, double drho) {
+  rho_local[p.type_id] += drho;
+  p.rho_local[type_id] += drho;
+}
+
+
+inline void QSP_2::norm_local_density(double norm) {
+#ifdef WITH_SELF
+  rho_local[type_id] += 1;
+#endif
+  rho_local[0] *= norm;
+  rho_local[1] *= norm;
+}
+
+inline double QSP_2::cal_v() const {
+  return v0_
+    * (1 + kappa_ * tanh(eta_[type_id][0] * (rho_local[0] - rhoA_)))
+    * (1 + kappa_ * tanh(eta_[type_id][1] * (rho_local[1] - rhoB_)));
+};

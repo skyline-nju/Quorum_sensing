@@ -161,15 +161,17 @@ public:
   void get_data_from_par(const std::vector<TPar>& p_arr,
                          float* pos, uint32_t* type_id, float* v);
 
+
+  template <typename TPar>
+  void get_data_from_par(const std::vector<TPar>& p_arr,
+                         float* pos, float* v);
+
   uint64_t get_time_step();
 
   int reset_start_time_step();
 
   template <typename TPar>
   void dump(int i_step, const std::vector<TPar>& p_arr);
-
-  template <typename TPar>
-  void dump(int i_step, const std::vector<TPar>& p_arr, float* v);
 
   template <typename TFloat, typename TInt>
   void read(int i_frame, TFloat* x, TFloat* y, TFloat* theta, TInt* type_id);
@@ -247,6 +249,60 @@ void Snap_GSD_2::get_data_from_par(const std::vector<TPar>& p_arr,
   delete[] my_v;
 }
 
+template <typename TPar>
+void Snap_GSD_2::get_data_from_par(const std::vector<TPar>& p_arr, float* pos, float* v) {
+  int n_par = p_arr.size();
+  int* n_par_arr = new int[tot_proc_] {};
+  int* displs = new int[tot_proc_] {};
+  MPI_Gather(&n_par, 1, MPI_INT, n_par_arr, 1, MPI_INT, 0, comm_);
+  if (my_rank_ == 0) {
+    size_t count = 0;
+    for (int i = 0; i < tot_proc_; i++) {
+      displs[i] += count;
+      count += n_par_arr[i];
+    }
+    if (count != gl_np_) {
+      std::cout << "Error, total particles = " << count << ", unequal to "
+        << gl_np_ << std::endl;
+      exit(1);
+    }
+  }
+
+  float* my_pos = new float[n_par * 3];
+  float* my_v = new float[n_par];
+
+
+  double half_Lx = gl_l_.x * 0.5;
+  double half_Ly = gl_l_.y * 0.5;
+  for (int j = 0; j < n_par; j++) {
+    int j3 = j * 3;
+    my_pos[j3] = p_arr[j].pos.x - half_Lx;
+    my_pos[j3 + 1] = p_arr[j].pos.y - half_Ly;
+    my_pos[j3 + 2] = p_arr[j].get_theta();
+    my_v[j] = p_arr[j].cal_v();
+  }
+
+
+  MPI_Gatherv(my_v, n_par, MPI_FLOAT,
+    v, n_par_arr, displs, MPI_FLOAT,
+    0, comm_);
+
+  for (int i = 0; i < tot_proc_; i++) {
+    n_par_arr[i] *= 3;
+    displs[i] *= 3;
+  }
+
+  MPI_Gatherv(my_pos, n_par * 3, MPI_FLOAT,
+    pos, n_par_arr, displs, MPI_FLOAT,
+    0, comm_);
+
+  delete[] n_par_arr;
+  delete[] displs;
+  delete[] my_pos;
+  delete[] my_v;
+}
+
+
 /********************************************************************
  * Caution: the particle speed output by this function is not correct,
  * because the local densities are lost when one particle moves from
@@ -256,16 +312,24 @@ template<typename TPar>
 void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
   if (need_export(i_step)) {
     float* pos = nullptr;
+#ifdef MULT_SPECIES
     uint32_t* type_id = nullptr;
+#endif
     float* v = nullptr;
     
     if (my_rank_ == 0) {
       pos = new float[gl_np_ * 3];
+#ifdef MULT_SPECIES
       type_id = new uint32_t[gl_np_];
+#endif
       v = new float[gl_np_];
     }
-
+#ifdef MULT_SPECIES
     get_data_from_par(p_arr, pos, type_id, v);
+#else
+    get_data_from_par(p_arr, pos, v);
+#endif
+
     uint32_t n_par = gl_np_;
     if (my_rank_ == 0) {
       //uint64_t step = get_time_step();
@@ -274,37 +338,20 @@ void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr) {
       gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
       gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
       gsd_write_chunk(handle_, "particles/position", GSD_TYPE_FLOAT, n_par, 3, 0, pos);
+#ifdef MULT_SPECIES
       gsd_write_chunk(handle_, "particles/typeid", GSD_TYPE_UINT32, n_par, 1, 0, type_id);
+#endif
       gsd_write_chunk(handle_, "particles/charge", GSD_TYPE_FLOAT, n_par, 1, 0, v);
       gsd_end_frame(handle_);
     }
     delete[] pos;
-    delete[] type_id;
     delete[] v;
+#ifdef MULT_SPECIES
+    delete[] type_id;
+#endif
   }
 }
 
-template <typename TPar>
-void Snap_GSD_2::dump(int i_step, const std::vector<TPar>& p_arr, float* v) {
-  if (need_export(i_step)) {
-    uint32_t n_par = p_arr.size();
-    float* pos = new float[n_par * 3];
-    uint32_t *type_id = new uint32_t[n_par];
-    get_data_from_par(p_arr, pos, type_id);
-    // uint64_t step = get_time_step();
-    uint64_t step = start_ + i_step;
-  
-    //std::cout << "dump frame " << step << std::endl;
-    gsd_write_chunk(handle_, "configuration/step", GSD_TYPE_UINT64, 1, 1, 0, &step);
-    gsd_write_chunk(handle_, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, &n_par);
-    gsd_write_chunk(handle_, "particles/position", GSD_TYPE_FLOAT, n_par, 3, 0, pos);
-    gsd_write_chunk(handle_, "particles/typeid", GSD_TYPE_UINT32, n_par, 1, 0, type_id);
-    gsd_write_chunk(handle_, "particles/charge", GSD_TYPE_FLOAT, n_par, 1, 0, v);
-    gsd_end_frame(handle_);
-    delete[] pos;
-    delete []type_id;
-  }
-}
 
 template<typename TFloat, typename TInt>
 void io::Snap_GSD_2::read(int i_frame,
@@ -323,23 +370,28 @@ void io::Snap_GSD_2::read(int i_frame,
     float* pos = new float[size_t(n_par) * 3];
     chunk = gsd_find_chunk(handle_, i_frame, "particles/position");
     gsd_read_chunk(handle_, pos, chunk);
+#ifdef MULT_SPECIES
     uint32_t* type_id0 = new uint32_t[n_par];
     chunk = gsd_find_chunk(handle_, i_frame, "particles/typeid");
     gsd_read_chunk(handle_, type_id0, chunk);
-
+#endif
     double half_Lx = gl_l_.x * 0.5;
     double half_Ly = gl_l_.y * 0.5;
     for (int i = 0; i < n_par; i++) {
       x[i] = pos[i * 3 + 0] + half_Lx;
       y[i] = pos[i * 3 + 1] + half_Ly;
       theta[i] = pos[i * 3 + 2];
+#ifdef MULT_SPECIES
       type_id[i] = type_id0[i];
+#endif
       tangle_1D(x[i], gl_l_.x);
       tangle_1D(y[i], gl_l_.y);
     }
 
     delete[] pos;
+#ifdef MULT_SPECIES
     delete[] type_id0;
+#endif
   }
 }
 

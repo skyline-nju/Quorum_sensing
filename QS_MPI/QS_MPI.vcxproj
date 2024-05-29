@@ -28,6 +28,7 @@
     <ClInclude Include="integrate2D.h" />
     <ClInclude Include="NRQS.h" />
     <ClInclude Include="particle2D.h" />
+    <ClInclude Include="QS.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="domain2D.cpp" />
@@ -35,6 +36,7 @@
     <ClCompile Include="gsd.c" />
     <ClCompile Include="NRQS.cpp" />
     <ClCompile Include="particle2D.cpp" />
+    <ClCompile Include="QS.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

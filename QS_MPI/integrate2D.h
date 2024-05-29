@@ -98,6 +98,17 @@ void integrate(std::vector<TNode>& p_arr, CellListNode_2<TNode>& cl,
   comm.comm_after_integration(p_arr, cl);
 }
 
+template <typename TNode, typename BiFunc>
+void integrate(std::vector<TNode>& p_arr, std::vector<double>& v_arr, CellListNode_2<TNode>& cl,
+               BiFunc f_move, Communicator_2& comm) {
+  const size_t np = p_arr.size();
+  for (size_t i = 0; i < np; i++) {
+    f_move(p_arr[i], v_arr[i]);
+  }
+  cl.recreate(p_arr);
+  comm.comm_after_integration(p_arr, cl);
+}
+
 // update cell list once one particle has moved from one cell to another cell
 template <typename TNode, typename UniFunc>
 void integrate2(std::vector<TNode>& p_arr, CellListNode_2<TNode>& cl,
@@ -113,3 +124,19 @@ void integrate2(std::vector<TNode>& p_arr, CellListNode_2<TNode>& cl,
   }
   comm.comm_after_integration(p_arr, cl);
 }
+
+template <typename TNode, typename BiFunc>
+void integrate2(std::vector<TNode>& p_arr, std::vector<double>& v_arr, CellListNode_2<TNode>& cl,
+                BiFunc f_move, Communicator_2& comm) {
+  const size_t np = p_arr.size();
+  for (size_t i = 0; i < np; i++) {
+    int ic_old = cl.get_ic(p_arr[i]);
+    f_move(p_arr[i], v_arr[i]);
+    int ic_new = cl.get_ic(p_arr[i]);
+    if (ic_old != ic_new) {
+      cl.update(p_arr[i], ic_old, ic_new);
+    }
+  }
+  comm.comm_after_integration(p_arr, cl);
+}
+

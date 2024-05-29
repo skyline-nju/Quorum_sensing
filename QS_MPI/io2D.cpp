@@ -52,6 +52,11 @@ io::LogExporter::LogExporter(const std::string& outfile,
 #endif
     std::strftime(str, 100, "%c", &now_time);
     fout << "Started simulation at " << str << "\n";
+#ifdef WITH_SELF
+    fout << "With particle self for QS" << "\n";
+#else
+    fout << "Without particle self for QS" << "\n";
+#endif
   }
   MPI_Barrier(group_comm);
 }

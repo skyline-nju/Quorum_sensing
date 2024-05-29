@@ -33,13 +33,16 @@
     <ClInclude Include="integrate2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="particle2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="communicator2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NRQS.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="particle2D.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="QS.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -57,6 +60,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="particle2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="QS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
