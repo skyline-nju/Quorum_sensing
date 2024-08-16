@@ -197,9 +197,12 @@ if __name__ == "__main__":
     # basename = "L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333/{basename}"
 
-    basename = "L1280_320_Dr0.100_k0.70_p5_2.41_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    fname = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333/{basename}"
-    # fname = "/scratch03.local/yduan/QS5/L80_5_k0.7_p40_beta/L80_5_Dr0.020_k0.70_p40_40_r40_e-2.000_J0.300_-0.300_1200.gsd"
-    plot_instant_profile3(fname, bins=640, i_frame=25, dt=1/3)
+    basename = "L480_160_Dr0.100_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_1001.gsd"
+    fname = f"{root_tahmineh}/QS_MPI_noself/L480_160_r5_5_5/{basename}"
+    plot_instant_profile3(fname, bins=480, i_frame=0, dt=0.01)
+
+    basename = "L120_40_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.gsd"
+    fname = f"{root_tahmineh}/QS_MPI_noself/L120_40_r10_10_10_varied_h/{basename}"
+    plot_instant_profile3(fname, bins=120, i_frame=-1, dt=0.1)
 
     # profiles_varied_etaAB()

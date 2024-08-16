@@ -4,7 +4,7 @@ from gsd import hoomd
 from read_gsd import read_one_frame
 
 
-def duplicate(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
+def duplicate(s: hoomd.Snapshot, nx: int, ny: int, inverse=False) -> hoomd.Snapshot:
     N = s.particles.N * nx * ny
     lx = s.configuration.box[0]
     ly = s.configuration.box[1]
@@ -12,13 +12,26 @@ def duplicate(s: hoomd.Snapshot, nx: int, ny: int) -> hoomd.Snapshot:
     pos = np.zeros((N, 3), dtype=np.float32)
     type_id = np.zeros(N, dtype=np.uint32)
     charge = np.zeros(N, dtype=np.float32)
+
+    pos0 = s.particles.position.copy()
+    pos_inv = np.zeros_like(pos0)
+    pos_inv[:, 0:2] = -pos0[:, 0:2]
+    pos_inv[:, 2] = pos0[:, 2] + np.pi
+    mask = pos_inv[:, 2] > np.pi * 2
+    pos_inv[:, 2][mask] -= np.pi * 2
     for j in range(ny):
         for i in range(nx):
             beg = (j * nx + i) * s.particles.N
             end = beg + s.particles.N
-            pos[beg:end, 0] = s.particles.position[:, 0] + lx / 2 + i * lx
-            pos[beg:end, 1] = s.particles.position[:, 1] + ly / 2 + j * ly
-            pos[beg:end, 2] = s.particles.position[:, 2]
+            if inverse and (i + j) % 2 == 0:
+                pos[beg:end, 0] = pos0[:, 0] + lx / 2 + i * lx
+                pos[beg:end, 1] = pos0[:, 1] + ly / 2 + j * ly
+                pos[beg:end, 2] = pos0[:, 2]
+            else:
+                pos[beg:end, 0] = pos_inv[:, 0] + lx / 2 + i * lx
+                pos[beg:end, 1] = pos_inv[:, 1] + ly / 2 + j * ly
+                pos[beg:end, 2] = pos_inv[:, 2]
+
             type_id[beg:end] = s.particles.typeid
             charge[beg:end] = s.particles.charge
     pos[:, 0] -= Lx / 2
@@ -319,7 +332,7 @@ def shift_pos(s: hoomd.Snapshot, dx: float, dy: float) -> hoomd.Snapshot:
     return s
 
 
-def shift_to_center(s: hoomd.Snapshot) -> hoomd.Snapshot:
+def shift_to_center(s: hoomd.Snapshot, inverse=False) -> hoomd.Snapshot:
     Ly = s.configuration.box[1]
     Lx = s.configuration.box[0]
 
@@ -328,6 +341,14 @@ def shift_to_center(s: hoomd.Snapshot) -> hoomd.Snapshot:
 
     x_c = np.arctan2(np.mean(np.sin(x)), np.mean(np.cos(x))) / (2 * np.pi) * Lx
     y_c = np.arctan2(np.mean(np.sin(y)), np.mean(np.cos(y))) / (2 * np.pi) * Ly
+
+    if inverse:
+        x_c += Lx / 2
+        if x_c >= Lx:
+            x_c -= Lx
+        y_c += Ly / 2
+        if y_c >= Ly:
+            y_c -= Ly
 
     return shift_pos(s, -x_c, -y_c)
 
@@ -533,11 +554,21 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L1280_r10_10_10_varied_Dt_h"
-    basename = "L1280_1280_Dr0.100_Dt0_k0.70_p5.5_13.55_r10_10_10_e-2.000_J2.000_-2.000_h0.100_1000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/MC_L480_r10_10_10_h0.333"
+    basename = "L480_480_Dr0.100_k0.70_p9.6_16.15_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
 
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
+    snap = shift_to_center(snap, inverse=True)
+    # snap = rot90(snap)
+    snap = duplicate(snap, 2, 1, inverse=False)
+
+    # snap = adjust_density(snap, 50, 60, mode="copy")
+    # snap = scale(snap, 1.5, 1.5)
+    # snap = adjust_density(snap, 15, 15)
+
+    fout = f"{folder}/L960_480_Dr0.100_k0.70_p9.6_16.15_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+
 
     # s1 = read_one_frame(fname, 454)
     # s2 = read_one_frame(fname, 454)
@@ -549,14 +580,14 @@ if __name__ == "__main__":
     # snap = vstack(s1, s2)
 
     # snap = shift_h_slice(snap, 3.6, 80, 15)
-    snap = shift_pos(snap, 0, -450)
+    # snap = shift_pos(snap, 160, 140)
     # snap = shift_v_slice(snap, -80, 0, 10)
 
-    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L320_80_r10_10_10_h0.333"
-    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_80_r10_10_10_h0.333"
-    # fname1 = f"{folder1}/L320_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129.gsd"
+    # folder1 = "/scratch03.local/yduan/QS_MPI_noself/L960_1280_r10_10_10_varied_h"
+    # folder2 = "/scratch03.local/yduan/QS_MPI_noself/L960_1280_r10_10_10_varied_h"
+    # fname1 = f"{folder1}/L1280_1280_Dr0.100_Dt0_k0.70_p5.5_13.55_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
     # s1 = read_one_frame(fname1, -1)
-    # fname2 = f"{folder2}/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2042.gsd"
+    # fname2 = f"{folder2}/L960_1280_Dr0.100_k0.70_p5.5_13.55_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2001.gsd"
     # s2 = read_one_frame(fname2, -1)
 
     # s1 = shift_to_center(s1)
@@ -571,8 +602,6 @@ if __name__ == "__main__":
     # snap = shift_v_slice(snap, 80, 160, 160)
 
     # snap = swap_h(snap, 20, 35, -40)
-    snap = scale(snap, 1/2, 1)
-    # snap = adjust_density(snap, 6.48, 7.2, mode="copy")
     # snap = adjust_density(snap, 20.75, 80, mode="local_rect", R=1)
     # snap = adjust_density(snap, 20.75, 80, mode="local", R=5)
     # snap = shift_to_center(snap)
@@ -593,7 +622,6 @@ if __name__ == "__main__":
 
     # fout = 'data/snap/L80_80_Dr0.100_k0.70_p38_8_r40_e-2.000_J0.500_-0.500_21000.gsd'
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
-    fout = f"{folder}/L640_1280_Dr0.100_Dt0_k0.70_p5.5_13.55_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
 

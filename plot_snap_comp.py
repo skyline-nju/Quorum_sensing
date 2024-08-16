@@ -45,8 +45,9 @@ def PD_comp(phiA_arr, phiB_arr, ms=0.05, L=40, Dr=1., rho0=20., eta=-2., eta_AB=
 
     # prefix = f"{root_sohrab}/IQS/L40"
     prefix = f"data/snap_L{L:d}_phiA_phiB"
+
     if eta_BA != 0.:
-        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{eta_AB:.3f}_{eta_BA:.3f}_h{h:.3f}_1000.gsd"
+        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{eta_AB:.3f}_{eta_BA:.3f}_h{h:.3f}_1004.gsd"
     else:
         file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{eta_AB:.3f}_-{eta_BA:.3f}_h{h:.3f}_1000.gsd"
     print(file_pat)
@@ -65,9 +66,9 @@ def PD_comp(phiA_arr, phiB_arr, ms=0.05, L=40, Dr=1., rho0=20., eta=-2., eta_AB=
     add_xlabel(fig, axes, "bottom", r"\bar{\rho}_A/\rho_0", phiA_arr/rho0, fontsize)
     add_ylabel(fig, axes, "left", r"\bar{\rho}_B/\rho_0", phiB_arr/rho0, fontsize, vertical=True, reverse=True)
 
-    fout_name = f"fig/PD_L{L:d}_phiA_phiB/PD_comp_Dr{Dr:.3f}_r{rho0:.3f}_e{eta:.3f}_J{eta_AB:.3f}_{eta_BA:.3f}.jpg"
-    plt.savefig(fout_name)
-    # plt.show()
+    # fout_name = f"fig/PD_L{L:d}_phiA_phiB/PD_comp_Dr{Dr:.3f}_r{rho0:.3f}_e{eta:.3f}_J{eta_AB:.3f}_{eta_BA:.3f}.jpg"
+    # plt.savefig(fout_name)
+    plt.show()
     plt.close()
 
 
@@ -104,9 +105,9 @@ if __name__ == "__main__":
     eta_AB = 0.5
     eta_BA = -0.5
     Dr = 0.1
-    rho0 = 60
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J{eta_AB:g}_{eta_BA:g}_h0.1"
-    prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r{rho0:g}_e-2_J{eta_AB:g}_h0.1"
+    rho0 = 20
+    prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r20_e-2_J0.5"
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L40_k0.7_r{rho0:g}_e-2_J{eta_AB:g}_{eta_BA:g}_h0.1"
 
 
     out_folder = "data/snap_L40_phiA_phiB"
@@ -114,8 +115,8 @@ if __name__ == "__main__":
 
     # phiA_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
     # phiB_arr = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60])
-    phiA_arr = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) * 1.5
-    phiB_arr = np.array([80, 90, 100, 110, 120, 130, 140, 150, 160]) * 1.5
+    phiA_arr = np.array([0, 0.5, 1, 1.5, 2, 2.5, 3]) * 20
+    phiB_arr = np.array([0, 0.5, 1, 1.5, 2, 2.5, 3]) * 20
 
 
     PD_comp(phiA_arr, phiB_arr, Dr=Dr, eta=-2, eta_AB=eta_AB, eta_BA=eta_BA, rho0=rho0)

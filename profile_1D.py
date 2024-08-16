@@ -392,18 +392,18 @@ def locate_interfaces(x, y, y_threshold, Lx, acsending=True):
 
 
 def show_instant_profiles():
-    # fname = f"{root_tahmineh}/QS_MPI_noself/L1280_80_r10_10_10_h0.333/L1280_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2129042.gsd"
+    fname = f"{root_tahmineh}/QS_MPI_noself/L1920_640_r10_10_10_h0.333/L1920_640_Dr1.000_k0.70_p6.48_7.2_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L1920_160_r5_5_5_varied_Dt_h/L1920_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_160_r5_5_5_varied_Dt_h/L960_160_Dr0.100_Dt0_k0.70_p2.25_7.35_r5_5_5_e-2.000_J0.500_-0.500_h0.100_2000.gsd"
     # fname = f"{root_tahmineh}/QS_MPI_noself/L3840_160_r10_10_10_varied_h/L3840_160_Dr0.100_k0.70_p7_4_r10_10_10_e-2.000_J2.000_-2.000_h0.100_2000.gsd"
-    fname = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1/L10_4_Dr0.100_r200_e0.000_0.000_J1.800000_-1.800000_h0.100_1001.gsd"
+    # fname = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1/L10_4_Dr0.100_r200_e0.000_0.000_J1.800000_-1.800000_h0.100_1001.gsd"
 
     # fname = f"{root_tahmineh}/QS_MPI_noself/L960_80_r10_10_10_h0.333/L960_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2120.gsd"
 
     Lx, Ly = get_L(fname)
-    rho0 = 200
-    dx = 0.2
+    rho0 = 10
+    dx = 2
     if isinstance(dx, int):
         nx = Lx // dx
     else:
@@ -411,7 +411,7 @@ def show_instant_profiles():
     x = np.arange(nx) * dx + dx / 2
     print(Lx, Ly, x.size)
 
-    beg_frame =0
+    beg_frame = 7
     end_frame = None
     with fl.open(name=fname, mode="rb") as fgsd:
         if end_frame is None:
@@ -433,7 +433,7 @@ def show_instant_profiles():
             # for xi in xs2:
             #     ax2.axvline(xi, linestyle="dotted", c="tab:red")
 
-            ax1.set_ylim(0, 5)
+            ax1.set_ylim(0)
             ax2.plot(x, mx[0]/rho0)
             ax2.plot(x, mx[1]/rho0)
             ax2.set_xlabel(r"$x/L_x$")
@@ -542,6 +542,11 @@ def update_space_time_profiles():
     Ly = 40
     prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r10_10_10_varied_h"
     coarse_grain_all_1D(prefix, 1, False)
+
+    Lx = 120
+    Ly = 40
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r20_20_20_varied_h"
+    coarse_grain_all_1D(prefix, 1, False, pat="*_p20_*.gsd")
 
     Lx = 1920
     Ly = 160
@@ -754,6 +759,36 @@ def plot_space_time_varied_rhoB():
     plt.show()
     plt.close()
 
+def plot_space_time_varied_rhoB_10():
+    Lx = 120
+    Ly = 40
+    rA = 20
+    ncut_dict = {50: 1, 68: 9, 76:1}
+    seed_dict = {50: 1000, 68: 2000, 76:2000}
+    titles = [r"(a) $\rho_B=%g$", r"(b) $\rho_B=%g$", r"(c) $\rho_B=%g$", r"(d) $\rho_B=%g$"]
+
+    fig, axes = plt.subplots(1, len(ncut_dict), constrained_layout=True, sharey=False)
+    for i, rB in enumerate(ncut_dict.keys()):
+        folder = f"{root_tahmineh}/QS_MPI_noself/L{Lx}_{Ly}_r20_20_20_varied_h/profile_1D_dx1"
+        fname = f"{folder}/L{Lx}_{Ly}_Dr0.100_k0.70_p{rA:g}_{rB:g}_r20_20_20_e-2.000_J0.500_-0.500_h0.100_{seed_dict[rB]}.npz"
+
+
+        with np.load(fname, "r") as data:
+            t0, x0, fields0 = data["t"], data["x"], data["fields"]
+
+            ncut = ncut_dict[rB]
+            dt = (t0[-1] - t0[-2]) * 0.1
+            T = (t0[-1] - t0[ncut]) * 0.1 + dt
+ 
+            rhoA = fields0[ncut:, 0]
+            rhoB = fields0[ncut:, 1]
+            axes[i].imshow(rhoB, origin="lower", extent=[0, Lx, 0, T], aspect="auto")
+            axes[i].set_title(titles[i] % rB)
+            axes[i].set_xlabel(r"$x$")
+            axes[i].set_ylabel(r"$t$")
+
+    plt.show()
+    plt.close()
 
 def plot_space_time_fields():
     Lx = 1920
@@ -909,16 +944,16 @@ def plot_spacing_vs_t(Lx=960):
 
 
 if __name__ == "__main__":
-    # update_time_ave_profiles()
+    update_time_ave_profiles()
     # show_time_ave_profiles()
     # show_instant_profiles()
     # show_profiles_varied_time()
 
-    plot_spacing_vs_t(Lx=1280)
+    # plot_spacing_vs_t(Lx=1280)
 
     # update_space_time_profiles()
-    # plot_space_time_varied_Ly(rA=9)
-    # plot_space_time_varied_rhoB()
+    # plot_space_time_varied_Ly(rA=8)
+    # plot_space_time_varied_rhoB_10()
     # plot_space_time_varied_Lx()
     # plot_space_time_fields()
     

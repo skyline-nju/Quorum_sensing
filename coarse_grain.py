@@ -262,39 +262,35 @@ def coarse_grain_all_1D(prefix, dx, forced_updating=False, pat="*.gsd"):
 if __name__ == "__main__":
     from datetime import datetime
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_Turing_v3_1"
-    # coarse_grain_all(prefix, dx=1, pat="*.gsd", vxvy=True)
-    
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_Turing"
-    # coarse_grain_all(prefix, dx=1, pat="*.gsd", vxvy=True)
-
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333"
-    # coarse_grain_all(prefix, dx=1, pat="*_p20_*.gsd", vxvy=True)
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L40_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=1, pat="*.gsd", only_rho=True)
 
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_varied_Dt_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=True, pat="L320_320_Dr0.100_Dt0_k0.70_p*_22.5_r10_10_10_e-2.000_J0.500_-0.500_h0.100_1000.gsd")
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L80_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=1, pat="*.gsd", only_rho=True)
 
-    # prefix = f"{root_rudabeh}/QS_MPI_noself/L120_40_r80_12_60_h0.333"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_40_r40_40_40_varied_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r40_40_40_varied_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20_varied_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_40_r20_20_20_varied_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
+    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r10_10_10_varied_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h"
+    coarse_grain_all(prefix, dx=1, vxvy=False, pat="*_p18_14.5_*.gsd")
 
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h"
-    # coarse_grain_all(prefix, dx=1, vxvy=False)
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r5_5_5"
+    # coarse_grain_all_1D(prefix, 1, pat="*_p2.25_7.35_*.gsd")
 
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L240_160_r10_10_10"
     # coarse_grain_all(prefix, dx=1, vxvy=False)
@@ -308,56 +304,3 @@ if __name__ == "__main__":
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333"
     # coarse_grain_all(prefix, dx=1, vxvy=True)
 
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1"
-    # coarse_grain_all(prefix, pat="*_1002.gsd", dx=0.25, vxvy=True)
-
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L40_16_v1_1"
-    # coarse_grain_all(prefix, dx=1, vxvy=True)
-
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_32_v1_1"
-    # coarse_grain_all(prefix, dx=0.5, vxvy=True)
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25"
-    # coarse_grain_all(prefix, dx=0.5, vxvy=True, pat="L30_10_Dr6_12_v8_1_r60*.gsd")
-
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1"
-    # coarse_grain_all(prefix, dx=1, vxvy=True)
-
-
-    # # prefix = f"{root_sohrab}/QS_not_inc_self/L80_10_v1_1_J0.1/coarse_grain_dx1"
-    # prefix = f"{root_sohrab}/QS_not_inc_self/L30_10_v8_1_J0.25/coarse_grain_dx0.5"
-    # J_AB = -1
-    # Lx = 80
-    # # basename = "L80_10_Dr0.100_r20_e-2.000_-2.000_J%.6f_%.6f_h0.100_1000.npz" % (J_AB, -0.25**2/J_AB)
-    # basename = "L30_10_Dr6_12_v8_1_r60_e-0.9725_-1.5091_J%.6f_%.6f_h0.025_2000.npz" % ((J_AB, -0.25**2/J_AB))
-    # fin = f"{prefix}/{basename}"
-    # with np.load(fin, "r") as data:
-    #     t = data["t"]
-    #     x = data["x"]
-
-    #     rho_A = np.zeros((t.size, x.size))
-    #     rho_B = np.zeros((t.size, x.size))
-
-    #     fields = data["fields"]
-    #     for i in range(t.size):
-    #         rho_A[i] = np.mean(fields[i][0], axis=0)
-    #         rho_B[i] = np.mean(fields[i][1], axis=0)
-
-    #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 6), sharex=True, sharey=True, constrained_layout=True)
-    #     ax1.imshow(rho_A, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
-    #     ax2.imshow(rho_B, origin="lower", extent=[0, Lx, 0, t[-1]], aspect="auto", vmax=80, vmin=20)
-    #     # ax1.axis("a")
-
-    #     ax1.set_xlabel(r"$x$", fontsize="large")
-    #     ax2.set_xlabel(r"$x$", fontsize="large")
-    #     ax1.set_ylabel(r"$t$", fontsize="x-large")
-    #     ax1.set_title(r"(a) $\langle\rho_A(\mathbf{r}, t)\rangle_y$")
-    #     ax2.set_title(r"(b) $\langle\rho_B(\mathbf{r}, t)\rangle_y$")
-
-    #     plt.show()
-    #     plt.close()
-        
-        # for i in range(500, 505):
-        #     plt.plot(x, rho_A[i])
-        #     plt.plot(x, rho_B[i])
-        #     plt.show()
-        #     plt.close()

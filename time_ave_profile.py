@@ -127,6 +127,7 @@ def CCB_profiles_varied_L():
     f1 = "data/time_ave_fields/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
     f2 = "data/time_ave_fields/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
     f3 = "data/time_ave_fields/L640_640_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+    f4 = "data/time_ave_fields/L1280_1280_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
 
 
     with np.load(f1, "r") as data:
@@ -137,6 +138,9 @@ def CCB_profiles_varied_L():
 
     with np.load(f3, "r") as data:
         rho3, mx3, my3, v3, vx3, vy3 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
+    
+    with np.load(f4, "r") as data:
+        rho4, mx4, my4, v4, vx4, vy4 = data["rho"], data["mx"], data["my"], data["v"], data["vx"], data["vy"]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.3), constrained_layout=True, sharex=True, sharey=True)
     ax1.imshow(rho3[0], origin="lower")
@@ -155,9 +159,12 @@ def CCB_profiles_varied_L():
     x1 = np.arange(160) * dx + dx / 2
     x2 = np.arange(320) * dx + dx / 2
     x3 = np.arange(640) * dx + dx / 2
+    x4 = np.arange(1280) * dx + dx / 2
+
     x1 /= 160
     x2 /= 320
     x3 /= 640
+    # x4 /= 1280
 
     # mx1 /= rho1
     # mx2 /= rho2
@@ -169,6 +176,8 @@ def CCB_profiles_varied_L():
     rho1_x = np.mean(rho1[:, 75:85], axis=1)
     rho2_x = np.mean(rho2[:, 150:170], axis=1)
     rho3_x = np.mean(rho3[:, 300:340], axis=1)
+    rho4_x = np.mean(rho4[:, 600:680], axis=1)
+
     # rho1_x = np.mean(rho1[:, :], axis=1)
     # rho2_x = np.mean(rho2[:, :], axis=1)
     # rho3_x = np.mean(rho3[:, :], axis=1)
@@ -177,9 +186,13 @@ def CCB_profiles_varied_L():
     line1, = ax1.plot(x1, rho1_x[0], label=r"$L=160$")
     line2, = ax1.plot(x2, rho2_x[0], label=r"$L=320$")
     line3, = ax1.plot(x3, rho3_x[0], label=r"$L=640$")
+    line4, = ax1.plot(x4, rho4_x[0], label=r"$L=1280$")
+
     ax2.plot(x1, rho1_x[1])
     ax2.plot(x2, rho2_x[1])
     ax2.plot(x3, rho3_x[1])
+    ax2.plot(x4, rho4_x[1])
+
 
     # mask1 = np.logical_or(x1 < 0.2, x1 >=0.8)
     # rm_1 = np.mean(rho1_x[:, mask1], axis=1)
@@ -486,20 +499,6 @@ def update_time_ave_fields():
     beg_frame = 46
     time_ave(fname, beg_frame, center_type="B")
 
-    '''
-    fname = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
-    beg_frame = 200
-    time_ave(fname, beg_frame)
-
-    fname = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    beg_frame = 100
-    time_ave(fname, beg_frame)
-
-    fname = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333/L640_640_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
-    beg_frame = 50
-    time_ave(fname, beg_frame)
-
-
     fname = f"{root_tahmineh}/QS_MPI_noself/MC_L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     beg_frame = 20
     time_ave(fname, beg_frame, center_type="B")
@@ -513,6 +512,23 @@ def update_time_ave_fields():
     beg_frame = 8
     time_ave(fname, beg_frame, center_type="B")
 
+    fname = f"{root_tahmineh}/QS_MPI_noself/MC_L1280_r10_10_10_h0.333/L1280_1280_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 1
+    time_ave(fname, beg_frame, center_type="B")
+
+
+    '''
+    fname = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333/L160_160_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    beg_frame = 200
+    time_ave(fname, beg_frame)
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333/L320_320_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 100
+    time_ave(fname, beg_frame)
+
+    fname = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333/L640_640_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    beg_frame = 50
+    time_ave(fname, beg_frame)
 
     fname = f"{root_tahmineh}/QS_MPI_noself/L640_r5_5_5_h0.333/L640_640_Dr0.100_k0.70_p2.5_1.25_r5_5_5_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     beg_frame = 20
@@ -565,7 +581,7 @@ if __name__ == "__main__":
     # plt.close()
 
 
-    update_time_ave_fields()
+    # update_time_ave_fields()
     # CCB_profiles_varied_L_r5()
 
     # with np.load("data/time_ave_fields/L320_320_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz", "r") as data:
@@ -579,5 +595,15 @@ if __name__ == "__main__":
 
     # show_instant_profile()
     # show_instant_fields()
-    CCB_profiles_large_NR()
-    # CCB_LA_profiles()
+    # CCB_profiles_large_NR()
+    CCB_LA_profiles()
+
+    # fig, ax = plt.subplots(1, 1)
+    # ax.plot([160, 320, 640], [4, 3.8, 3.5], "--o")
+    # # ax.set_xscale("log")
+    # # ax.set_yscale("log")
+
+    # # from add_line import add_line
+    # # add_line(ax, 0, 1, 1, slope=-1, scale="log")
+    # plt.show()
+    # plt.close()

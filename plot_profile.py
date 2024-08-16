@@ -121,7 +121,7 @@ def get_time_ave_profile(fin, beg_frame, end_frame=None, dt=0.01, inversed_A=Fal
     fields_x = np.zeros((n_frames, 10, x.size))
     for i, frame in enumerate(fields[beg_frame:end_frame]):
         fx = np.zeros((10, x.size))
-        fx[:8] = np.mean(frame, axis=1)
+        fx[:8] = np.mean(frame[:8], axis=1)
         fx[8] = np.mean(frame[0]*frame[6], axis=0)
         fx[9] = np.mean(frame[1]*frame[7], axis=0)
 
@@ -190,6 +190,8 @@ def SP():
 
     x, fx = get_time_ave_profile(f1, beg_frame=50, end_frame=None, inversed_A=True, inversed_B=False)
     
+    np.savez_compressed("data/tmp/G_LB_profiles_p5_20_r20_L120_40.npz", x=x, fx=fx)
+
     x0, fx0 = get_time_ave_profile(f0, beg_frame=50, end_frame=None, inversed_A=True, inversed_B=False)
 
     normed = True
@@ -249,21 +251,25 @@ def SP():
 
 
 def D1S1():
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10/coarse_grain_dx1"
-    f1 = f"{prefix}/L480_160_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_21010.npz"
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L120_40_r20_20_20/coarse_grain_dx1"
-    # f1 = f"{prefix}/L120_40_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_1000.npz"
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h/coarse_grain_dx1"
+    # f1 = f"{prefix}/L480_160_Dr0.100_Dt0_k0.70_p18_14.5_r10_10_10_e-2.000_J0.500_-0.500_h0.100_2000.npz"
+
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333/coarse_grain_dx1"
+    f1 = f"{prefix}/L960_160_Dr0.100_k0.70_p7.6525_10.5675_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2100.npz"
+
     Lx = get_Lx(f1)
     para = get_para(f1)
-    dt = 0.01
+    dt = 1/3
     with np.load(f1, "r") as data:
         t, x, y = data["t"] * dt, data["x"], data["y"]
         fields = data["fields"]
     i_frame = -1
     plot_instant_profile(t[i_frame], x, fields[i_frame], normed=True, para=para)
 
-    x, fx = get_time_ave_profile(f1, beg_frame=50, end_frame=None, inversed_A=False, inversed_B=False)
+    x, fx = get_time_ave_profile(f1, beg_frame=100, end_frame=None, inversed_A=False, inversed_B=False, shifting_mode="A")
 
+    # np.savez_compressed("data/tmp/LA_CCB_profiles_p18_14.5_L480_160.npz", x=x, fx=fx)
+    np.savez_compressed("data/tmp/G_CCB_profiles_p7.6525_10.5675_L960_160.npz", x=x, fx=fx)
     normed = True
     r1, r2 = None, None
     fig, axes = plt.subplots(5, 1, figsize=(6, 6), constrained_layout=True, sharex=True)
@@ -661,7 +667,7 @@ def profiles_two_Lx():
 
 if __name__ == "__main__":
     # D1S2()
-    # SP()
+    SP()
     # plot_time_ave_density_profile_SP()
     # lever_rule()
     # phase_transform()
@@ -669,4 +675,4 @@ if __name__ == "__main__":
 
     # D1S1()
 
-    profiles_two_Lx()
+    # profiles_two_Lx()

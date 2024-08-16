@@ -129,6 +129,8 @@ def update_density_Sqt(dx=1):
     prefix_list = [
         # f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333",
         # f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333",
+        f"{root_tahmineh}/QS_MPI_noself/L640_r5_5_5",
+        f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333",
         # f"{root_tahmineh}/QS_MPI_noself/L1280_r5_5_5_h0.333",
         f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333",
         # f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.100_Dt0.01",
@@ -876,6 +878,92 @@ def CCB_LA_varied_L():
     plt.close()
 
 
+def CCB_LB_G():
+    fins = ["data/Sqt_rho/L640_640_Dr0.100_k0.70_p4.5_14.7_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p20_20_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
+
+    phi_A = [4.5, 10, 20]
+    phi_B = [10, 28, 20]
+    for j, fin in enumerate(fins):
+        h = get_h(fin)
+        t, q, rho_Sqt, rho_var = get_Sq_t_rho(f_Sqt=fin, dt=h)
+        q1_A, q1_B = np.zeros((2, t.size))
+        for i in range(t.size):
+            q1_A[i] = get_q1(q, rho_Sqt[0][i])
+            q1_B[i] = get_q1(q, rho_Sqt[1][i])
+    
+        ax1.plot(t, 2 * np.pi /q1_A, "o", fillstyle="none", label=r"$(%g, %g)$" % (phi_A[j], phi_B[j]))
+        ax2.plot(t, 2 * np.pi /q1_B, "o", fillstyle="none", label=r"$(%g, %g)$" % (phi_A[j], phi_B[j]))
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+
+    ax1.set_xlabel(r"$t$", fontsize="large")
+    ax1.set_ylabel(r"$\zeta_A$", fontsize="large")
+    ax2.set_xlabel(r"$t$", fontsize="large")
+    ax2.set_ylabel(r"$\zeta_B$", fontsize="large")
+    ax1.legend(fontsize="large")
+    ax2.legend(fontsize="large")
+
+    add_line(ax1, 0.1, 0.2, 0.95, 0.33, label="0.33", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.2, 0.95, 0.5, label="0.5", xl=0.15, yl=0.2, fontsize="large")
+
+
+    plt.show()
+    plt.close()
+
+
+def NJP_coarsening():
+    fins = ["data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p4.5_14.7_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p4.2_7.8_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p17_22.5_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            # "data/Sqt_rho/L640_640_Dr0.100_k0.70_p20_20_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"]
+    # fins = ["data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+    #         "data/Sqt_rho/L640_640_Dr0.100_k0.70_p10_28_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+    #         "data/Sqt_rho/L640_640_Dr0.100_k0.70_p20_20_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+    #         "data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
+
+    labels = ["G+CCB", "G+LB+CCB", "G+LB+CCB", "LB+CCB", "CCB", "G+LB"]
+    # phi_A = [4.5, 10, 20]
+    # phi_B = [10, 28, 20]
+    for j, fin in enumerate(fins):
+        h = get_h(fin)
+        t, q, rho_Sqt, rho_var = get_Sq_t_rho(f_Sqt=fin, dt=h)
+        q1_A, q1_B = np.zeros((2, t.size))
+        for i in range(t.size):
+            q1_A[i] = get_q1(q, rho_Sqt[0][i])
+            q1_B[i] = get_q1(q, rho_Sqt[1][i])
+    
+        ax1.plot(t, 2 * np.pi /q1_A, "o", fillstyle="none", label="%s" % labels[j])
+        ax2.plot(t, 2 * np.pi /q1_B, "o", fillstyle="none", label="%s" % labels[j])
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+
+    ax1.set_xlabel(r"$t$", fontsize="large")
+    ax1.set_ylabel(r"$\zeta_A$", fontsize="large")
+    ax2.set_xlabel(r"$t$", fontsize="large")
+    ax2.set_ylabel(r"$\zeta_B$", fontsize="large")
+    ax1.legend(fontsize="large")
+    ax2.legend(fontsize="large")
+
+    add_line(ax1, 0.1, 0.2, 0.95, 0.33, label="0.33", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.2, 0.95, 0.5, label="0.5", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.2, 0.95, 1, label="1", xl=0.15, yl=0.2, fontsize="large")
+
+
+
+    plt.show()
+    plt.close()
+
 
 if __name__ == "__main__":
     update_density_Sqt()
@@ -917,4 +1005,6 @@ if __name__ == "__main__":
 
     # CCB_LA_varied_L()
 
-    CCB_G_small_phi_A()
+    # CCB_G_small_phi_A()
+
+    NJP_coarsening()

@@ -83,8 +83,70 @@ def square(ncols=None, nrows=None, L=40, J=0.5, rho0=40, Dr=0.1, eta=-2.0, zero_
             vertical=True, reverse=True)
 
     plt.savefig(fout_name)
+    # plt.show()
     plt.close()
 
+
+def square2(ncols=None, nrows=None, L=40, JAB=1, JBA=0, rho0=20, Dr=0.1, eta=-2.0, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=None, ms=0.05, show_labels=True):
+    if ncols is not None and nrows is not None:
+        pA_arr = np.arange(1, ncols+1) * 10
+        pB_arr = np.arange(1, nrows+1) * 10
+    elif pA_arr is not None and pB_arr is not None:
+        ncols = pA_arr.size
+        nrows = pB_arr.size
+
+
+    prefix = "/scratch03.local/yduan/QS_not_inc_self"
+    fig_dir = f"fig/PD/pA_pB_noself"
+    if seed is None:
+        seed = 1000
+
+    if bar_rhoA is None and bar_rhoB is None:
+        fout_name = f"{fig_dir}/L{L}_{L}_Dr{Dr:g}_r{rho0:g}_e{eta:g}_J{JAB:.2f}_{JBA:.2f}"
+    else:
+        fout_name = f"{fig_dir}/L{L}_{L}_Dr{Dr:g}_r{rho0:g}_{bar_rhoA:g}_{bar_rhoB:g}_e{eta:g}_J{JAB:.2f}_{JBA:.2f}"
+
+    if subfix is None:
+        fout_name += ".jpeg"
+    else:
+        fout_name += f"_{subfix}.jpeg"
+
+    h = 0.1
+    prefix = f"{prefix}/L40_k0.7_r{rho0:g}_e-2_J{JAB:g}_{JBA:g}_h0.1"
+    if JBA != 0.:
+        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{JAB:.3f}_{JBA:.3f}_h{h:.3f}_{seed:d}.gsd"
+    else:
+        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{JAB:.3f}_-{JBA:.3f}_h{h:.3f}_{seed:d}.gsd"
+    nrows = pB_arr.size
+    ncols = pA_arr.size
+    figsize = (ncols * 2 + 0.25, nrows * 2 + 0.25)
+    if show_labels:
+        rect = [0.015, 0.015, 1.01, 1.01]
+    else:
+        rect = [-0.01, -0.01, 1.01, 1.01]
+    if bar_rhoA == 38 and bar_rhoB == 8:
+        figsize = (ncols * 2 + 1, nrows * 2 + 1)
+        rect = [0.005, 0.005, 1., 1.]
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
+
+    for j, pB in enumerate(pB_arr[::-1]):
+        for i, pA in enumerate(pA_arr):
+            fin = file_pat % (pA, pB)
+            print(fin)
+            if os.path.exists(fin):
+                plot_one_panel(fin, ax=axes[j, i], ms=ms)
+            axes[j, i].axis("off")
+    
+    fontsize = 30
+    plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1, rect=rect)
+    if show_labels:
+        add_xlabel(fig, axes, "bottom", r"\phi_A", pA_arr, fontsize)
+        add_ylabel(fig, axes, "left", r"\phi_B", pB_arr, fontsize,
+            vertical=True, reverse=True)
+
+    plt.savefig(fout_name)
+    # plt.show()
+    plt.close()
 
 def square_lower_left(L, J, rho0, Dr=0.1, eta=-2.0, inc_self=True, zero_drho=False):
     # Close up for the lower-left corner of the phase diagram on the composition plane
@@ -136,6 +198,66 @@ def square_lower_left(L, J, rho0, Dr=0.1, eta=-2.0, inc_self=True, zero_drho=Fal
 
     plt.savefig(fout_name)
     plt.close()
+
+
+def zero_self_couplings(ncols=None, nrows=None, L=20, JAB=2, JBA=-2, rho0=80, Dr=0.1, eta=0, pA_arr=None, pB_arr=None, subfix=None, bar_rhoA=None, bar_rhoB=None, seed=1000, ms=0.05, show_labels=False):
+    if ncols is not None and nrows is not None:
+        pA_arr = np.arange(1, ncols+1) * 10
+        pB_arr = np.arange(1, nrows+1) * 10
+    elif pA_arr is not None and pB_arr is not None:
+        ncols = pA_arr.size
+        nrows = pB_arr.size
+
+    prefix = "/scratch03.local/yduan/QS_not_inc_self"
+    fig_dir = f"fig/PD/pA_pB_noself"
+    if seed is None:
+        seed = 1000
+
+    if bar_rhoA is None and bar_rhoB is None:
+        fout_name = f"{fig_dir}/L{L}_{L}_Dr{Dr:g}_r{rho0:g}_e{eta:g}_J{JAB:.2f}_{JBA:.2f}"
+    else:
+        fout_name = f"{fig_dir}/L{L}_{L}_Dr{Dr:g}_r{rho0:g}_{bar_rhoA:g}_{bar_rhoB:g}_e{eta:g}_J{JAB:.2f}_{JBA:.2f}"
+
+    if subfix is None:
+        fout_name += ".jpeg"
+    else:
+        fout_name += f"_{subfix}.jpeg"
+
+    h = 0.1
+    prefix = f"{prefix}/L{L:d}_k0.7_r{rho0:g}_e{eta:g}_J{JAB:g}"
+    if JBA != 0.:
+        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{JAB:.3f}_{JBA:.3f}_h{h:.3f}_{seed:d}.gsd"
+    else:
+        file_pat = f"{prefix}/L{L:d}_{L:d}_Dr{Dr:.3f}_k0.70_p%g_%g_r{rho0:g}_e{eta:.3f}_J{JAB:.3f}_-{JBA:.3f}_h{h:.3f}_{seed:d}.gsd"
+    nrows = pB_arr.size
+    ncols = pA_arr.size
+    figsize = (ncols * 2 + 0.25, nrows * 2 + 0.25)
+    if show_labels:
+        rect = [0.015, 0.015, 1.01, 1.01]
+    else:
+        rect = [-0.01, -0.01, 1.01, 1.01]
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
+
+    for j, pB in enumerate(pB_arr[::-1]):
+        for i, pA in enumerate(pA_arr):
+            fin = file_pat % (pA, pB)
+            print(fin)
+            if os.path.exists(fin):
+                plot_one_panel(fin, ax=axes[j, i], ms=ms)
+            axes[j, i].axis("off")
+    
+    plt.tight_layout(h_pad=0.1, w_pad=0.1, pad=1.1, rect=rect)
+    if show_labels:
+        fontsize = 30
+        add_xlabel(fig, axes, "bottom", r"\phi_A", pA_arr, fontsize)
+        add_ylabel(fig, axes, "left", r"\phi_B", pB_arr, fontsize,
+            vertical=True, reverse=True)
+
+    plt.savefig(fout_name)
+    # plt.show()
+    plt.close()
+
 
 def update():
     square(10, 10, L=40, J=2, rho0=40, Dr=0.1, eta=-0.5)
@@ -225,9 +347,22 @@ if __name__ == "__main__":
     # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]) / 2
     # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="full")
 
-    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
-    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
-    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="reduced", show_labels=False)
+    # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
+    # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]) / 2
+    # pA_arr = np.array([0, 0.5, 1, 1.5, 2, 2.5, 3]) * 20
+    # pB_arr = np.array([0, 0.5, 1, 1.5, 2, 2.5, 3]) * 20
+    # # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, subfix="reduced", show_labels=False)
+
+    # square2(L=40, JAB=0, JBA=-1, rho0=20, Dr=0.1, eta=-2.0, pA_arr=pA_arr, pB_arr=pB_arr, subfix=None, seed=None, ms=0.05, show_labels=False)
+
+    pA_arr = np.array([20, 40, 60, 80, 100, 120, 140, 160])
+    pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
+    zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr)
+
+    pA_arr = np.array([40, 60, 80, 100, 120, 140, 160])
+    pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
+    zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr, JAB=1, JBA=-1)
+    # square2(L=40, JAB=0, JBA=-1, rho0=20, Dr=0.1, eta=-2.0, pA_arr=pA_arr, pB_arr=pB_arr, subfix=None, seed=None, ms=0.05, show_labels=False)
 
     # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
     # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
