@@ -554,20 +554,19 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/MC_L480_r10_10_10_h0.333"
-    basename = "L480_480_Dr0.100_k0.70_p9.6_16.15_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/surface_instability/L120_40_r10_MR"
+    basename = "L120_40_Dr1.000_k0.70_p29_14_r10_e-2.000_J0.100_0.100_h0.100_2000.gsd"
 
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
-    snap = shift_to_center(snap, inverse=True)
+    # snap = shift_to_center(snap, inverse=True)
     # snap = rot90(snap)
-    snap = duplicate(snap, 2, 1, inverse=False)
+    # snap = duplicate(snap, 2, 1, inverse=False)
 
-    # snap = adjust_density(snap, 50, 60, mode="copy")
+    snap = adjust_density(snap, 30, 14, mode="copy")
     # snap = scale(snap, 1.5, 1.5)
-    # snap = adjust_density(snap, 15, 15)
 
-    fout = f"{folder}/L960_480_Dr0.100_k0.70_p9.6_16.15_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    fout = f"{folder}/L120_40_Dr1.000_k0.70_p30_14_r10_e-2.000_J0.100_0.100_h0.100_2000.gsd"
 
 
     # s1 = read_one_frame(fname, 454)

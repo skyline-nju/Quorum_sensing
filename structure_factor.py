@@ -834,16 +834,15 @@ def CCB_G_small_phi_A():
     plt.close()
 
 def CCB_LA_varied_L():
-    phi_A = 22
-    phi_B = 6
+    # phi_A, phi_B = 22, 6
+    phi_A, phi_B = 7.5, 3
     fins = [
-        # "data/Sqt_rho/L320_320_Dr0.100_k0.70_p7.5_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-        # "data/Sqt_rho/L640_640_Dr0.100_k0.70_p7.5_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
         f"data/Sqt_rho/L320_320_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
         f"data/Sqt_rho/L640_640_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+        f"data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
         ]
     
-    Lx = [320, 640]
+    Lx = [320, 640, 1280]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
     for j, fin in enumerate(fins):
         h = get_h(fin)
@@ -965,46 +964,62 @@ def NJP_coarsening():
     plt.close()
 
 
+def three_CCB():
+    fins = ["data/Sqt_rho/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p22_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
+            "data/Sqt_rho/L640_640_Dr0.100_k0.70_p7.5_3_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz"
+            ]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
+
+    labels = ["G+CCB", "LA+CCB", "G+LA+CCB"]
+    # phi_A = [4.5, 10, 20]
+    # phi_B = [10, 28, 20]
+    for j, fin in enumerate(fins):
+        h = get_h(fin)
+        t, q, rho_Sqt, rho_var = get_Sq_t_rho(f_Sqt=fin, dt=h)
+        q1_A, q1_B = np.zeros((2, t.size))
+        for i in range(t.size):
+            q1_A[i] = get_q1(q, rho_Sqt[0][i])
+            q1_B[i] = get_q1(q, rho_Sqt[1][i])
+    
+        ax1.plot(t, 2 * np.pi /q1_A, "o", fillstyle="none", label="%s" % labels[j])
+        ax2.plot(t, 2 * np.pi /q1_B, "o", fillstyle="none", label="%s" % labels[j])
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+
+    ax1.set_xlabel(r"$t$", fontsize="large")
+    ax1.set_ylabel(r"$\zeta_A$", fontsize="large")
+    ax2.set_xlabel(r"$t$", fontsize="large")
+    ax2.set_ylabel(r"$\zeta_B$", fontsize="large")
+    ax1.legend(fontsize="large")
+    ax2.legend(fontsize="large")
+
+    add_line(ax1, 0.1, 0.2, 0.95, 0.33, label="0.33", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.2, 0.95, 0.5, label="0.5", xl=0.15, yl=0.2, fontsize="large")
+    add_line(ax1, 0.1, 0.2, 0.95, 1, label="1", xl=0.15, yl=0.2, fontsize="large")
+
+
+
+    plt.show()
+    plt.close()
 if __name__ == "__main__":
     update_density_Sqt()
     # cluster_phase_separation()
     # h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
-    # L1280_varied_composition()1
+    # L1280_varied_composition()
 
     # SP_S1D1_S2D1()
 
-
-    # fins = [
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p50_54_r40_22_36_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p50_60_r40_22_36_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p56_54_r40_22_36_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p100_108_r80_44_72_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p100_120_r80_44_72_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p112_108_r80_44_72_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     # "data/Sqt_rho/L80_80_Dr1.000_8.000_k0.70_p100_120_r80_44_72_e-0.680_-0.750_J0.010_-1.400_h0.050_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr3.000_2.000_k0.70_p132_80_r80_128_128_e-2.300_-0.400_J1.200_-1.200_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr3.000_2.000_k0.70_p132_82_r80_128_128_e-2.300_-0.400_J1.200_-1.200_h0.100_1000.npz"
-    # ]
-
-    # fins = [
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e1.000_-2.200_J-3.125_0.320_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-1.500_-2.200_J-3.125_0.320_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-1.125_-1.300_J0.250_-0.250_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-1.250_-1.600_J0.500_-0.500_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p40_40_r40_40_40_e-1.500_-2.200_J1.000_-1.000_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p80_80_r80_80_80_e-0.200_-2.200_J-3.125_0.320_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p80_80_r80_80_80_e-0.200_-2.200_J-4.000_0.250_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p80_80_r80_80_80_e-0.210_-2.250_J-2.500_0.400_h0.100_1000.npz",
-    #     "data/Sqt_rho/L80_80_Dr6.000_6.000_k0.70_p80_80_r80_80_80_e-0.210_-2.250_J-4.000_0.250_h0.100_1000.npz"
-    # ]
-
-    
     # CCB_G_large_eta()
 
-    # CCB_LA_varied_L()
+    CCB_LA_varied_L()
 
     # CCB_G_small_phi_A()
 
-    NJP_coarsening()
+    # three_CCB()
+
+    # NJP_coarsening()
