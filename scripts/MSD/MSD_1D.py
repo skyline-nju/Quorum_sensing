@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import sys
+import sys
+sys.path.append("../../")
 from gsd import fl
 from add_line import add_line
 from MSD import untangle

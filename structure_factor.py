@@ -834,8 +834,8 @@ def CCB_G_small_phi_A():
     plt.close()
 
 def CCB_LA_varied_L():
-    # phi_A, phi_B = 22, 6
-    phi_A, phi_B = 7.5, 3
+    phi_A, phi_B = 22, 6
+    # phi_A, phi_B = 7.5, 3
     fins = [
         f"data/Sqt_rho/L320_320_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
         f"data/Sqt_rho/L640_640_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",

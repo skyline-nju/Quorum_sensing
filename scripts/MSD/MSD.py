@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import sys
+sys.path.append("../../")
 from gsd import fl
 from add_line import add_line
+from center_traj import read_traj, untangle
 
 
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
@@ -71,20 +73,6 @@ def find_center_series(fin: str, fout: str, beg_frame=0):
                 np.savez_compressed(fout, t=t, x=x, y=y)
             else:
                 print("find no new frames")
-
-
-
-def untangle(x, Lx):
-    x_new = np.copy(x)
-    phase_shift = 0 
-    for i in range(1, x.size):
-        dx = x[i] - x[i-1]
-        if dx < -Lx/2:
-            phase_shift += Lx
-        elif dx > Lx/2:
-            phase_shift -= Lx
-        x_new[i] += phase_shift
-    return x_new
 
 
 def update_center_traj():
@@ -339,36 +327,17 @@ def show_MSD_averaged():
     plt.close()
 
 
-def read_traj(f_traj, Lx, Ly, n_cut=100, which="B"):
-    with open(f_traj, "r") as f:
-        lines = f.readlines()[n_cut:]
-        t, x, y = np.zeros((3, len(lines)))
-        for i, line in enumerate(lines):
-            s = line.rstrip("\n").split("\t")
-            t[i] = float(s[0]) / 3
-            if which == "A":
-                x[i] = float(s[1])
-                y[i] = float(s[2])
-            else:
-                x[i] = float(s[3])
-                y[i] = float(s[4])
-        x += Lx/2
-        y += Ly/2
-        x[x>=Lx/2] -= Lx
-        y[y>=Ly/2] -= Ly
-        x = untangle(x, Lx)
-        y = untangle(y, Ly)
-    return t, x, y
 
 
-def MSD_vs_t_SP_varied_L():
+
+def MSD_vs_t_SP_varied_L(phiA=3, phiB=6):
     L_arr = np.array([160, 240, 320, 480])
     ncut_arr = [1000, 1000, 1000, 1000]
 
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     for i, L in enumerate(L_arr):
         folder = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333"
-        f_traj = f"{folder}/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p3_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+        f_traj = f"{folder}/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p{phiA:g}_{phiB:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
         t, x, y = read_traj(f_traj, L, L, ncut_arr[i])
 
         rr = (x-x[0])**2 + (y-y[0]) **2
@@ -483,20 +452,28 @@ def MSD_vs_t_CCB_varied_L():
 
 
 def D_vs_L_varied_composition():
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
     L_arr = [160, 240, 320, 480, 640]
     # MSD_arr = np.array([516, 130, 67, 24.5, 11.5]) / 4e4
     MSD_arr = np.array([516, 138, 65.36, 21.68, 11.5]) / 4e4
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
     ax.plot(L_arr, MSD_arr, "-o", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
+
+    MSD_arr = np.array([1267, 298, 162, 60.8, 29.36]) / 1e5
+    ax.plot(L_arr, MSD_arr, "-D", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
 
     L_arr = [240, 320, 480]
     MSD_arr = np.array([233, 112.2, 54.2]) / 4e4
     ax.plot(L_arr[:3], MSD_arr[:3], "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
 
+    MSD_arr = np.array([573, 261.5, 125]) / 1e5
+    ax.plot(L_arr[:3], MSD_arr[:3], "-p", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
+
     L_arr = [160, 240, 320, 480]
     MSD_arr = np.array([20.5, 10.7, 6.7, 3.52]) / 4e4
     ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=3, \bar{\rho}_B=6$")
 
+    MSD_arr = np.array([21.73, 10.92, 6.45, 2.93]) / 4e4
+    ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=0, \bar{\rho}_B=6$")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -505,6 +482,7 @@ def D_vs_L_varied_composition():
     ax.legend()
     add_line(ax, 0.05, 1, 0.95, -3, label="slope=-3", xl=0.60, yl=0.2, fontsize="large")
     add_line(ax, 0.05, 1, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
+    add_line(ax, 0.05, 0.8, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
     add_line(ax, 0.05, 0.8, 0.95, -4, label="slope=-4", xl=0.40, yl=0.2, fontsize="large")
 
     add_line(ax, 0.05, 0.3, 0.5, -1.6, label="slope=-1.6", xl=0.20, yl=0.2, fontsize="large")
@@ -515,13 +493,13 @@ def D_vs_L_varied_composition():
 
 if __name__ == "__main__":
     # update_center_traj()
-    # show_traj()
+    show_traj()
     # show_MSD()
     # show_MSD_averaged()
     
-    MSD_vs_t_CCB_varied_L()
-    MSD_vs_t_SP_varied_L()
-    D_vs_L_varied_composition()
+    # MSD_vs_t_CCB_varied_L()
+    # MSD_vs_t_SP_varied_L(phiA=3)
+    # D_vs_L_varied_composition()
 
     # f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L480_r10_10_10_h0.333/mc_L480_480_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
     # t, x, y = read_traj(f_traj, Lx=480, Ly=480, n_cut=1)
