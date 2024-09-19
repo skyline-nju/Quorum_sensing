@@ -44,8 +44,10 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, 1, constrained_layout=True, figsize=(6, 6))
     L_arr = [160, 240, 320, 480]
+    phiA = 3
+    phiB = 6
     for L in L_arr:
-        f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+        f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p{phiA:g}_{phiB:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
         t, x, y = read_traj(f_traj, L, L)
         ax.plot(x, y, label=r"$L=%d$" % L)
     ax.legend()

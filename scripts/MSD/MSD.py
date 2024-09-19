@@ -331,8 +331,12 @@ def show_MSD_averaged():
 
 
 def MSD_vs_t_SP_varied_L(phiA=3, phiB=6):
-    L_arr = np.array([160, 240, 320, 480])
-    ncut_arr = [1000, 1000, 1000, 1000]
+    if phiA == 0:
+        L_arr = np.array([160, 240, 320, 400, 480])
+        ncut_arr = [1000, 1000, 1000, 1000, 1000]
+    else:
+        L_arr = np.array([160, 240, 320, 480])
+        ncut_arr = [1000, 1000, 1000, 1000]
 
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     for i, L in enumerate(L_arr):
@@ -361,6 +365,9 @@ def MSD_vs_t_SP_varied_L(phiA=3, phiB=6):
     ax.set_ylabel("MSD")
     ax.legend()
     add_line(ax, 0.05, 0.1, 0.95, 1, label="slope=1", xl=0.60, yl=0.7, fontsize="large")
+    add_line(ax, 0.15, 0.1, 0.95, 1, label="slope=1", xl=0.60, yl=0.7, fontsize="large")
+    add_line(ax, 0.25, 0.1, 0.95, 1, label="slope=1", xl=0.60, yl=0.7, fontsize="large")
+
     plt.show()
     plt.close()
 
@@ -411,23 +418,26 @@ def MSD_vs_t_CCB_varied_L():
     plt.close()
 
 
-    L_arr = np.array([240, 320, 480])
+    L_arr = np.array([240, 320, 400, 480, 640])
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     for i, L in enumerate(L_arr):
         if L != 320:
-            folder = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333"
-            fin = f"{folder}/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
-            n = 1000
-            ncut = 500
-            t, x, y = read_traj(fin, L_arr[i], L_arr[i], ncut)
-            t_new = np.arange(1, n+1) * 100
+            seed = 2000
         else:
-            fin = f"data/center_traj/L320_320_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
-            n = 10
-            with np.load(fin, "r") as data:
-                t, x, y = data["t"] / 3, data["x"], data["y"]
-                x, y = untangle(x[:], L_arr[i]), untangle(y[:], L_arr[i])
-            t_new = np.arange(1, n+1) * 10000
+            seed = 2001
+        folder = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333"
+        fin = f"{folder}/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed:d}.dat"
+        n = 1000
+        ncut = 500
+        t, x, y = read_traj(fin, L_arr[i], L_arr[i], ncut)
+        t_new = np.arange(1, n+1) * 100
+        # else:
+        #     fin = f"data/center_traj/L320_320_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz"
+        #     n = 10
+        #     with np.load(fin, "r") as data:
+        #         t, x, y = data["t"] / 3, data["x"], data["y"]
+        #         x, y = untangle(x[:], L_arr[i]), untangle(y[:], L_arr[i])
+        #     t_new = np.arange(1, n+1) * 10000
         rr_new = np.zeros(n)
         count = 0
         for j in range(t.size - n):
@@ -461,9 +471,9 @@ def D_vs_L_varied_composition():
     MSD_arr = np.array([1267, 298, 162, 60.8, 29.36]) / 1e5
     ax.plot(L_arr, MSD_arr, "-D", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
 
-    L_arr = [240, 320, 480]
-    MSD_arr = np.array([233, 112.2, 54.2]) / 4e4
-    ax.plot(L_arr[:3], MSD_arr[:3], "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
+    L_arr = [240, 320, 400, 480, 640]
+    MSD_arr = np.array([233, 116.2, 69.5, 49.7, 29.6]) / 4e4
+    ax.plot(L_arr, MSD_arr, "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
 
     MSD_arr = np.array([573, 261.5, 125]) / 1e5
     ax.plot(L_arr[:3], MSD_arr[:3], "-p", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
@@ -472,7 +482,8 @@ def D_vs_L_varied_composition():
     MSD_arr = np.array([20.5, 10.7, 6.7, 3.52]) / 4e4
     ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=3, \bar{\rho}_B=6$")
 
-    MSD_arr = np.array([21.73, 10.92, 6.45, 2.93]) / 4e4
+    L_arr = [160, 240, 320, 400, 480]
+    MSD_arr = np.array([19.49, 11.63, 6.87, 3.78, 2.82]) / 4e4
     ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=0, \bar{\rho}_B=6$")
 
     ax.set_xscale("log")
@@ -483,9 +494,10 @@ def D_vs_L_varied_composition():
     add_line(ax, 0.05, 1, 0.95, -3, label="slope=-3", xl=0.60, yl=0.2, fontsize="large")
     add_line(ax, 0.05, 1, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
     add_line(ax, 0.05, 0.8, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
-    add_line(ax, 0.05, 0.8, 0.95, -4, label="slope=-4", xl=0.40, yl=0.2, fontsize="large")
 
-    add_line(ax, 0.05, 0.3, 0.5, -1.6, label="slope=-1.6", xl=0.20, yl=0.2, fontsize="large")
+    # add_line(ax, 0.05, 0.3, 0.5, -1.6, label="slope=-1.6", xl=0.20, yl=0.2, fontsize="large")
+    # add_line(ax, 0.05, 0.3, 0.5, -2, label="slope=-2", xl=0.20, yl=0.2, fontsize="large")
+
 
     plt.show()
     plt.close()
@@ -493,12 +505,12 @@ def D_vs_L_varied_composition():
 
 if __name__ == "__main__":
     # update_center_traj()
-    show_traj()
+    # show_traj()
     # show_MSD()
     # show_MSD_averaged()
     
     # MSD_vs_t_CCB_varied_L()
-    # MSD_vs_t_SP_varied_L(phiA=3)
+    MSD_vs_t_SP_varied_L(phiA=3, phiB=6)
     # D_vs_L_varied_composition()
 
     # f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L480_r10_10_10_h0.333/mc_L480_480_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
