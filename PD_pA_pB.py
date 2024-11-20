@@ -355,18 +355,18 @@ if __name__ == "__main__":
 
     # square2(L=40, JAB=0, JBA=-1, rho0=20, Dr=0.1, eta=-2.0, pA_arr=pA_arr, pB_arr=pB_arr, subfix=None, seed=None, ms=0.05, show_labels=False)
 
-    pA_arr = np.array([20, 40, 60, 80, 100, 120, 140, 160])
-    pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
-    zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr)
+    # pA_arr = np.array([20, 40, 60, 80, 100, 120, 140, 160])
+    # pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
+    # zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr)
 
-    pA_arr = np.array([40, 60, 80, 100, 120, 140, 160])
-    pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
-    zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr, JAB=1, JBA=-1)
+    # pA_arr = np.array([40, 60, 80, 100, 120, 140, 160])
+    # pB_arr = np.array([20, 40, 60, 80, 100, 120, 140])
+    # zero_self_couplings(pA_arr=pA_arr, pB_arr=pB_arr, JAB=1, JBA=-1)
     # square2(L=40, JAB=0, JBA=-1, rho0=20, Dr=0.1, eta=-2.0, pA_arr=pA_arr, pB_arr=pB_arr, subfix=None, seed=None, ms=0.05, show_labels=False)
 
-    # pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
-    # pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
-    # square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.25, rho0=20, Dr=0.1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, show_labels=False)
+    pA_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
+    pB_arr = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]) / 2
+    square(pA_arr=pA_arr, pB_arr=pB_arr, L=40, J=0.5, rho0=20, Dr=1, eta=-2, inc_self=False, zero_drho=False, seed=1004, ms=0.08, show_labels=False)
     # sohrab003
 
     # # eta = -2, eta_AB = 2

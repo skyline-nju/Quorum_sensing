@@ -215,6 +215,20 @@ def inverse(x, y, theta, xc, yc):
     theta_inv[theta_inv < -np.pi] += np.pi * 2
     return x_inv, y_inv, theta_inv
 
+def center_inverse(s):
+    x, y, theta = s.particles.position.T
+    x_inv, y_inv, theta_inv = inverse(x, y, theta, 0, 0)
+
+    s2 = hoomd.Snapshot()
+    s2.configuration.box = s.configuration.box
+    s2.particles.N = s.particles.N
+    s2.particles.position = np.array([x_inv, y_inv, theta_inv], dtype=np.float32).T
+    s2.particles.typeid = s.particles.typeid
+    s2.particles.charge = s.particles.charge
+    s2.particles.types = s.particles.types
+    s2.configuration.step = 0
+    return s2
+
 
 def flip_half(s):
     x, y, theta = s.particles.position.T
@@ -554,19 +568,20 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/MC_L320_r10_10_10_h0.333"
-    basename = "L320_320_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    folder = "/scratch03.local/yduan/QS_MPI_noself/L40_16_v1_1"
+    basename = "L40_16_Dr0.100_0.100_k0.70_p80_80_r80_80_80_e-2.000_-2.000_J0.10000_-0.10000_h0.100_2000.gsd"
 
     fname = f"{folder}/{basename}"
     snap = read_one_frame(fname, -1)
-    # snap = shift_to_center(snap, inverse=True)
+    snap = shift_to_center(snap, inverse=False)
     # snap = rot90(snap)
-    # snap = duplicate(snap, 2, 1, inverse=False)
+    # snap = duplicate(snap, 1, 5, inverse=False)
+    snap2 = center_inverse(snap)
+    snap = hstack(snap2, snap)
+    # snap = adjust_density(snap, 80, 120, mode="copy")
+    # snap = scale(snap, 1.25, 1.25)
 
-    # snap = adjust_density(snap, 0, 6, mode="copy")
-    snap = scale(snap, 1.25, 1.25)
-
-    fout = f"{folder}/L400_400_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
+    fout = f"{folder}/L80_16_Dr0.100_0.100_k0.70_p80_80_r80_80_80_e-2.000_-2.000_J0.10000_-0.10000_h0.100_2100.gsd"
 
 
     # s1 = read_one_frame(fname, 454)

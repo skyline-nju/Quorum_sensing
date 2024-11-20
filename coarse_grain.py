@@ -262,35 +262,11 @@ def coarse_grain_all_1D(prefix, dx, forced_updating=False, pat="*.gsd"):
 if __name__ == "__main__":
     from datetime import datetime
 
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L40_r10_10_10_h0.333"
-    coarse_grain_all(prefix, dx=1, pat="*.gsd", only_rho=True)
+    # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_16_v1_1"
+    # coarse_grain_all_1D(prefix, 0.25, pat="*.gsd")
 
-
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L80_r10_10_10_h0.333"
-    coarse_grain_all(prefix, dx=1, pat="*.gsd", only_rho=True)
-
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L160_r10_10_10_h0.333"
-    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
-
-
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L320_r10_10_10_h0.333"
-    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p17_22.5_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
-
-
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L640_r10_10_10_h0.333"
-    coarse_grain_all(prefix, dx=1, pat="*_p10_28_*.gsd", only_rho=True)
-    coarse_grain_all(prefix, dx=1, pat="*_p4.5_14.7_*.gsd", only_rho=True)
-
-    prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r10_10_10_varied_Dt_h"
-    coarse_grain_all(prefix, dx=1, vxvy=False, pat="*_p18_14.5_*.gsd")
-
-    # prefix = f"{root_tahmineh}/QS_MPI_noself/L480_160_r5_5_5"
-    # coarse_grain_all_1D(prefix, 1, pat="*_p2.25_7.35_*.gsd")
+    prefix = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1"
+    coarse_grain_all_1D(prefix, 0.1, pat="*1005.gsd")
 
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L240_160_r10_10_10"
     # coarse_grain_all(prefix, dx=1, vxvy=False)

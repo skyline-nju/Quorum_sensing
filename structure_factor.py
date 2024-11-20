@@ -1010,9 +1010,9 @@ if __name__ == "__main__":
     # h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
-    # L1280_varied_composition()
+    L1280_varied_composition()
 
-    SP_S1D1_S2D1()
+    # SP_S1D1_S2D1()
 
     # CCB_G_large_eta()
 

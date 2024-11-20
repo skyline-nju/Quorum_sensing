@@ -463,27 +463,24 @@ def MSD_vs_t_CCB_varied_L():
 
 def D_vs_L_varied_composition():
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    L_arr = [160, 240, 320, 480, 640]
-    # MSD_arr = np.array([516, 130, 67, 24.5, 11.5]) / 4e4
-    MSD_arr = np.array([516, 138, 65.36, 21.68, 11.5]) / 4e4
-    ax.plot(L_arr, MSD_arr, "-o", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
-
-    MSD_arr = np.array([1267, 298, 162, 60.8, 29.36]) / 1e5
-    ax.plot(L_arr, MSD_arr, "-D", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
+    # L_arr = [160, 240, 320, 480, 640]
+    # # MSD_arr = np.array([516, 130, 67, 24.5, 11.5]) / 4e4
+    # MSD_arr = np.array([516, 138, 65.36, 21.68, 11.5]) / 4e4
+    # ax.plot(L_arr, MSD_arr, "-o", label=r"$\bar{\rho}_A=5, \bar{\rho}_B=2.96$")
 
     L_arr = [240, 320, 400, 480, 640]
-    MSD_arr = np.array([233, 116.2, 69.5, 49.7, 29.6]) / 4e4
+    MSD_arr = np.array([230.9, 122.7, 73.85, 52.19, 29.24]) / 4e4
+    # MSD_arr = np.array([233, 116.2, 69.5, 49.7, 29.6]) / 4e4
     ax.plot(L_arr, MSD_arr, "-s", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
 
-    MSD_arr = np.array([573, 261.5, 125]) / 1e5
-    ax.plot(L_arr[:3], MSD_arr[:3], "-p", label=r"$\bar{\rho}_A=4.5, \bar{\rho}_B=1.53$")
-
     L_arr = [160, 240, 320, 480]
-    MSD_arr = np.array([20.5, 10.7, 6.7, 3.52]) / 4e4
+    MSD_arr = np.array([21.47, 11.05, 6.8, 3.08]) / 4e4
+    # MSD_arr = np.array([20.5, 10.7, 6.7, 3.52]) / 4e4
     ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=3, \bar{\rho}_B=6$")
 
     L_arr = [160, 240, 320, 400, 480]
-    MSD_arr = np.array([19.49, 11.63, 6.87, 3.78, 2.82]) / 4e4
+    MSD_arr = np.array([21, 10.67, 6.15, 3.98, 2.86]) / 4e4
+    # MSD_arr = np.array([19.49, 11.63, 6.87, 3.78, 2.82]) / 4e4
     ax.plot(L_arr, MSD_arr, "->", label=r"$\bar{\rho}_A=0, \bar{\rho}_B=6$")
 
     ax.set_xscale("log")
@@ -496,7 +493,7 @@ def D_vs_L_varied_composition():
     add_line(ax, 0.05, 0.8, 0.95, -2, label="slope=-2", xl=0.60, yl=0.6, fontsize="large")
 
     # add_line(ax, 0.05, 0.3, 0.5, -1.6, label="slope=-1.6", xl=0.20, yl=0.2, fontsize="large")
-    # add_line(ax, 0.05, 0.3, 0.5, -2, label="slope=-2", xl=0.20, yl=0.2, fontsize="large")
+    add_line(ax, 0.05, 0.3, 0.5, -2, label="slope=-2", xl=0.20, yl=0.2, fontsize="large")
 
 
     plt.show()
@@ -513,12 +510,12 @@ if __name__ == "__main__":
     MSD_vs_t_SP_varied_L(phiA=3, phiB=6)
     # D_vs_L_varied_composition()
 
-    # f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L480_r10_10_10_h0.333/mc_L480_480_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
-    # t, x, y = read_traj(f_traj, Lx=480, Ly=480, n_cut=1)
+    f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L320_r10_10_10_h0.333/mc_L320_320_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+    t, x, y = read_traj(f_traj, Lx=320, Ly=320, n_cut=1000)
 
-    # plt.plot(x, y)
-    # plt.plot(x[0], y[0], "o")
-    # plt.plot(x[-1], y[-1], "s")
+    plt.plot(x, y)
+    plt.plot(x[0], y[0], "o")
+    plt.plot(x[-1], y[-1], "s")
 
-    # plt.show()
-    # plt.close()
+    plt.show()
+    plt.close()

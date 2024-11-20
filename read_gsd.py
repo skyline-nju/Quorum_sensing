@@ -59,13 +59,6 @@ def get_one_snap(f, i_frame):
     """
     s.particles.position = f.read_chunk(frame=i_frame,
                                         name="particles/position")
-
-    # 'particles/charge'actually denotes the self-propelled speeds of particles
-    if f.chunk_exists(frame=i_frame, name="particles/charge"):
-        s.particles.charge = f.read_chunk(frame=i_frame,
-                                          name="particles/charge")
-    else:
-        s.particles.charge = np.zeros(s.particles.N, np.float32)
     return s
 
 
@@ -127,9 +120,8 @@ def get_para(fname):
         return status
 
     para = {}
-    tag_keys = {"L": ["Lx", "Ly"], "Dr": "Dr", "k": "kappa",
-                 "p": ["phiA", "phiB"], "r": "rho0", "s": "seed",
-                 "e": "eta", "J": ["JAB", "JBA"], "a": "alpha"}
+    tag_keys = {"L": ["Lx", "Ly"], "d": "rhoB", "e": "eta",
+                "r": "rho0", "s": "seed"}
     basename = os.path.basename(fname)
     s = basename.rstrip(".gsd").split("_")
 
