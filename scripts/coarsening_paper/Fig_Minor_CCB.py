@@ -7,6 +7,9 @@ sys.path.append("../../")
 from structure_factor import get_h, get_Sq_t_rho, get_q1
 from add_line import add_line
 
+plt.rcParams["xtick.direction"] = "in"
+plt.rcParams["ytick.direction"] = "in"
+
 def plot_Rt_varied_L(ax, which="CCB+G"):
     if which == "CCB+G":
         phi_A, phi_B = 5.5, 3.85
@@ -14,6 +17,8 @@ def plot_Rt_varied_L(ax, which="CCB+G"):
         phi_A, phi_B = 22, 6
     elif which == "CCB+LA+G":
         phi_A, phi_B = 7.5, 3
+    elif which == "LB+G":
+        phi_A, phi_B = 3, 6
     folder  = "/home/yduan/code/Quorum_sensing/data"
     fins = [
         # f"{folder}/Sqt_rho/L320_320_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
@@ -43,33 +48,36 @@ def plot_Rt_varied_L(ax, which="CCB+G"):
         ax.legend(loc="lower right", fontsize="large")
 
 if __name__ == "__main__":
-    fig, axes = plt.subplots(2, 3, figsize=(12, 8), constrained_layout=True, sharey="row")
+    fig, axes = plt.subplots(2, 4, figsize=(12, 6.5), constrained_layout=True, sharey="row")
 
 
-    snaps = ["fig/snaps/CCB_G.png", "fig/snaps/CCB_LA_G.png", "fig/snaps/CCB_LA.png"]
+    snaps = ["fig/snaps/CCB_G.png", "fig/snaps/CCB_LA_G.png", "fig/snaps/CCB_LA.png", "fig/snaps/LB_G.png"]
 
-    for i, ax in enumerate(axes[0]):
+    for i, ax in enumerate(axes[1]):
         im = mpimg.imread(snaps[i])
         ax.imshow(im)
         ax.set_xticks([])
         ax.set_yticks([])
     
-    modes = ["CCB+G", "CCB+LA+G", "CCB+LA"]
-    for i, ax in enumerate(axes[1]):
+    modes = ["CCB+G", "CCB+LA+G", "CCB+LA", "LB+G"]
+    titles = ["(a) CCB+G", "(b) CCB+LA+G", "(c) CCB+LA", "(d) LB+G"]
+    for i, ax in enumerate(axes[0]):
         plot_Rt_varied_L(ax, which=modes[i])
         ax.set_xscale("log")
         ax.set_yscale("log")
-        axes[0, i].set_title(modes[i], fontsize="xx-large")
+        axes[0, i].set_title(titles[i], fontsize="xx-large")
         ax.set_xlabel(r"$t$", fontsize="xx-large")
     
 
-    axes[1, 0].set_ylabel(r"Typical domain size", fontsize="xx-large")
+    axes[0, 0].set_ylabel(r"Typical domain size", fontsize="xx-large")
+    axes[1, 0].set_ylabel(r"Snapshots at $t=10^6$", fontsize="xx-large")
     
 
-    add_line(axes[1, 0], 0.3, 0.5, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
-    add_line(axes[1, 1], 0.3, 0.5, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
-    add_line(axes[1, 2], 0.3, 0.45, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
+    add_line(axes[0, 0], 0.3, 0.5, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
+    add_line(axes[0, 1], 0.3, 0.5, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
+    add_line(axes[0, 2], 0.3, 0.45, 0.95, 0.13, label="0.13", xl=0.50, yl=0.4, fontsize="large")
+    add_line(axes[0, 3], 0.3, 0.42, 0.95, 0.333, label="0.33", xl=0.50, yl=0.7, fontsize="large")
 
     # plt.show()
-    plt.savefig("fig/Fig1.pdf")
+    plt.savefig("fig/Fig1.pdf", dpi=150)
     plt.close()

@@ -7,6 +7,8 @@ sys.path.append("../../")
 from structure_factor import get_h, get_Sq_t_rho, get_q1, get_npz_file_name
 from add_line import add_line
 
+plt.rcParams["xtick.direction"] = "in"
+plt.rcParams["ytick.direction"] = "in"
 
 def plot_Rt(ax):
     para = {}
@@ -51,7 +53,7 @@ def plot_Rt(ax):
         q1_B[i] = get_q1(q, rho_Sqt[1][i])
     
     mask = t<1.2e6
-    ax.plot(t[mask], 2 * np.pi/q1_A[mask], "o", fillstyle="none", c="tab:cyan", label=r"$(0.76, 1.06)$")
+    ax.plot(t[mask], 2 * np.pi/q1_A[mask], "o", fillstyle="none", c="tab:cyan", label=r"$(0.75, 1)$")
 
 
     para["pA"] = 10
@@ -73,16 +75,14 @@ def plot_Rt(ax):
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    add_line(ax, 0.65, 0.7, 0.95, 0.33, label="0.33", xl=0.75, yl=0.75, fontsize="large")
-    # add_line(ax, 0.75, 0.6, 0.98, 0.2, label="0.2", xl=0.40, yl=0.75, fontsize="large")
-    add_line(ax, 0.1, 0.3, 0.95, 0.13, label="0.13", xl=0.8, yl=0.5, fontsize="large")
-    ax.set_xlabel(r"$t$", fontsize="x-large")
-    ax.set_ylabel(r"$\zeta$", fontsize="x-large")
+
+    ax.set_xlabel(r"$t$", fontsize="xx-large")
+    ax.set_ylabel(r"Typical domain size", fontsize="xx-large")
     ax.legend(title=r"$(\bar{\rho}_A/\rho_0, \bar{\rho}_B/\rho_0)$", fontsize="large", title_fontsize="x-large")
 
 
 if __name__ == "__main__":
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4.5), constrained_layout=True)
     plot_Rt(axes[0])
 
 
@@ -93,6 +93,14 @@ if __name__ == "__main__":
         ax.imshow(im)
         ax.set_xticks([])
         ax.set_yticks([])
-    # plt.show()
+
+    axes[0].set_title(r"(a)", fontsize="xx-large")
+    axes[1].set_title(r"(b) $(\bar{\rho}_A/\rho_0,\bar{\rho}_B/\rho_0)=(0.75, 1)$", fontsize="xx-large")
+    axes[2].set_title(r"(c) $(\bar{\rho}_A/\rho_0,\bar{\rho}_B/\rho_0)=(1, 1.74)$", fontsize="xx-large")
+    add_line(axes[0], 0.65, 0.68, 0.95, 0.33, label="0.33", xl=0.75, yl=0.73, fontsize="large")
+    # add_line(ax, 0.75, 0.6, 0.98, 0.2, label="0.2", xl=0.40, yl=0.75, fontsize="large")
+    add_line(axes[0], 0.1, 0.28, 0.95, 0.13, label="0.13", xl=0.8, yl=0.5, fontsize="large")
     plt.savefig("fig/Fig2.pdf")
+    # plt.show()
+
     plt.close()

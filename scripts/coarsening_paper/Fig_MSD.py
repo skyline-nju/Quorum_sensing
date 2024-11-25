@@ -129,5 +129,5 @@ if __name__ == "__main__":
     ax3.set_title(r"(c) Reduced bubble model", fontsize=fs)
 
     plt.show()
-    # plt.savefig("fig/Fig4.pdf")
+    # plt.savefig("fig/Fig5.pdf")
     plt.close()

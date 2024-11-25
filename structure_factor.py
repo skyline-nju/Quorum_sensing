@@ -1005,12 +1005,12 @@ def three_CCB():
     plt.show()
     plt.close()
 if __name__ == "__main__":
-    # update_density_Sqt()
+    update_density_Sqt()
     # cluster_phase_separation()
     # h_one_third_varied_L()
     # L1280_varied_h()
     # L1280_varied_Dt()
-    L1280_varied_composition()
+    # L1280_varied_composition()
 
     # SP_S1D1_S2D1()
 

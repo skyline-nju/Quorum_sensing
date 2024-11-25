@@ -1,12 +1,31 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from MSD_1D import find_xc
 from gsd import fl
+import sys
 
 
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
+
+
+def find_xc(i_frame: int, fgsd: fl.GSDFile, Lx: float, which="both"):
+    pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
+    if which == "both":
+        x = pos[:,0] / Lx * np.pi * 2
+    else:
+        type_id = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+        if which == "A":
+            mask = type_id == 0
+        elif which == "B":
+            mask = type_id == 1
+        else:
+            print("Error, which must be one of 'both', 'A' or 'B'.")
+            sys.exit()
+        x = pos[mask][:, 0] / Lx * np.pi * 2
+
+    x_c = np.arctan2(np.mean(np.sin(x)), np.mean(np.cos(x))) / (2 * np.pi) * Lx
+    return x_c
 
 
 def get_profiles(i_frame, fgsd, dx, Lx, Ly, center=None, inc_v_mx=False):
@@ -835,7 +854,7 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
     if Lx == 1280:
         seed_arr = [1000, 2129042, 2030, 2240]
     elif Lx == 1120:
-        seed_arr = [2003]
+        seed_arr = [2000, 2003]
     elif Lx== 960:
         seed_arr = [2030, 2060, 2090, 2120]
     
@@ -861,6 +880,7 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
         with fl.open(name=fname, mode="rb") as fgsd:
             if end_frame is None:
                 end_frame = fgsd.nframes
+            print("find", end_frame, "in", os.path.basename(fname))
             xs = np.zeros((end_frame-beg_frame, 4))
             t_arr = np.zeros(end_frame-beg_frame)
             if os.path.exists(fout):
@@ -916,6 +936,8 @@ def plot_spacing_vs_t(Lx=960):
         seed_arr = [2030, 2060, 2090, 2120]
     elif Lx == 1280:
         seed_arr = [1000, 2129042, 2030, 2240]
+    elif Lx == 1120:
+        seed_arr = [2000, 2003]
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     for seed in seed_arr:
@@ -944,12 +966,12 @@ def plot_spacing_vs_t(Lx=960):
 
 
 if __name__ == "__main__":
-    update_time_ave_profiles()
+    # update_time_ave_profiles()
     # show_time_ave_profiles()
     # show_instant_profiles()
     # show_profiles_varied_time()
 
-    # plot_spacing_vs_t(Lx=1280)
+    plot_spacing_vs_t(Lx=1120)
 
     # update_space_time_profiles()
     # plot_space_time_varied_Ly(rA=8)

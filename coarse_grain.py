@@ -265,8 +265,8 @@ if __name__ == "__main__":
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L80_16_v1_1"
     # coarse_grain_all_1D(prefix, 0.25, pat="*.gsd")
 
-    prefix = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1"
-    coarse_grain_all_1D(prefix, 0.1, pat="*1005.gsd")
+    # prefix = f"{root_sohrab}/QS_not_inc_self/L10_4_v1_1"
+    # coarse_grain_all_1D(prefix, 0.1, pat="*1005.gsd")
 
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L240_160_r10_10_10"
     # coarse_grain_all(prefix, dx=1, vxvy=False)
@@ -280,3 +280,18 @@ if __name__ == "__main__":
     # prefix = f"{root_tahmineh}/QS_MPI_noself/L960_160_r10_10_10_h0.333"
     # coarse_grain_all(prefix, dx=1, vxvy=True)
 
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L5120_80_r10_10_10_h0.333"
+    coarse_grain_all_1D(prefix, dx=1, pat="*.gsd")
+
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L1280_320_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=4, vxvy=True)
+
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L960_480_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=4, vxvy=True)
+
+    prefix = f"{root_tahmineh}/QS_MPI_noself/L1280_80_r10_10_10_h0.333"
+    coarse_grain_all_1D(prefix, dx=1, pat="*.gsd")
+    coarse_grain_all_1D(prefix, dx=4, pat="*.gsd")
+
+    prefix = f"{root_tahmineh}/QS_MPI_noself/MC_L640_r10_10_10_h0.333"
+    coarse_grain_all(prefix, dx=4, vxvy=True, pat="*_p9.6_*.gsd")
