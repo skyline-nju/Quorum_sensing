@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from gsd import fl
 
 
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
@@ -38,6 +39,27 @@ def read_traj(f_traj, Lx, Ly, n_cut=100, which="B"):
         y = untangle(y, Ly)
     return t, x, y
 
+
+def find_center(i_frame: int, fgsd: fl.GSDFile, Lx: float, Ly: float, which="both"):
+    pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
+    if which == "both":
+        x = pos[:,0] / Lx * np.pi * 2
+        y = pos[:,1] / Ly * np.pi * 2
+    else:
+        type_id = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
+        if which == "A":
+            mask = type_id == 0
+        elif which == "B":
+            mask = type_id == 1
+        else:
+            print("Error, which must be one of 'both', 'A' or 'B'.")
+            sys.exit()
+        x = pos[mask][:, 0] / Lx * np.pi * 2
+        y = pos[mask][:, 1] / Ly * np.pi * 2
+
+    x_c = np.arctan2(np.mean(np.sin(x)), np.mean(np.cos(x))) / (2 * np.pi) * Lx
+    y_c = np.arctan2(np.mean(np.sin(y)), np.mean(np.cos(y))) / (2 * np.pi) * Ly
+    return x_c, y_c
 
 
 if __name__ == "__main__":

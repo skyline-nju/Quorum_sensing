@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from read_gsd import get_para, read_one_frame
 from gsd import fl
-from MSD import find_center
+from center_traj import find_center
 
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
 

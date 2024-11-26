@@ -2,6 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
+import sys
+sys.path.append("../../")
 from read_gsd import read_one_frame
 from gsd import hoomd
 from plot_snap import add_xlabel, add_ylabel

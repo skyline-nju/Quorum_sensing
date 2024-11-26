@@ -971,7 +971,7 @@ if __name__ == "__main__":
     # show_instant_profiles()
     # show_profiles_varied_time()
 
-    plot_spacing_vs_t(Lx=1120)
+    plot_spacing_vs_t(Lx=1280)
 
     # update_space_time_profiles()
     # plot_space_time_varied_Ly(rA=8)

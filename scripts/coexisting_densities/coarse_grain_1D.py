@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 
 from coarse_grain import coarse_grain_all_1D
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"

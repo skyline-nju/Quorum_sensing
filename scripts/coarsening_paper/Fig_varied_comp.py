@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image as mpimg
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 
 from structure_factor import get_h, get_Sq_t_rho, get_q1, get_npz_file_name
 from add_line import add_line

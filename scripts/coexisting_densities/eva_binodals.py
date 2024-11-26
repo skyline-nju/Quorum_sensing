@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 from plot_profile import get_center, shift_profile
 
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"

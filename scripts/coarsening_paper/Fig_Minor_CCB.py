@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image as mpimg
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 
 from structure_factor import get_h, get_Sq_t_rho, get_q1
 from add_line import add_line
@@ -19,7 +19,7 @@ def plot_Rt_varied_L(ax, which="CCB+G"):
         phi_A, phi_B = 7.5, 3
     elif which == "LB+G":
         phi_A, phi_B = 3, 6
-    folder  = "/home/yduan/code/Quorum_sensing/data"
+    folder  = "/home/yduan/code/Quorum_sensing/scripts/data"
     fins = [
         # f"{folder}/Sqt_rho/L320_320_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
         f"{folder}/Sqt_rho/L640_640_Dr0.100_k0.70_p{phi_A:g}_{phi_B:g}_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",

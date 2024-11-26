@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os
 import glob
 from gsd import fl
+import sys
+sys.path.append("../../")
 from structure_factor import orientation_average, get_q1
 from add_line import add_line
 

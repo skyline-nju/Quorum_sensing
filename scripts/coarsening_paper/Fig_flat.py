@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image as mpimg
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 
 from sk_1D import plot_R_t_1D
 
@@ -15,7 +15,7 @@ plt.rcParams["ytick.direction"] = "in"
 def plot_spacing(ax1, ax2):
     Lx = 1280
     seed = 1000
-    folder = "/home/yduan/code/Quorum_sensing/data"
+    folder = "/home/yduan/code/Quorum_sensing/scripts/data"
     f_interface = f"{folder}/interface_locs/L{Lx}_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed}.npz"
     with np.load(f_interface, "r") as data:
         t, xs = data["t"], data["xs"]

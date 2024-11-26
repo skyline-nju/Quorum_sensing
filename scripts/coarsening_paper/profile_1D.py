@@ -70,9 +70,15 @@ if __name__ == "__main__":
     rhoA = np.mean(fields[:, 0], axis=0)
     rhoB = np.mean(fields[:, 1], axis=0)
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(8, 4), constrained_layout=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8, 4), constrained_layout=True)
     ax1.plot(x, rhoA)
     ax2.plot(x, rhoB)
+    ax1.set_ylabel(r"$\rho_A$", fontsize="x-large")
+    ax2.set_ylabel(r"$\rho_B$", fontsize="x-large")
+    ax2.set_xlabel(r"$x$", fontsize="x-large")
+    ax1.set_xlim(0, 1280)
+    ax1.set_ylim(0, 4.5)
+    ax2.set_ylim(0, 4.5)
 
     plt.show()
     plt.close()

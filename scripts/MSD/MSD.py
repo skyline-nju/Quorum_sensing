@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import sys
-sys.path.append("../../")
 from gsd import fl
 from add_line import add_line
+sys.path.append("../")
 from center_traj import read_traj, untangle
 
 
@@ -14,26 +14,7 @@ root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.lo
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
 
 
-def find_center(i_frame: int, fgsd: fl.GSDFile, Lx: float, Ly: float, which="both"):
-    pos = fgsd.read_chunk(frame=i_frame, name="particles/position")
-    if which == "both":
-        x = pos[:,0] / Lx * np.pi * 2
-        y = pos[:,1] / Ly * np.pi * 2
-    else:
-        type_id = fgsd.read_chunk(frame=i_frame, name="particles/typeid")
-        if which == "A":
-            mask = type_id == 0
-        elif which == "B":
-            mask = type_id == 1
-        else:
-            print("Error, which must be one of 'both', 'A' or 'B'.")
-            sys.exit()
-        x = pos[mask][:, 0] / Lx * np.pi * 2
-        y = pos[mask][:, 1] / Ly * np.pi * 2
 
-    x_c = np.arctan2(np.mean(np.sin(x)), np.mean(np.cos(x))) / (2 * np.pi) * Lx
-    y_c = np.arctan2(np.mean(np.sin(y)), np.mean(np.cos(y))) / (2 * np.pi) * Ly
-    return x_c, y_c
 
 
 def find_center_series(fin: str, fout: str, beg_frame=0):

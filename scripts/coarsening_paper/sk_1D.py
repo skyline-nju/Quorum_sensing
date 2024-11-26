@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 
 from add_line import add_line
 
