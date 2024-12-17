@@ -41,10 +41,16 @@ def two_clusters(seed=2026, axes=None):
 
     # ax1.plot(x, np.mean(rhoA, axis=0))
     # ax1.plot(x, np.mean(rhoB, axis=0))
-    ax1.plot(x, np.mean(rho_v_A, axis=0))
-    ax1.plot(x, np.mean(rho_v_B, axis=0))
-    ax2.plot(x, np.mean(vx_A, axis=0))
-    ax2.plot(x, np.mean(vx_B, axis=0))
+    ax1.plot(x, np.mean(rho_v_A, axis=0), label=r"$\langle \rho_A\rangle_{y, t}$")
+    ax1.plot(x, np.mean(rho_v_B, axis=0), label=r"$\langle \rho_B\rangle_{y, t}$")
+    # ax2.plot(x, np.mean(vx_A, axis=0))
+    # ax2.plot(x, np.mean(vx_B, axis=0))
+
+    ax2.plot(x, np.mean(rho_v_A, axis=0))
+    ax2.plot(x, np.mean(rho_v_B, axis=0))
+    ax2.set_xlim(0, 1280)
+    ax2.set_ylim(2.2, 4.2)
+    ax1.legend(fontsize="x-large")
 
     if flag_show:
         plt.show()

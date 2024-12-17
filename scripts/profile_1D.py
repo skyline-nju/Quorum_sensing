@@ -852,7 +852,10 @@ def plot_space_time_fields():
 
 def get_interface_locs(Lx, Ly=80, h=1/3.):
     if Lx == 1280:
-        seed_arr = [1000, 2129042, 2030, 2240]
+        if Ly == 80:
+            seed_arr = [1000, 2129042, 2030, 2240]
+        elif Ly == 160:
+            seed_arr = [21000160, 21000220]
     elif Lx == 1120:
         seed_arr = [2000, 2003]
     elif Lx== 960:
@@ -930,18 +933,23 @@ def get_interface_locs(Lx, Ly=80, h=1/3.):
         np.savez_compressed(fout, t=t_arr, xs=xs)
 
 
-def plot_spacing_vs_t(Lx=960):
-    get_interface_locs(Lx)
+def plot_spacing_vs_t(Lx=960, Ly=80):
+    get_interface_locs(Lx, Ly)
     if Lx == 960:
-        seed_arr = [2030, 2060, 2090, 2120]
+        if Ly == 80:
+            seed_arr = [2030, 2060, 2090, 2120]
     elif Lx == 1280:
-        seed_arr = [1000, 2129042, 2030, 2240]
+        if Ly == 80:
+            seed_arr = [1000, 2129042, 2030, 2240]
+        elif Ly == 160:
+            seed_arr = [21000160, 21000220]
     elif Lx == 1120:
-        seed_arr = [2000, 2003]
+        if Ly == 80:
+            seed_arr = [2000, 2003]
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     for seed in seed_arr:
-        f_interface = f"data/interface_locs/L{Lx}_80_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed}.npz"
+        f_interface = f"data/interface_locs/L{Lx}_{Ly}_Dr0.100_k0.70_p7.5_10_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed}.npz"
         with np.load(f_interface, "r") as data:
             t, xs = data["t"], data["xs"]
             d1, d2 = np.zeros((2, t.size))
@@ -971,7 +979,7 @@ if __name__ == "__main__":
     # show_instant_profiles()
     # show_profiles_varied_time()
 
-    plot_spacing_vs_t(Lx=1280)
+    plot_spacing_vs_t(Lx=1120, Ly=80)
 
     # update_space_time_profiles()
     # plot_space_time_varied_Ly(rA=8)

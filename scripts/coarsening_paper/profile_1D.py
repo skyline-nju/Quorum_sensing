@@ -73,13 +73,23 @@ if __name__ == "__main__":
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8, 4), constrained_layout=True)
     ax1.plot(x, rhoA)
     ax2.plot(x, rhoB)
-    ax1.set_ylabel(r"$\rho_A$", fontsize="x-large")
-    ax2.set_ylabel(r"$\rho_B$", fontsize="x-large")
+    ax1.set_ylabel(r"$\langle \rho_A\rangle_{y, t}$", fontsize="x-large")
+    ax2.set_ylabel(r"$\langle \rho_B\rangle_{y, t}$", fontsize="x-large")
     ax2.set_xlabel(r"$x$", fontsize="x-large")
     ax1.set_xlim(0, 1280)
     ax1.set_ylim(0, 4.5)
     ax2.set_ylim(0, 4.5)
 
+    fig.suptitle(r"$t\in[9e6, 9.01e6]$", fontsize="large")
     plt.show()
     plt.close()
 
+    # rhoA = fields[170:, 0]
+    # rhoB = fields[170:, 1]
+    # t = t[170:]
+    # rhoA_m1 = np.mean(rhoA[:, 200: 210], axis=1)
+    # rhoA_m2 = np.mean(rhoA[:, 50: 60], axis=1)
+    # plt.plot(t, rhoA_m1)
+    # plt.plot(t, rhoA_m2)
+    # plt.show()
+    # plt.close()
