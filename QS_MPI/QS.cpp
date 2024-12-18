@@ -1,4 +1,5 @@
 #include "QS.h"
+#ifdef RUN_QS
 
 void run(const Vec_2<double>& gl_l,
          double phi, double rho0,
@@ -87,7 +88,6 @@ void run(const Vec_2<double>& gl_l,
   MPI_Barrier(group_comm);
 }
 
-#ifdef RUN_QS
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 

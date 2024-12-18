@@ -17,7 +17,7 @@ void run(const Vec_2<double>& gl_l,
   std::vector<node_t> p_arr;
   const double r_cut = 1.0;
 
-  Vec_2<int> proc_size = Vec_2<int>(2, 2);
+  Vec_2<int> proc_size = Vec_2<int>(2, 1);
   Grid_2 grid(gl_l, r_cut, proc_size, group_comm);
   PeriodicDomain_2 dm(gl_l, grid, proc_size, group_comm);
   CellListNode_2<node_t> cl(dm, grid);
@@ -49,9 +49,11 @@ void run(const Vec_2<double>& gl_l,
   };
 
   // set output
+  int cg_l = 4;
   char basename[255];
   char log_file[255];
   char gsd_file[255];
+  char cg_file[255];
   //char mc_file[255];
   snprintf(basename, 255, "L%g_%g_Dr%.3f_k%.2f_p%g_%g_r%g_%g_%g_e%.3f_J%.3f_%.3f_h%.3f_%lld",
     gl_l.x, gl_l.y, Dr, kappa, phiA, phiB, rho0, bar_rho_A, bar_rho_B, eta, J_AB, J_BA, h, seed);
@@ -66,17 +68,22 @@ void run(const Vec_2<double>& gl_l,
 #else
   char folder[] = "data/";
 #endif
+  char cg_fields_folder[255];
+  snprintf(cg_fields_folder, 255, "%s/coarse_grain_dx%d/", folder, cg_l);
 
   snprintf(log_file, 255, "%slog_%s.dat", folder, basename);
   snprintf(gsd_file, 255, "%s%s.gsd", folder, basename);
-  //snprintf(mc_file, 255, "%smc_%s.dat", folder, basename);
 
 
   int log_dt = 10000;
+  int cg_dt = 1000;
   int gl_np = round(phiA * gl_l.x * gl_l.y) + round(phiB * gl_l.x * gl_l.y);
   int start = 0;
   io::Snap_GSD_2 gsd(gsd_file, n_step, snap_dt, start, h, snap_log_sep, gl_l, gl_np, ini_mode, group_comm);
   io::LogExporter log(log_file, n_step, log_dt, start, gl_np, group_comm);
+
+  snprintf(cg_file, 255, "%s%s_t%d_%d.bin", cg_fields_folder, basename, cg_dt, start);
+  io::FeildExporter cg(cg_file, start, n_step, cg_dt, grid, dm, cg_l);
   //io::MassCenterExporter mc(mc_file, n_step, 100, start, gl_l, snap_log_sep, group_comm);
 
   // initialize particles and celllist
@@ -90,6 +97,7 @@ void run(const Vec_2<double>& gl_l,
     integrate(p_arr, cl, one_par_move, comm);
     gsd.dump(t, p_arr);
     log.record(t);
+    cg.dump(t, p_arr);
     //mc.record(t, p_arr);
   }
 
@@ -104,13 +112,13 @@ void run(const Vec_2<double>& gl_l,
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 
-  double Lx = 20;
-  double Ly = 20;
+  double Lx = 40;
+  double Ly = 40;
   double phiA = atof(argv[1]);
   double phiB = atof(argv[2]);
-  double rho0 = 20;
-  double bar_rho_A = 20;
-  double bar_rho_B = 20;
+  double rho0 = 10;
+  double bar_rho_A = 10;
+  double bar_rho_B = 10;
   double h = 1/3.;
 
   int n_step = atoi(argv[3]);

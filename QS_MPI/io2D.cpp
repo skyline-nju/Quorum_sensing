@@ -209,3 +209,17 @@ int io::Snap_GSD_2::reset_start_time_step() {
   return start_;
 }
 
+void io::FeildExporter::write_data(const unsigned short* rho_A,
+                                   const unsigned short* rho_B) {
+  const MPI_Offset frame_start = idx_frame_ * frame_size_;
+  MPI_Offset offset1, offset2;
+  int pos = 0;
+  for (int row = 0; row < n_.y; row++) {
+    offset1 = frame_start + offset_[row];
+    offset2 = frame_start + offset_[row + n_.y];
+    MPI_File_write_at(fh_, offset1, &rho_A[pos], n_.x, MPI_UINT16_T, MPI_STATUSES_IGNORE);
+    MPI_File_write_at(fh_, offset2, &rho_B[pos], n_.x, MPI_UINT16_T, MPI_STATUSES_IGNORE);
+    pos += n_.x;
+  }
+  idx_frame_++;
+}

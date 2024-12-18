@@ -409,5 +409,104 @@ void io::Snap_GSD_2::read_last_frame(TFloat* x, TFloat* y,
   }
 }
 
+
+/**
+ * @brief Exporter for coarse-grained density and momentum field in 2D.
+ *
+ * Output coarse-grained density fields for A and B particles over boxes with linear
+ * size "box_size" every "sep" time steps.
+ *
+ * Caution: the number of grids in both x and y directions must be multiple
+ * of linear size of boxes for coarse graining.
+ */
+class FeildExporter : public ExporterBase {
+public:
+  template <typename TGrid, typename TDomain>
+  FeildExporter(const std::string& outfile, int start, int n_step, int sep,
+    const TGrid& grid, const TDomain& dm, int box_size = 4);
+
+  template <typename TPar>
+  void coarse_grain(const std::vector<TPar>& p_arr, unsigned short* rho_A, unsigned short* rho_B);
+
+  template <typename TPar>
+  void dump(int i_step, const std::vector<TPar>& p_arr);
+
+  void write_data(const unsigned short* rho_A, const unsigned short* rho_B);
+
+  ~FeildExporter() { delete[] offset_; MPI_File_close(&fh_); }
+
+protected:
+  Vec_2<double> origin_;
+  Vec_2<int> gl_n_;
+  Vec_2<int> n_;
+  Vec_2<int> o_;
+  Vec_2<double> inv_lc_;
+
+  MPI_File fh_{};
+  MPI_Offset frame_size_;
+  int n_grids_;
+  MPI_Offset* offset_;
+  int idx_frame_;
+};
+
+template <typename TGrid, typename TDomain>
+FeildExporter::FeildExporter(const std::string& outfile, int start, int n_step, int sep,
+  const TGrid& grid, const TDomain& dm, int box_size)
+  : ExporterBase(n_step, sep, start, dm.comm()), origin_(dm.origin()) {
+  gl_n_.x = grid.gl_n().x / box_size;
+  gl_n_.y = grid.gl_n().y / box_size;
+  n_.x = grid.n().x / box_size;
+  n_.y = grid.n().y / box_size;
+  o_.x = grid.origin().x / box_size;
+  o_.y = grid.origin().y / box_size;
+  inv_lc_.x = grid.lc().x / box_size;
+  inv_lc_.y = grid.lc().y / box_size;
+  frame_size_ = sizeof(unsigned short) * 2 * gl_n_.x * gl_n_.y;
+  n_grids_ = n_.x * n_.y;
+
+  offset_ = new MPI_Offset[n_.y * 2]{};
+
+  for (int i_field = 0; i_field < 2; i_field++) {
+    MPI_Offset start = sizeof(unsigned short) * gl_n_.x * gl_n_.y  * i_field;
+    for (int row = 0; row < n_.y; row++) {
+      int idx = row + i_field * n_.y;
+      offset_[idx] = start + sizeof(unsigned short) * (o_.x + (o_.y + row) * gl_n_.x);
+    }
+  }
+
+  MPI_File_open(dm.comm(), outfile.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fh_);
+  MPI_File_set_size(fh_, 0);
+  idx_frame_ = 0;
+}
+
+template<typename TPar>
+void FeildExporter::coarse_grain(const std::vector<TPar>& p_arr, unsigned short* rho_A, unsigned short* rho_B) {
+  const auto end = p_arr.end();
+  for (auto it = p_arr.cbegin(); it != end; ++it) {
+    const TPar& p = *it;
+    int idx = int((p.pos.x - origin_.x) * inv_lc_.x) + int((p.pos.y - origin_.y) * inv_lc_.y) * n_.x;
+    if (p.type_id == 0) {
+      rho_A[idx]++;
+    } else {
+      rho_B[idx]++;
+    }
+  }
+}
+
+template<typename TPar>
+void FeildExporter::dump(int i_step, const std::vector<TPar>& p_arr) {
+  if (need_export(i_step)) {
+    unsigned short *rho_A = new unsigned short[n_grids_]();
+    unsigned short *rho_B = new unsigned short[n_grids_]();
+
+    coarse_grain(p_arr, rho_A, rho_B);
+    write_data(rho_A, rho_B);
+
+    delete[] rho_A;
+    delete[] rho_B;
+  }
+}
+
+
 }
 

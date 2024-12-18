@@ -1,4 +1,5 @@
 #pragma once
+#ifdef RUN_OFFSET_QS
 #include "QS.h"
 
 void run(const Vec_2<double>& gl_l,
@@ -9,3 +10,5 @@ void run(const Vec_2<double>& gl_l,
   const std::string& ini_mode,
   unsigned long long seed,
   MPI_Comm group_comm);
+
+#endif

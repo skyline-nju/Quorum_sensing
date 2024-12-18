@@ -8,9 +8,9 @@
 #define WITH_SELF
 
 
-//#define RUN_NRQS
+#define RUN_NRQS
 //#define RUN_QS
-#define RUN_OFFSET_QS
+//#define RUN_OFFSET_QS
 
 #ifdef RUN_NRQS
 #define MULT_SPECIES

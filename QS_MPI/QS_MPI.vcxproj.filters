@@ -39,13 +39,13 @@
     <ClInclude Include="NRQS.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="particle2D.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="QS.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="offset_QS.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="particle2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

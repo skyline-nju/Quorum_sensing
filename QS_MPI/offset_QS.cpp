@@ -1,4 +1,5 @@
 #include "offset_QS.h"
+#ifdef RUN_OFFSET_QS
 
 void run(const Vec_2<double>& gl_l,
          double phi, double rho0, double eps,
@@ -89,7 +90,6 @@ void run(const Vec_2<double>& gl_l,
 }
 
 
-#ifdef RUN_OFFSET_QS
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
 
