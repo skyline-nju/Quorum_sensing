@@ -28,9 +28,13 @@ def read_one_file(fin, Lx, Ly, cg_l, cg_dt):
 
 
 if __name__ == "__main__":
-    fin = "D:\code\Quorum_sensing\QS_MPI\data\coarse_grain_dx4\L40_40_Dr0.100_k0.70_p10_10_r10_10_10_e-2.000_J0.000_0.000_h0.333_1234_t1000_0.bin"
+    root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
+    folder = f"{root_tahmineh}/QS_MPI_noself/L1280_r10_10_10_h0.333/coarse_grain_dx4"
 
-    frames = read_one_file(fin, 40, 40, 4, 1000)
+
+    fin = f"{folder}/L1280_1280_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2040_t1000_0.bin"
+
+    frames = read_one_file(fin, 1280, 1280, 4, 1000)
     for (t, rho_A, rho_B) in frames:
         plt.imshow(rho_B, origin="lower")
         plt.show()
