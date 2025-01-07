@@ -6,7 +6,7 @@ sys.path.append("../MSD/")
 
 
 from add_line import add_line
-from scripts.coarsening_paper.plot_reduced_bubble import show_R
+from plot_reduced_bubble import show_R
 
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
 root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan"
