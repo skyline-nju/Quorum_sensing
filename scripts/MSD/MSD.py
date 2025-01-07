@@ -4,17 +4,14 @@ import os
 import glob
 import sys
 from gsd import fl
-from add_line import add_line
 sys.path.append("../")
+from add_line import add_line
 from center_traj import read_traj, untangle
 
 
 root_sohrab = "/run/user/1148/gvfs/sftp:host=sohrab003,user=yduan/scratch03.local/yduan"
 root_rudabeh = "/run/user/1148/gvfs/sftp:host=rudabeh002,user=yduan/scratch03.local/yduan"
 root_tahmineh = "/run/user/1148/gvfs/sftp:host=tahmineh002,user=yduan/scratch03.local/yduan"
-
-
-
 
 
 def find_center_series(fin: str, fout: str, beg_frame=0):
@@ -354,12 +351,13 @@ def MSD_vs_t_SP_varied_L(phiA=3, phiB=6):
 
 
 def MSD_vs_t_CCB_varied_L():
-    L_arr = [160, 240, 320, 480, 640]
+    L_arr = [160, 240, 320, 480, 640, 1280]
     f_arr = [f"data/center_traj/L{L_arr[0]}_{L_arr[0]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.npz",
-             f"{root_tahmineh}/QS_MPI_noself/MC_L240_r10_10_10_h0.333/mc_L240_240_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
+             f"data/center_traj/mc_L240_240_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
              f"data/center_traj/L{L_arr[2]}_{L_arr[2]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
-             f"{root_tahmineh}/QS_MPI_noself/MC_L480_r10_10_10_h0.333/mc_L480_480_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
+             f"data/center_traj/mc_L480_480_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat",
              f"data/center_traj/L{L_arr[4]}_{L_arr[4]}_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.npz",
+             f"data/center_traj/mc_L1280_1280_Dr0.100_k0.70_p5_2.96_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
             ]
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     for i, fin in enumerate(f_arr):
@@ -406,7 +404,7 @@ def MSD_vs_t_CCB_varied_L():
             seed = 2000
         else:
             seed = 2001
-        folder = f"{root_tahmineh}/QS_MPI_noself/MC_L{L:d}_r10_10_10_h0.333"
+        folder = "data/center_traj"
         fin = f"{folder}/mc_L{L:d}_{L:d}_Dr0.100_k0.70_p4.5_1.53_r10_10_10_e-2.000_J0.500_-0.500_h0.333_{seed:d}.dat"
         n = 1000
         ncut = 500
@@ -487,16 +485,16 @@ if __name__ == "__main__":
     # show_MSD()
     # show_MSD_averaged()
     
-    # MSD_vs_t_CCB_varied_L()
-    MSD_vs_t_SP_varied_L(phiA=3, phiB=6)
-    # D_vs_L_varied_composition()
+    MSD_vs_t_CCB_varied_L()
+    # MSD_vs_t_SP_varied_L(phiA=3, phiB=6)
+    # # D_vs_L_varied_composition()
 
-    f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L320_r10_10_10_h0.333/mc_L320_320_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
-    t, x, y = read_traj(f_traj, Lx=320, Ly=320, n_cut=1000)
+    # f_traj = f"{root_tahmineh}/QS_MPI_noself/MC_L320_r10_10_10_h0.333/mc_L320_320_Dr0.100_k0.70_p0_6_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.dat"
+    # t, x, y = read_traj(f_traj, Lx=320, Ly=320, n_cut=1000)
 
-    plt.plot(x, y)
-    plt.plot(x[0], y[0], "o")
-    plt.plot(x[-1], y[-1], "s")
+    # plt.plot(x, y)
+    # plt.plot(x[0], y[0], "o")
+    # plt.plot(x[-1], y[-1], "s")
 
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
