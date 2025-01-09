@@ -561,10 +561,10 @@ def varied_cluster_size():
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    add_line(ax, 0, 0, 1, slope=0.5, label="0.5", xl=0.75)
-    add_line(ax, 0, 0, 0.8, slope=1, label="1", xl=0.5)
     ax.set_xlabel(r"$t$", fontsize="x-large")
     ax.set_ylabel("MSD", fontsize="x-large")
+    add_line(ax, 0, 0, 1, slope=0.5, label="0.5", xl=0.75)
+    add_line(ax, 0, 0, 0.8, slope=1, label="1", xl=0.5)
     plt.show()
     plt.close()
 
