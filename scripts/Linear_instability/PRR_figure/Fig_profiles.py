@@ -242,7 +242,7 @@ def plot_R_J_snaps():
     ax1.text(0.9, 0.02, r"$t$", fontsize=label_font_size, transform=ax1.transAxes)
     ax2.text(0.9, 0.02, r"$L$", fontsize=label_font_size, transform=ax2.transAxes)
 
-    img_names = ["G_LB_CCB_L640.png", "LB_CCB_L640.png", "CCB_L160.jpg"]
+    img_names = ["G_LB_CCB_L640_v2.png", "LB_CCB_L640_v2.png", "CCB_L160.jpg"]
     for i, ax in enumerate(ax_snaps):
         fname = f"fig/snap/{img_names[i]}"
         im = mpimg.imread(fname)
@@ -277,11 +277,11 @@ def plot_R_J_snaps():
     add_line(ax2, 0.01, 0.65, 0.95, -1)
     add_line(ax2, 0.01, 0.45, 0.8, -1)
 
-    plt.show()
-    # plt.savefig("fig/R_J_snaps.pdf", dpi=150)
+    # plt.show()
+    plt.savefig("fig/R_J_snaps_v2.pdf", dpi=200)
     plt.close()
 
 
 if __name__ == "__main__":
-    # plot_R_J_snaps()
-    plot_rho_v()
+    plot_R_J_snaps()
+    # plot_rho_v()

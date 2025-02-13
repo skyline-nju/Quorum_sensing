@@ -13,11 +13,11 @@ from general_PD import find_long_instabi, find_short_instabi, find_contours
 def get_PD_composition_data(etaAA, etaAB, etaBA, etaBB, Dr_A, Dr_B, bar_rho_A, bar_rho_B, bar_vA=1, bar_vB=1, kappa=0.7,
                             extent=[0, 4, 0, 4], qmin=1e-5, qmax=1, Nq=200, resolution=1000, overwrite=False, ll=3./20, simple_gamma=False):
     if simple_gamma:
-        folder = "D:/code/PDE/Linear_instability/data/PD_pA_pB_SG/"
+        folder = "../data/PD_pA_pB_SG/"
     elif ll == 0.:
-        folder = "D:/code/PDE/Linear_instability/data/PD_pA_pB_woS/"
+        folder = "../data/PD_pA_pB_woS/"
     else:
-        folder = "D:/code/PDE/Linear_instability/data/PD_pA_pB/"
+        folder = "../data/PD_pA_pB/"
     fout = "%se%g_%g_%g_%g_D%g_%g_r%g_%g_v%g_%g_qm%g_r%g.npz" % (
         folder, etaAA, etaAB, etaBA, etaBB, Dr_A, Dr_B, bar_rho_A, bar_rho_B, bar_vA, bar_vB, qmax, resolution
     )
@@ -95,7 +95,7 @@ def plot_state(state, extent, xlim=None, ylim=None, ax=None):
         plt.close()
 
 
-def plot_PD_composition(state, extent, xlim=None, ylim=None, ax=None, fill=True):
+def plot_PD_composition(state, extent, xlim=None, ylim=None, ax=None, fill=True, legend_fs="x-large"):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
         flag_show = True
@@ -135,10 +135,11 @@ def plot_PD_composition(state, extent, xlim=None, ylim=None, ax=None, fill=True)
             ax.fill(x, y, c="tab:green", alpha=0.5)
         else:
             ax.plot(x, y, c="tab:green", lw=2.5, linestyle="dashed", label="SOI")
-    ax.legend(fontsize="x-large")
+    ax.legend(fontsize=legend_fs)
     # # ax.plot(1, 1, "o", ms=2, c="k")
 
-if __name__ == "__main__":
+
+def panel_4_2_2():
     plt.rcParams["xtick.direction"] = "in"
     plt.rcParams["ytick.direction"] = "in"
 
@@ -200,4 +201,73 @@ if __name__ == "__main__":
 
     plt.show()
     # plt.savefig("fig/snaps_pure_NR.pdf", dpi=150)
+    plt.close()
+
+
+
+if __name__ == "__main__":
+    plt.rcParams["xtick.direction"] = "in"
+    plt.rcParams["ytick.direction"] = "in"
+
+    fig = plt.figure(figsize=(8, 10))
+    subfigs = fig.subfigures(2, 1, wspace=0.001, hspace=0.001, height_ratios=[8, 2])
+
+    ax_top = subfigs[0].subplots(1, 1, gridspec_kw=dict(hspace=0, wspace=0, left=0.03, right=0.995, bottom=0.04, top=0.998))
+    im = mpimg.imread(f"fig/L20_20_Dr0.1_r80_e0_J1.00_-1.00.jpeg")
+    extent = [0.5-0.125, 2+0.125, 0.25-0.125, 1.75+0.125]
+    ax_top.imshow(im, extent=extent)
+    ax_top.set_xticks([0.5, 0.75, 1, 1.25, 1.5, 1.75, 2])
+    ax_top.set_yticks([0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75])
+    for tick in ax_top.get_yticklabels():
+        tick.set_rotation(90)
+
+    Dr_A = Dr_B = 0.1
+    etaAA = 0
+    etaBB = 0
+
+    etaAB = 1
+    etaBA = -1
+    bar_rho_A = 1
+    bar_rho_B = 1
+    bar_vA = 1
+    bar_vB = 1
+    extent, state, q_range = get_PD_composition_data(etaAA, etaAB, etaBA, etaBB, Dr_A, Dr_B, bar_rho_A, bar_rho_B, bar_vA, bar_vB, qmax=2.5, Nq=400, resolution=2000)
+    plot_PD_composition(state, extent, ax=ax_top, fill=False, legend_fs=22)
+
+    ax_top.text(0.8, 0.02, r"$\bar{\rho}_A/\rho_0$", fontsize=26, transform=ax_top.transAxes)
+    ax_top.text(0.02, 0.8, r"$\bar{\rho}_B/\rho_0$", fontsize=26, rotation=90, transform=ax_top.transAxes)
+    bbox=dict(edgecolor="w", facecolor="w", boxstyle="Square, pad=0.08")
+    ax_top.text(0.006, 0.968, "(a)", fontsize=20, transform=ax_top.transAxes, bbox=bbox)
+
+    ax_top.tick_params(axis="x", labelsize="large")
+    ax_top.tick_params(axis="y", labelsize="large")
+
+    ax_bottom = subfigs[1].subplots(1, 4, sharex=True, sharey=True, gridspec_kw=dict(hspace=0, wspace=0, left=0., right=1, bottom=0.005, top=1))
+    # fins = ["fig/L80_p60_60.jpg", "fig/L80_p80_80.jpg", "fig/L80_p100_100.jpg", "fig/L80_p80_80_ori.jpg"]
+    fins = ["fig/p60.jpg", "fig/p80.jpg", "fig/p100.jpg", "fig/p80_ori.jpg"]
+
+    labels = ["(b)", "(c)", "(d)", "(e)"]
+    for i, ax in enumerate(ax_bottom):
+        im = mpimg.imread(fins[i])
+        ax.imshow(im)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_aspect("equal")
+        ax.text(0.025, 0.875, labels[i], fontsize=20, transform=ax.transAxes, bbox=bbox)
+
+    ax_cb = ax_bottom[-1].inset_axes([0.75, 0., 0.25, 0.25])
+    im = mpimg.imread("fig/circle2.png")
+    ax_cb.set_title(r"$\theta_i$", fontsize=26)
+    ax_cb.imshow(im)
+    ax_cb.set_xticks([])
+    ax_cb.set_yticks([])
+
+    ax_top.text(0.75, 0.75, "(b)", fontsize=20, c="k", ha="center", va="center")
+    ax_top.text(1, 1, "(c)", fontsize=20, c="k", ha="center", va="center")
+    ax_top.text(1.25, 1.25, "(d)", fontsize=20, c="k", ha="center", va="center")
+
+    # plt.show()
+    plt.savefig("fig/snaps_pure_NR_v2.pdf", dpi=100)
     plt.close()

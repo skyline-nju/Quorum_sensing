@@ -552,9 +552,9 @@ def PD_large_snap_profile():
     ax1.plot(0.825, 3.4, "<", ms=ms, fillstyle="none", c="tab:purple")
 
 
-    fnames = ["G_CCB.png", "G_LA_CCB.png",
-              "LA_CCB.png", "none",
-              "G_LB_CCB.png", "none", 
+    fnames = ["G_CCB_v2.png", "G_LA_CCB_v2.png",
+              "LA_CCB_v2.png", "none",
+              "G_LB_CCB_v3.png", "none", 
               "LB_CCB_L120_40.png", "none",
               "LB_CCB_0.png", "LB_CCB_1.png"]
     titles = ["(b) G+CCB", "(c) G+LA+CCB",
@@ -662,12 +662,12 @@ def PD_large_snap_profile():
         ax_right[4, 1].arrow(x[i], y[i], 0.05 * np.cos(theta[i]), 0.05 * np.sin(theta[i]),
                              transform=ax_right[4, 1].transAxes, width=0.015, color="k", ec="k", head_length=0.03)
 
-    plt.show()
-    # plt.savefig("fig/PD_large_J05_snap_profile.pdf", dpi=150)
+    # plt.show()
+    plt.savefig("fig/PD_large_J05_snap_profile_v2.pdf", dpi=200)
     plt.close()
 
 if __name__ == "__main__":
     # PD_and_snaps()
-    # PD_large_snap_profile()
+    PD_large_snap_profile()
 
-    PD_L40_instability()
+    # PD_L40_instability()

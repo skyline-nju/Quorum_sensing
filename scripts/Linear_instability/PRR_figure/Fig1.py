@@ -197,7 +197,7 @@ def plot_PD_w1_w2(state, extent, xlim=None, ylim=None, ax=None):
 
 def get_PD_tilde_w1_w2_data(sigma_D, sigma_v, Pe, wc, extent=[-8, 8, -8, 8],
                             qmin=1e-5, qmax=2.5, Nq=400, resolution=1000, overwrite=False):
-    fout = "d:/code/PDE/Linear_instability/data/PD_tilde_w1_w2/sD%g_sv%g_Pe%g_wc%g_qm%g_r%g.npz" % (
+    fout = "../data/PD_tilde_w1_w2/sD%g_sv%g_Pe%g_wc%g_qm%g_r%g.npz" % (
             sigma_D, sigma_v, Pe, wc, qmax, resolution
         )
     if not overwrite and os.path.exists(fout):

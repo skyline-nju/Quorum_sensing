@@ -568,11 +568,12 @@ def split(s: hoomd.Snapshot, x_shift=0):
 
 
 if __name__ == "__main__":
-    folder = "/scratch03.local/yduan/QS_MPI_noself/L2560_r10_10_10_h0.333"
-    basename = "L2560_2560_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_1000.gsd"
+    # folder = "/scratch03.local/yduan/QS_MPI_noself/L2560_r10_10_10_h0.333"
+    folder = r"E:\\QS_MPI/L480_160_r10_10_10"
+    basename = "L480_160_Dr0.100_k0.70_p18_14.5_r10_10_10_e-2.000_J0.500_-0.500_2000.gsd"
     fname = f"{folder}/{basename}"
-    snap = read_one_frame(fname, 40)
-    # snap = shift_to_center(snap, inverse=True)
+    snap = read_one_frame(fname, -1)
+    snap = shift_to_center(snap, inverse=False)
 
     # basename = "L640_640_Dr0.100_k0.70_p5.22625_2.83875_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2000.gsd"
     # fname = f"{folder}/{basename}"
@@ -588,7 +589,7 @@ if __name__ == "__main__":
     # snap = adjust_density(snap, 10.5, 18.75, mode="copy")
     # snap = scale(snap, 1, 2)
 
-    fout = f"{folder}/L2560_2560_Dr0.100_k0.70_p5.5_3.85_r10_10_10_e-2.000_J0.500_-0.500_h0.333_2040.gsd"
+    fout = f"{folder}/L480_160_Dr0.100_k0.70_p18_14.5_r10_10_10_e-2.000_J0.500_-0.500_2000120.gsd"
 
 
     # s1 = read_one_frame(fname, 454)
@@ -645,6 +646,7 @@ if __name__ == "__main__":
     # fout = f"{folder}/L160_160_Dr0.100_k0.70_p10_72_r80_12_60_e-2.000_J2.000_-2.000_h0.333_2000.gsd"
     f = hoomd.open(name=fout, mode='wb')
     f.append(snap)
+    print(fout)
 
 
     # fname = "/home/yduan/data/tmp/L160_160_Dr0.100_k0.70_p5_33_r20_20_20_e-2.000_J2.000_-2.000_2000.gsd"
